@@ -76,6 +76,7 @@ endif
 
 libg4eval_la_SOURCES = \
 	$(ROOT5DICTS) \
+	TrackingEvaluator_hp_Dict.cc \
 	BaseTruthEval.cc \
 	CaloEvalStack.cc \
 	CaloTruthEval.cc \
