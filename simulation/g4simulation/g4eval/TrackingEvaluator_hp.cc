@@ -243,7 +243,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
 }
 
 //_____________________________________________________________________
-void TrackingEvaluator_hp::print_track(SvtxTrack* track)
+void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
 {
 
   std::cout << "TrackingEvaluator_hp::print_track - track: " << track << std::endl;

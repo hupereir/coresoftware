@@ -2,6 +2,7 @@
 #define G4EVAL_TRACKINGEVALUATOR_HP_H
 
 #include <fun4all/SubsysReco.h>
+// #include <g4main/PHG4HitDefs.h>
 #include <phool/PHObject.h>
 #include <phool/PHTimer.h>
 
@@ -9,12 +10,16 @@
 #include <TFile.h>
 #include <TTree.h>
 
+#include <set>
 #include <string>
 #include <memory>
 
+class PHG4Hit;
 class SvtxTrack;
 class SvtxTrackMap;
 class TrkrClusterContainer;
+class TrkrCluster;
+class TrkrHitTruthAssoc;
 
 // cluster information to be stored in tree
 class ClusterStruct: public TObject
@@ -77,7 +82,11 @@ class TrackingEvaluator_hp : public SubsysReco
   void evaluate_tracks();
 
   // print track content
-  void print_track( SvtxTrack* );
+  void print_track( SvtxTrack* ) const;
+
+  // get geant hits associated to a cluster
+  using G4HitSet = std::set<PHG4Hit*>;
+  G4HitSet find_g4_hits( TrkrCluster* ) const;
 
   // event counter
   unsigned int _ievent = 0;
@@ -95,6 +104,7 @@ class TrackingEvaluator_hp : public SubsysReco
   // nodes
   SvtxTrackMap* _trackMap = nullptr;
   TrkrClusterContainer* _clusterMap = nullptr;
+  TrkrHitTruthAssoc* _hitTruthAssociationMap = nullptr;
 
 };
 
