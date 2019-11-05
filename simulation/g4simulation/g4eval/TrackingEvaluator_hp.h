@@ -12,10 +12,9 @@
 #include <string>
 #include <memory>
 
-class PHCompositeNode;
-class SvtxEvalStack;
-class TFile;
-class TNtuple;
+class SvtxTrack;
+class SvtxTrackMap;
+class TrkrClusterContainer;
 
 // cluster information to be stored in tree
 class ClusterStruct: public TObject
@@ -26,10 +25,20 @@ class ClusterStruct: public TObject
   { return "ClusterStruct"; }
 
   unsigned int _layer = 0;
-  size_t _size = 0;
+
+  // cluster position
   float _x = 0;
   float _y = 0;
   float _z = 0;
+  float _r = 0;
+  float _phi = 0;
+
+  // track position
+  float _trk_x = 0;
+  float _trk_y = 0;
+  float _trk_z = 0;
+  float _trk_r = 0;
+  float _trk_phi = 0;
 
   ClassDef(ClusterStruct,1)
 
@@ -58,6 +67,18 @@ class TrackingEvaluator_hp : public SubsysReco
 
   private:
 
+  // load nodes
+  int load_nodes( PHCompositeNode* );
+
+  // evaluate clusters
+  void evaluate_clusters();
+
+  // evaluate clusters
+  void evaluate_tracks();
+
+  // print track content
+  void print_track( SvtxTrack* );
+
   // event counter
   unsigned int _ievent = 0;
   std::unique_ptr<PHTimer> _timer;
@@ -70,6 +91,10 @@ class TrackingEvaluator_hp : public SubsysReco
   // cluster array
   TClonesArray* _clusterArray = nullptr;
   int _clusterCount = 0;
+
+  // nodes
+  SvtxTrackMap* _trackMap = nullptr;
+  TrkrClusterContainer* _clusterMap = nullptr;
 
 };
 
