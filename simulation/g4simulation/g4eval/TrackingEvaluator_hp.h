@@ -2,9 +2,9 @@
 #define G4EVAL_TRACKINGEVALUATOR_HP_H
 
 #include <fun4all/SubsysReco.h>
-// #include <g4main/PHG4HitDefs.h>
 #include <phool/PHObject.h>
 #include <phool/PHTimer.h>
+#include <trackbase/TrkrDefs.h>
 
 #include <TClonesArray.h>
 
@@ -13,10 +13,12 @@
 #include <memory>
 
 class PHG4Hit;
+class PHG4HitContainer;
 class SvtxTrack;
 class SvtxTrackMap;
-class TrkrClusterContainer;
 class TrkrCluster;
+class TrkrClusterContainer;
+class TrkrClusterHitAssoc;
 class TrkrHitTruthAssoc;
 
 // cluster information to be stored in tree
@@ -46,6 +48,16 @@ class ClusterStruct: public TObject
   float _trk_r = 0;
   float _trk_phi = 0;
   //@}
+
+  ///@name truth position
+  //@{
+  float _truth_x = 0;
+  float _truth_y = 0;
+  float _truth_z = 0;
+  float _truth_r = 0;
+  float _truth_phi = 0;
+  //@}
+
   ClassDef(ClusterStruct,1)
 
 };
@@ -117,22 +129,31 @@ class TrackingEvaluator_hp : public SubsysReco
   // print track content
   void print_track( SvtxTrack* ) const;
 
+  // print cluster and association
+  void print_cluster( TrkrDefs::cluskey, TrkrCluster* ) const;
+
   // get geant hits associated to a cluster
   using G4HitSet = std::set<PHG4Hit*>;
-  G4HitSet find_g4_hits( TrkrCluster* ) const;
+  G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
 
   // event counter
   unsigned int _ievent = 0;
   std::unique_ptr<PHTimer> _timer;
 
   // cluster array
-  ClusterContainer* _clusterContainer = nullptr;
+  ClusterContainer* _cluster_container = nullptr;
   int _clusterCount = 0;
 
   // nodes
-  SvtxTrackMap* _trackMap = nullptr;
-  TrkrClusterContainer* _clusterMap = nullptr;
-  TrkrHitTruthAssoc* _hitTruthAssociationMap = nullptr;
+  SvtxTrackMap* _track_map = nullptr;
+  TrkrClusterContainer* _cluster_map = nullptr;
+  TrkrClusterHitAssoc* _cluster_hit_map = nullptr;
+  TrkrHitTruthAssoc* _hit_truth_map = nullptr;
+
+  PHG4HitContainer* _g4hits_tpc = nullptr;
+  PHG4HitContainer* _g4hits_intt = nullptr;
+  PHG4HitContainer* _g4hits_mvtx = nullptr;
+  PHG4HitContainer* _g4hits_outertracker = nullptr;
 
 };
 
