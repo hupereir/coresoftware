@@ -59,14 +59,28 @@ class ClusterContainer: public PHObject
   /// constructor
   ClusterContainer();
 
+  /// copy constructor
+  explicit ClusterContainer(const ClusterContainer &) = delete;
+
+  /// assignment operator
+  ClusterContainer& operator = ( const ClusterContainer& ) = delete;
+
+  /// destructor
+  ~ClusterContainer() override;
+
+  /// reset
+  void Reset() override;
+
   /// accessor
   TClonesArray* get() const
-  { return _array.get(); }
+  { return _array; }
 
   private:
 
   /// cluster array
-  std::unique_ptr<TClonesArray> _array;
+  TClonesArray* _array = nullptr;
+
+  ClassDef(ClusterContainer,1)
 
 };
 

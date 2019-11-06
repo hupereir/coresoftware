@@ -17,6 +17,7 @@
 #include <iostream>
 
 ClassImp(ClusterStruct)
+ClassImp(ClusterContainer)
 
 //_____________________________________________________________________
 namespace
@@ -61,11 +62,19 @@ ClusterContainer::ClusterContainer()
 {
 
   // create TClonesArray
-  _array.reset( new TClonesArray( "ClusterStruct" ) );
+  _array = new TClonesArray( "ClusterStruct" );
   _array->SetName( "ClusterArray" );
   _array->SetOwner( kTRUE );
 
 }
+
+//_____________________________________________________________________
+ClusterContainer::~ClusterContainer()
+{ delete _array; }
+
+//_____________________________________________________________________
+void ClusterContainer::Reset()
+{ _array->Clear(); }
 
 //_____________________________________________________________________
 TrackingEvaluator_hp::TrackingEvaluator_hp( const std::string& name ):
@@ -89,12 +98,23 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
+  // get EVAL node
+  iter = PHNodeIterator(dstNode);
+  auto evalNode = dynamic_cast<PHCompositeNode*>(iter.findFirst("PHCompositeNode", "EVAL"));
+  if( !evalNode )
+  {
+    // create
+    std::cout << "TrackingEvaluator_hp::Init - EVAL node missing - creating" << std::endl;
+    evalNode = new PHCompositeNode( "EVAL" );
+    dstNode->addNode(evalNode);
+  }
+
   // create TClonesArray
   _clusterContainer = new ClusterContainer;
 
   // add node tree
   auto newNode = new PHIODataNode<PHObject>( _clusterContainer, "ClusterContainer","PHObject");
-  dstNode->addNode(newNode);
+  evalNode->addNode(newNode);
 
   // initialize timer
   _timer.reset( new PHTimer("_tracking_evaluator_hp_timer") );
@@ -155,10 +175,9 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   _clusterMap = findNode::getClass<TrkrClusterContainer>(topNode, "TRKR_CLUSTER");
   if( !_clusterMap ) return Fun4AllReturnCodes::ABORTEVENT;
 
-  /*
-  todo: should probably read back the TClones array from node tree
-  rather than using member pointer
-  */
+  // cluster container
+  _clusterContainer = findNode::getClass<ClusterContainer>(topNode, "ClusterContainer");
+  if( !_clusterContainer ) return Fun4AllReturnCodes::ABORTEVENT;
 
   return Fun4AllReturnCodes::EVENT_OK;
 
