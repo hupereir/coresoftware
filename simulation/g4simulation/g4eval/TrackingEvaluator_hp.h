@@ -7,8 +7,6 @@
 #include <phool/PHTimer.h>
 
 #include <TClonesArray.h>
-#include <TFile.h>
-#include <TTree.h>
 
 #include <set>
 #include <string>
@@ -31,21 +29,44 @@ class ClusterStruct: public TObject
 
   unsigned int _layer = 0;
 
-  // cluster position
+  ///@name cluster position
+  //@{
   float _x = 0;
   float _y = 0;
   float _z = 0;
   float _r = 0;
   float _phi = 0;
+  //@}
 
-  // track position
+  ///@name track position
+  //@{
   float _trk_x = 0;
   float _trk_y = 0;
   float _trk_z = 0;
   float _trk_r = 0;
   float _trk_phi = 0;
-
+  //@}
   ClassDef(ClusterStruct,1)
+
+};
+
+/// cluster container
+class ClusterContainer: public PHObject
+{
+
+  public:
+
+  /// constructor
+  ClusterContainer();
+
+  /// accessor
+  TClonesArray* get() const
+  { return _array.get(); }
+
+  private:
+
+  /// cluster array
+  std::unique_ptr<TClonesArray> _array;
 
 };
 
@@ -54,9 +75,7 @@ class TrackingEvaluator_hp : public SubsysReco
   public:
 
   /// constructor
-  TrackingEvaluator_hp(
-    const std::string &name = "TRACKINGEVALUATOR_HP",
-    const std::string &filename = "trackevaluator_hp.root" );
+  TrackingEvaluator_hp( const std::string& = "TRACKINGEVALUATOR_HP" );
 
   /// global initialization
   int Init(PHCompositeNode*) override;
@@ -92,13 +111,8 @@ class TrackingEvaluator_hp : public SubsysReco
   unsigned int _ievent = 0;
   std::unique_ptr<PHTimer> _timer;
 
-  // filename
-  std::string _filename;
-  std::unique_ptr<TFile> _tfile;
-  TTree* _tree = nullptr;
-
   // cluster array
-  TClonesArray* _clusterArray = nullptr;
+  ClusterContainer* _clusterContainer = nullptr;
   int _clusterCount = 0;
 
   // nodes

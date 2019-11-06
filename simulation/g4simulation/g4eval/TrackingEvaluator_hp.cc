@@ -7,6 +7,9 @@
 #include <trackbase_historic/SvtxTrack.h>
 #include <trackbase_historic/SvtxTrackMap.h>
 
+#include <phool/PHCompositeNode.h>
+#include <phool/PHNodeIterator.h>
+
 #include <fun4all/Fun4AllReturnCodes.h>
 
 #include <phool/getClass.h>
@@ -54,28 +57,44 @@ namespace
 }
 
 //_____________________________________________________________________
-TrackingEvaluator_hp::TrackingEvaluator_hp( const std::string& name, const std::string& filename ):
-  SubsysReco( name),
-  _filename( filename )
+ClusterContainer::ClusterContainer()
+{
+
+  // create TClonesArray
+  _array.reset( new TClonesArray( "ClusterStruct" ) );
+  _array->SetName( "ClusterArray" );
+  _array->SetOwner( kTRUE );
+
+}
+
+//_____________________________________________________________________
+TrackingEvaluator_hp::TrackingEvaluator_hp( const std::string& name ):
+  SubsysReco( name)
 {
   std::cout << "TrackingEvaluator_hp::TrackingEvaluator_hp." << std::endl;
 }
 
 //_____________________________________________________________________
-int TrackingEvaluator_hp::Init(PHCompositeNode* )
+int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
 {
+
   std::cout << "TrackingEvaluator_hp::Init." << std::endl;
 
-  _tfile.reset( new TFile( _filename.c_str(), "RECREATE" ) );
+  // find DST node
+  PHNodeIterator iter(topNode);
+  auto dstNode = dynamic_cast<PHCompositeNode*>(iter.findFirst("PHCompositeNode", "DST"));
+  if (!dstNode)
+  {
+    std::cout << "TrackingEvaluator_hp::Init - DST Node missing" << std::endl;
+    return Fun4AllReturnCodes::ABORTEVENT;
+  }
 
-  const Int_t kSplitlevel = 98;
-  const Int_t kBufsize = 32000;
-  _clusterArray = new TClonesArray( "ClusterStruct" );
-  _clusterArray->SetName( "ClusterArray" );
-  _clusterArray->SetOwner( kTRUE );
+  // create TClonesArray
+  _clusterContainer = new ClusterContainer;
 
-  _tree = new TTree( "Tree", "Clusters" );
-  _tree->Branch( "clusterArray", "TClonesArray", &_clusterArray, kBufsize, kSplitlevel );
+  // add node tree
+  auto newNode = new PHIODataNode<PHObject>( _clusterContainer, "ClusterContainer","PHObject");
+  dstNode->addNode(newNode);
 
   // initialize timer
   _timer.reset( new PHTimer("_tracking_evaluator_hp_timer") );
@@ -114,14 +133,6 @@ int TrackingEvaluator_hp::End(PHCompositeNode* )
 {
   std::cout << "TrackingEvaluator_hp::End." << std::endl;
 
-  // write tree to tfile and close
-  if( _tfile )
-  {
-    _tfile->cd();
-    if( _tree ) _tree->Write();
-    _tfile->Close();
-  }
-
   // print timer information
   _timer->stop();
   std::cout
@@ -144,6 +155,11 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   _clusterMap = findNode::getClass<TrkrClusterContainer>(topNode, "TRKR_CLUSTER");
   if( !_clusterMap ) return Fun4AllReturnCodes::ABORTEVENT;
 
+  /*
+  todo: should probably read back the TClones array from node tree
+  rather than using member pointer
+  */
+
   return Fun4AllReturnCodes::EVENT_OK;
 
 }
@@ -152,10 +168,10 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 void TrackingEvaluator_hp::evaluate_clusters()
 {
 
-  if( !( _clusterMap && _clusterArray ) ) return;
+  if( !( _clusterMap && _clusterContainer ) ) return;
 
   // clear array
-  _clusterArray->Clear();
+  _clusterContainer->get()->Clear();
   _clusterCount = 0;
 
   auto range = _clusterMap->getClusters();
@@ -167,22 +183,19 @@ void TrackingEvaluator_hp::evaluate_clusters()
 
     // create cluster structure and add in array
     auto clusterStruct = create_cluster( key, cluster );
-    new((*_clusterArray)[_clusterCount++]) ClusterStruct( clusterStruct );
+    new((*_clusterContainer->get())[_clusterCount++]) ClusterStruct( clusterStruct );
 
   }
-
-  // fill tree
-  if( _tree ) _tree->Fill();
 
 }
 
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_tracks()
 {
-  if( !( _trackMap && _clusterMap && _clusterArray ) ) return;
+  if( !( _trackMap && _clusterMap && _clusterContainer ) ) return;
 
   // clear array
-  _clusterArray->Clear();
+  _clusterContainer->get()->Clear();
   _clusterCount = 0;
 
   for( auto trackIter = _trackMap->begin(); trackIter != _trackMap->end(); ++trackIter )
@@ -231,14 +244,11 @@ void TrackingEvaluator_hp::evaluate_tracks()
       add_trk_information( clusterStruct, iter->second );
 
       // add to array
-      new((*_clusterArray)[_clusterCount++]) ClusterStruct( clusterStruct );
+      new((*_clusterContainer->get())[_clusterCount++]) ClusterStruct( clusterStruct );
 
     }
 
   }
-
-  // fill tree
-  if( _tree ) _tree->Fill();
 
 }
 
