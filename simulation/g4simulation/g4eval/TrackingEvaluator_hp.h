@@ -10,7 +10,6 @@
 
 #include <set>
 #include <string>
-#include <memory>
 
 class PHG4Hit;
 class PHG4HitContainer;
@@ -135,10 +134,6 @@ class TrackingEvaluator_hp : public SubsysReco
   // get geant hits associated to a cluster
   using G4HitSet = std::set<PHG4Hit*>;
   G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
-
-  // event counter
-  unsigned int _ievent = 0;
-  std::unique_ptr<PHTimer> _timer;
 
   // cluster array
   ClusterContainer* _cluster_container = nullptr;

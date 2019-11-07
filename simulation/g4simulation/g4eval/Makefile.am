@@ -32,6 +32,7 @@ pkginclude_HEADERS = \
 	CaloRawClusterEval.h \
 	CaloRawTowerEval.h \
 	CaloTruthEval.h \
+	EventCounter_hp.h \
 	JetEvalStack.h \
 	JetEvaluator.h \
 	JetRecoEval.h \
@@ -76,13 +77,13 @@ endif
 
 libg4eval_la_SOURCES = \
 	$(ROOT5DICTS) \
-	TrackingEvaluator_hp_Dict.cc \
 	BaseTruthEval.cc \
 	CaloEvalStack.cc \
 	CaloTruthEval.cc \
 	CaloRawTowerEval.cc \
 	CaloRawClusterEval.cc \
 	CaloEvaluator.cc \
+ EventCounter_hp.cc \
 	JetEvalStack.cc \
 	JetTruthEval.cc \
 	JetRecoEval.cc \
@@ -97,6 +98,7 @@ libg4eval_la_SOURCES = \
 	SvtxEvaluator.cc \
 	TrkrEvaluator.cc \
 	TrackingEvaluator_hp.cc \
+	TrackingEvaluator_hp_Dict.cc \
 	MomentumEvaluator.cc \
 	PHG4DstCompressReco.cc
 

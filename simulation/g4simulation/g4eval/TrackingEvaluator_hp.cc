@@ -172,10 +172,6 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
   auto newNode = new PHIODataNode<PHObject>( _cluster_container, "ClusterContainer","PHObject");
   evalNode->addNode(newNode);
 
-  // initialize timer
-  _timer.reset( new PHTimer("_tracking_evaluator_hp_timer") );
-  _timer->restart();
-
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -189,11 +185,6 @@ int TrackingEvaluator_hp::InitRun(PHCompositeNode* )
 //_____________________________________________________________________
 int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 {
-  // print event number
-  if( _ievent % 100 == 0 )
-  { std::cout << "TrackingEvaluator_hp::process_event - Event = " << _ievent << std::endl; }
-  ++_ievent;
-
   // load nodes
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
@@ -208,14 +199,6 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 int TrackingEvaluator_hp::End(PHCompositeNode* )
 {
   std::cout << "TrackingEvaluator_hp::End." << std::endl;
-
-  // print timer information
-  _timer->stop();
-  std::cout
-    << "TrackingEvaluator_hp::End -"
-    << " time per event:" << _timer->get_accumulated_time()/(1000.*_ievent) << " sec"
-    << std::endl;
-
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
