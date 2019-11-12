@@ -111,6 +111,16 @@ namespace
     cluster._truth_phi = get_phi( cluster._truth_x, cluster._truth_y );
   }
 
+  // print to stream
+  std::ostream& operator << (std::ostream& out, const ClusterStruct& cluster )
+  {
+    out << "ClusterStruct" << std::endl;
+    out << "  cluster: (" << cluster._x << "," << cluster._y << "," << cluster._z << ")" << std::endl;
+    out << "  track:   (" << cluster._trk_x << "," << cluster._trk_y << "," << cluster._trk_z << ")" << std::endl;
+    out << "  truth:   (" << cluster._truth_x << "," << cluster._truth_y << "," << cluster._truth_z << ")" << std::endl;
+    return out;
+  }
+
 }
 
 //_____________________________________________________________________
