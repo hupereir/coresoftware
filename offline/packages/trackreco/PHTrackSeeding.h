@@ -30,11 +30,10 @@ class PHTrackSeeding : public SubsysReco
 {
  public:
   PHTrackSeeding(const std::string &name = "PHTrackSeeding");
-  virtual ~PHTrackSeeding() {}
 
-  int InitRun(PHCompositeNode *topNode);
-  int process_event(PHCompositeNode *topNode);
-  int End(PHCompositeNode *topNode);
+  int InitRun(PHCompositeNode *topNode) override;
+  int process_event(PHCompositeNode *topNode) override;
+  int End(PHCompositeNode *topNode) override;
   void set_track_map_name(const std::string &map_name) { _track_map_name = map_name; }
 
   //virtual const std::set<unsigned int>& get_seeding_layers() const = 0;
@@ -53,10 +52,10 @@ class PHTrackSeeding : public SubsysReco
   /// Called in SubsysReco::End
   virtual int End() = 0;
 
-  TrkrClusterContainer *_cluster_map;
-  SvtxVertexMap *_vertex_map;
-  SvtxTrackMap *_track_map;
-  AssocInfoContainer *_assoc_container;
+  TrkrClusterContainer *_cluster_map = nullptr;
+  SvtxVertexMap *_vertex_map = nullptr;
+  SvtxTrackMap *_track_map = nullptr;
+  AssocInfoContainer *_assoc_container = nullptr;
 
   std::string _track_map_name;
 
