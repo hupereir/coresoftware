@@ -63,8 +63,6 @@ int PHTruthTrackSeeding::Setup(PHCompositeNode* topNode)
 int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 {
 
-  std::cout << "PHTruthTrackSeeding::Process" << std::endl;
-
   typedef std::map<int, std::set<TrkrCluster*> > TrkClustersMap;
   TrkClustersMap m_trackID_clusters;
 
@@ -114,9 +112,9 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
           phg4hit = phg4hits_intt->findHit( g4hitkey );
           break;
 
-//           case TrkrDefs::outertrackerId:
-//           phg4hit = _g4hits_outertracker->findHit( g4hitkey );
-//           break;
+          case TrkrDefs::outertrackerId:
+          phg4hit = phg4hits_outertracker->findHit( g4hitkey );
+          break;
 
           case TrkrDefs::mvtxId:
           phg4hit = phg4hits_mvtx->findHit( g4hitkey );
@@ -157,17 +155,14 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
           }
 
         }
-      }  // loop over g4hits associated with hit
-    }    // loop over hits associated with cluster
-  }      // loop over clusters
+      }
+    }
+  }
 
   //==================================
 
   if (Verbosity() >= 2)
-  {
-    std::cout<<__PRETTY_FUNCTION__
-        <<" _track_map->size = "<<_track_map->size()<<std::endl;
-  }
+  { std::cout<<__PRETTY_FUNCTION__ <<" _track_map->size = "<<_track_map->size()<<std::endl; }
 
   // Build track
   for (TrkClustersMap::const_iterator trk_clusters_itr = m_trackID_clusters.begin();
@@ -260,28 +255,29 @@ int PHTruthTrackSeeding::GetNodes(PHCompositeNode* topNode)
     exit(1);
   }
 
-  phg4hits_tpc = findNode::getClass<PHG4HitContainer>(
-      topNode, "G4HIT_TPC");
-
-  phg4hits_intt = findNode::getClass<PHG4HitContainer>(
-      topNode, "G4HIT_INTT");
-
-  phg4hits_mvtx = findNode::getClass<PHG4HitContainer>(
-      topNode, "G4HIT_MVTX");
-
-  if (!phg4hits_tpc and phg4hits_intt and !phg4hits_mvtx)
+  using nodePair = std::pair<std::string, PHG4HitContainer*&>;
+  std::initializer_list<nodePair> nodes =
   {
-    if (Verbosity() >= 0)
+    { "G4HIT_TPC", phg4hits_tpc },
+    { "G4HIT_INTT", phg4hits_intt },
+    { "G4HIT_MVTX", phg4hits_mvtx },
+    { "G4HIT_OuterTracker", phg4hits_outertracker }
+  };
+
+  for( auto&& node: nodes )
+  {
+    if( !( node.second = findNode::getClass<PHG4HitContainer>( topNode, node.first ) ) )
     {
-      std::cerr << PHWHERE << " ERROR: No PHG4HitContainer found!" << std::endl;
+      if (Verbosity() >= 0)
+      { std::cerr << PHWHERE << " ERROR: No PHG4HitContainer found!" << std::endl; }
+      return Fun4AllReturnCodes::ABORTRUN;
     }
-    return Fun4AllReturnCodes::ABORTRUN;
+
   }
 
   return Fun4AllReturnCodes::EVENT_OK;
+
 }
 
 int PHTruthTrackSeeding::End()
-{
-  return 0;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }

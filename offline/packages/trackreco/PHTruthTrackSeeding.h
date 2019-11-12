@@ -64,6 +64,7 @@ class PHTruthTrackSeeding : public PHTrackSeeding
   PHG4HitContainer* phg4hits_tpc = nullptr;
   PHG4HitContainer* phg4hits_intt = nullptr;
   PHG4HitContainer* phg4hits_mvtx = nullptr;
+  PHG4HitContainer* phg4hits_outertracker = nullptr;
 
   TrkrHitTruthAssoc* hittruthassoc = nullptr;
   TrkrClusterHitAssoc* clusterhitassoc = nullptr;
