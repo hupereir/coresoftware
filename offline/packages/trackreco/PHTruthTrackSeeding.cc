@@ -22,19 +22,17 @@
 #include <phool/getClass.h>
 #include <phool/phool.h>
 
-#include <cstdlib>   // for exit
-#include <iostream>  // for operator<<, endl
-#include <map>       // for multimap, map<>::c...
+#include <cstdlib>
+#include <iostream>
+#include <map>
 #include <memory>
-#include <utility>  // for pair
+#include <utility>
 
 #define LogDebug(exp) std::cout << "DEBUG: " << __FILE__ << ": " << __LINE__ << ": " << exp << std::endl
 #define LogError(exp) std::cout << "ERROR: " << __FILE__ << ": " << __LINE__ << ": " << exp << std::endl
 #define LogWarning(exp) std::cout << "WARNING: " << __FILE__ << ": " << __LINE__ << ": " << exp << std::endl
 
 class PHCompositeNode;
-
-using namespace std;
 
 PHTruthTrackSeeding::PHTruthTrackSeeding(const std::string& name)
   : PHTrackSeeding(name)
@@ -51,7 +49,7 @@ PHTruthTrackSeeding::PHTruthTrackSeeding(const std::string& name)
 
 int PHTruthTrackSeeding::Setup(PHCompositeNode* topNode)
 {
-  cout << "Enter PHTruthTrackSeeding:: Setup" << endl;
+  std::cout << "Enter PHTruthTrackSeeding:: Setup" << std::endl;
 
   int ret = PHTrackSeeding::Setup(topNode);
   if (ret != Fun4AllReturnCodes::EVENT_OK) return ret;
@@ -64,6 +62,9 @@ int PHTruthTrackSeeding::Setup(PHCompositeNode* topNode)
 
 int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 {
+
+  std::cout << "PHTruthTrackSeeding::Process" << std::endl;
+
   typedef std::map<int, std::set<TrkrCluster*> > TrkClustersMap;
   TrkClustersMap m_trackID_clusters;
 
@@ -71,14 +72,15 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
   TrkrClusterContainer::ConstRange clusrange = _cluster_map->getClusters();
   for (TrkrClusterContainer::ConstIterator clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
   {
-    TrkrCluster* cluster = clusiter->second;
-    TrkrDefs::cluskey cluskey = clusiter->first;
-    unsigned int trkrid = TrkrDefs::getTrkrId(cluskey);
+
+    auto cluster = clusiter->second;
+    auto cluskey = clusiter->first;
+    auto trkrid = TrkrDefs::getTrkrId(cluskey);
 
 
     if (Verbosity() >= 3)
     {
-      cout <<__PRETTY_FUNCTION__<<" process cluster ";
+      std::cout<<__PRETTY_FUNCTION__<<" process cluster ";
       cluster->identify();
     }
 
@@ -86,40 +88,63 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
     TrkrClusterHitAssoc::ConstRange hitrange = clusterhitassoc->getHits(cluskey);  // returns range of pairs {cluster key, hit key} for this cluskey
     for (TrkrClusterHitAssoc::ConstIterator clushititer = hitrange.first; clushititer != hitrange.second; ++clushititer)
     {
+
       TrkrDefs::hitkey hitkey = clushititer->second;
+
       // TrkrHitTruthAssoc uses a map with (hitsetkey, std::pair(hitkey, g4hitkey)) - get the hitsetkey from the cluskey
       TrkrDefs::hitsetkey hitsetkey = TrkrDefs::getHitSetKeyFromClusKey(cluskey);
 
       // get all of the g4hits for this hitkey
-      std::multimap<TrkrDefs::hitsetkey, std::pair<TrkrDefs::hitkey, PHG4HitDefs::keytype> > temp_map;
-      hittruthassoc->getG4Hits(hitsetkey, hitkey, temp_map);  // returns pairs (hitsetkey, std::pair(hitkey, g4hitkey)) for this hitkey only
-      for (std::multimap<TrkrDefs::hitsetkey, std::pair<TrkrDefs::hitkey, PHG4HitDefs::keytype> >::iterator htiter = temp_map.begin(); htiter != temp_map.end(); ++htiter)
+      // returns pairs (hitsetkey, std::pair(hitkey, g4hitkey)) for this hitkey only
+      TrkrHitTruthAssoc::MMap temp_map;
+      hittruthassoc->getG4Hits(hitsetkey, hitkey, temp_map);
+      for( auto htiter = temp_map.begin(); htiter != temp_map.end(); ++htiter)
       {
+
         // extract the g4 hit key here and add the hits to the set
-        PHG4HitDefs::keytype g4hitkey = htiter->second.second;
-        PHG4Hit* phg4hit;
-        if (trkrid == TrkrDefs::tpcId)
-          phg4hit = phg4hits_tpc->findHit(g4hitkey);
-        else if (trkrid == TrkrDefs::inttId)
-          phg4hit = phg4hits_intt->findHit(g4hitkey);
-        else
-          phg4hit = phg4hits_mvtx->findHit(g4hitkey);
+        auto g4hitkey = htiter->second.second;
+        PHG4Hit* phg4hit = nullptr;
+        switch( trkrid )
+        {
+          case TrkrDefs::tpcId:
+          phg4hit = phg4hits_tpc->findHit( g4hitkey );
+          break;
 
-        int particle_id = phg4hit->get_trkid();
+          case TrkrDefs::inttId:
+          phg4hit = phg4hits_intt->findHit( g4hitkey );
+          break;
 
-        TrkClustersMap::iterator it = m_trackID_clusters.find(particle_id);
+//           case TrkrDefs::outertrackerId:
+//           phg4hit = _g4hits_outertracker->findHit( g4hitkey );
+//           break;
+
+          case TrkrDefs::mvtxId:
+          phg4hit = phg4hits_mvtx->findHit( g4hitkey );
+          break;
+
+          default: break;
+        }
+
+        if( !phg4hit )
+        {
+          std::cout<<__PRETTY_FUNCTION__<<" unable to find g4hit" << std::endl;
+          continue;
+        }
+
+        auto particle_id = phg4hit->get_trkid();
+        auto it = m_trackID_clusters.find(particle_id);
 
         if (it != m_trackID_clusters.end())
         {
           it->second.insert(cluster);
           if (Verbosity() >= 3)
           {
-            cout <<__PRETTY_FUNCTION__<<" append particle"<<particle_id<<" -> cluster "<<cluskey<<endl;;
+            std::cout<<__PRETTY_FUNCTION__<<" append particle"<<particle_id<<" -> cluster "<<cluskey<<std::endl;
             cluster->identify();
           }
-        }
-        else
-        {
+
+        } else {
+
           std::set<TrkrCluster*> clusters;
           clusters.insert(cluster);
           m_trackID_clusters.insert(std::pair<int, std::set<TrkrCluster*> >(particle_id, clusters));
@@ -127,7 +152,7 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
           if (Verbosity() >= 3)
           {
-            cout <<__PRETTY_FUNCTION__<<" new particle"<<particle_id<<" -> cluster "<<cluskey<<endl;;
+            std::cout<<__PRETTY_FUNCTION__<<" new particle"<<particle_id<<" -> cluster "<<cluskey<<std::endl;
             cluster->identify();
           }
 
@@ -140,8 +165,8 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
   if (Verbosity() >= 2)
   {
-    cout <<__PRETTY_FUNCTION__
-        <<" _track_map->size = "<<_track_map->size()<<endl;
+    std::cout<<__PRETTY_FUNCTION__
+        <<" _track_map->size = "<<_track_map->size()<<std::endl;
   }
 
   // Build track
@@ -169,7 +194,7 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
       if (Verbosity() >= 2)
       {
-        cout <<__PRETTY_FUNCTION__<<" particle "<<trk_clusters_itr->first<<" -> "
+        std::cout<<__PRETTY_FUNCTION__<<" particle "<<trk_clusters_itr->first<<" -> "
             <<trk_clusters_itr->second.size()<<" clusters"
             <<" _track_map->size = "<< (_track_map->size()) <<": ";
         _track_map->identify();
@@ -179,7 +204,7 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
   if (Verbosity() >= 2)
   {
-    cout << "Loop over SvtxTrackMap entries " << endl;
+    std::cout<< "Loop over SvtxTrackMap entries " << std::endl;
     for (SvtxTrackMap::Iter iter = _track_map->begin();
          iter != _track_map->end(); ++iter)
     {
@@ -188,9 +213,9 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
       //svtx_track->identify();
       //continue;
 
-      cout << "Track ID: " << svtx_track->get_id() << ", Dummy Track pT: "
+      std::cout<< "Track ID: " << svtx_track->get_id() << ", Dummy Track pT: "
            << svtx_track->get_pt() << ", Truth Track/Particle ID: "
-           << svtx_track->get_truth_track_id() << endl;
+           << svtx_track->get_truth_track_id() << std::endl;
 
       //Print associated clusters;
       for (SvtxTrack::ConstClusterKeyIter iter =
@@ -201,9 +226,9 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
         TrkrCluster* cluster = _cluster_map->findCluster(cluster_key);
         float radius = sqrt(
             cluster->getX() * cluster->getX() + cluster->getY() * cluster->getY());
-        cout << "       cluster ID: "
+        std::cout<< "       cluster ID: "
              << cluster->getClusKey() << ", cluster radius: " << radius
-             << endl;
+             << std::endl;
       }
     }
   }
@@ -217,21 +242,21 @@ int PHTruthTrackSeeding::GetNodes(PHCompositeNode* topNode)
   _g4truth_container = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
   if (!_g4truth_container)
   {
-    cerr << PHWHERE << " ERROR: Can't find node G4TruthInfo" << endl;
+    std::cerr << PHWHERE << " ERROR: Can't find node G4TruthInfo" << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
   clusterhitassoc = findNode::getClass<TrkrClusterHitAssoc>(topNode, "TRKR_CLUSTERHITASSOC");
   if (!clusterhitassoc)
   {
-    cout << PHWHERE << "Failed to find TRKR_CLUSTERHITASSOC node, quit!" << endl;
+    std::cout<< PHWHERE << "Failed to find TRKR_CLUSTERHITASSOC node, quit!" << std::endl;
     exit(1);
   }
 
   hittruthassoc = findNode::getClass<TrkrHitTruthAssoc>(topNode, "TRKR_HITTRUTHASSOC");
   if (!hittruthassoc)
   {
-    cout << PHWHERE << "Failed to find TRKR_HITTRUTHASSOC node, quit!" << endl;
+    std::cout<< PHWHERE << "Failed to find TRKR_HITTRUTHASSOC node, quit!" << std::endl;
     exit(1);
   }
 
@@ -248,7 +273,7 @@ int PHTruthTrackSeeding::GetNodes(PHCompositeNode* topNode)
   {
     if (Verbosity() >= 0)
     {
-      cerr << PHWHERE << " ERROR: No PHG4HitContainer found!" << endl;
+      std::cerr << PHWHERE << " ERROR: No PHG4HitContainer found!" << std::endl;
     }
     return Fun4AllReturnCodes::ABORTRUN;
   }
