@@ -74,23 +74,19 @@ class PHGenFitTrkProp : public PHTrackPropagating
 
   struct TrackQuality
   {
-    int nhits;
-    float chi2;
-    int ndf;
+    int nhits = 0;
+    float chi2 = 0;
+    int ndf = 0;
 
-    int ntpc;
-    int nintt;
-    int nmaps;
+    int ntpc = 0;
+    int nintt = 0;
+    int nmaps = 0;
 
     TrackQuality(int nhits_, float chi2_, int ndf_)
       : nhits(nhits_)
       , chi2(chi2_)
       , ndf(ndf_)
-      , ntpc(0)
-      , nintt(0)
-      , nmaps(0)
-    {
-    }
+    {}
 
     TrackQuality(int nhits_, float chi2_, int ndf_, int ntpc_, int nintt_, int nmaps_)
       : nhits(nhits_)
@@ -99,8 +95,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
       , ntpc(ntpc_)
       , nintt(nintt_)
       , nmaps(nmaps_)
-    {
-    }
+    {}
 
     bool operator<(const TrackQuality& b) const
     {
@@ -462,7 +457,6 @@ class PHGenFitTrkProp : public PHTrackPropagating
   //! KalmanTrkProp Call.
   int SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack);
 
-  //	int TrackPropPatRec(PHCompositeNode* topNode,
   int TrackPropPatRec(
     const unsigned int ivert,
     MapPHGenFitTrack::iterator& track_iter,
@@ -476,7 +470,6 @@ class PHGenFitTrkProp : public PHTrackPropagating
   std::vector<TrkrDefs::cluskey> SearchHitsNearBy(const unsigned int ivert, const unsigned int layer, const float z_center, const float phi_center, const float z_window, const float phi_window);
 
   //! ExportOutput Call. Make SvtxTrack from PHGenFit::Track and set of clusters
-  //std::shared_ptr<SvtxTrack> MakeSvtxTrack(const int genfit_track_ID, const SvtxVertex * vertex = NULL);
   int OutputPHGenFitTrack(MapPHGenFitTrack::iterator, SvtxTrackMap::Iter);
 
   //------------------
@@ -544,13 +537,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
   //! if two seeds have common hits more than this number, merge them
   unsigned int _max_share_hits = 3;
 
+  //! genfit fitter
   std::unique_ptr<PHGenFit::Fitter> _fitter;
 
   //! KalmanFitterRefTrack, KalmanFitter, DafSimple, DafRef
-  //PHGenFit::Fitter::FitterType _track_fitting_alg_name;
   std::string _track_fitting_alg_name = "KalmanFitter";
 
-  // should use enumeration here
   int _primary_pid_guess = 211;
 
   double _cut_min_pT = 0.2;
@@ -560,8 +552,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
   unsigned int _nlayers_maps = 3;
   unsigned int _nlayers_intt = 8;
   unsigned int _nlayers_tpc = 60;
-
   int _nlayers_all = 0;
+
+  unsigned int _firstlayer_maps = 0;
+  unsigned int _firstlayer_intt = 0;
+  unsigned int _firstlayer_tpc = 0;
+  unsigned int _firstlayer_outer = 0;
 
   std::map<int, unsigned int> _layer_ilayer_map_all;
   std::vector<float> _radii_all;
