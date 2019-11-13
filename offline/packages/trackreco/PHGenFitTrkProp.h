@@ -12,19 +12,20 @@
 
 #include <trackbase_historic/SvtxTrackMap.h>
 
-#include <trackbase/TrkrDefs.h>               // for cluskey
+#include <trackbase/TrkrDefs.h>
 
 #if !defined(__CINT__) || defined(__CLING__)
-#include <Eigen/Core>                         // for Matrix
+#include <Eigen/Core>
 #endif
 
 // standard includes
+#include <array>
 #include <list>
 #include <map>
 #include <memory>
-#include <ostream>                            // for basic_ostream::operator<<
-#include <string>                             // for string
-#include <utility>                            // for pair
+#include <ostream>
+#include <string>
+#include <utility>
 #include <vector>
 
 // forward declarations
@@ -40,10 +41,10 @@ class TNtuple;
 
 namespace PHGenFit
 {
-class Fitter;
-class Track;
-class Measurement;
-} /* namespace PHGenFit */
+  class Fitter;
+  class Track;
+  class Measurement;
+}
 
 ///
 /// \class PHGenFitTrkProp
@@ -51,31 +52,25 @@ class Measurement;
 ///
 class PHGenFitTrkProp : public PHTrackPropagating
 {
- public:
+
+  public:
   PHGenFitTrkProp(
-      const std::string& name = "PHGenFitTrkProp",
-      unsigned int nlayers_maps = 3,
-      unsigned int nlayers_intt = 8,
-      unsigned int nlayers_tpc = 60);
+    const std::string& name = "PHGenFitTrkProp",
+    unsigned int nlayers_maps = 3,
+    unsigned int nlayers_intt = 8,
+    unsigned int nlayers_tpc = 60);
 
-  virtual ~PHGenFitTrkProp();
+  protected:
 
- protected:
-  int Setup(PHCompositeNode* topNode);
+  int Setup(PHCompositeNode* topNode) override;
+  int Process() override;
+  int End() override;
 
-  int Process();
-
-  int End();
-
- private:
+  private:
   /// fetch node pointers
   int GetNodes(PHCompositeNode* topNode);
 
- public:
-  //	int Init(PHCompositeNode *topNode);
-  //	int InitRun(PHCompositeNode *topNode);
-  //	int process_event(PHCompositeNode *topNode);
-  //	int End(PHCompositeNode *topNode);
+  public:
 
   struct TrackQuality
   {
@@ -468,19 +463,13 @@ class PHGenFitTrkProp : public PHTrackPropagating
   int SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack);
 
   //	int TrackPropPatRec(PHCompositeNode* topNode,
-  //			//const int iPHGenFitTrack, std::shared_ptr<PHGenFit::Track> &track,
-  //			MapPHGenFitTrack::iterator &track_iter,
-  //			const unsigned int init_layer = 0, const unsigned int end_layer = 66,
-  //			const bool use_fitted_state_once = false);
   int TrackPropPatRec(
-		      const unsigned int ivert,
-		      //const int iPHGenFitTrack, std::shared_ptr<PHGenFit::Track> &track,
-		      MapPHGenFitTrack::iterator& track_iter,
-		      const unsigned int init_layer = 0, const unsigned int end_layer = 66,
-		      const bool use_fitted_state_once = false);
-  
+    const unsigned int ivert,
+    MapPHGenFitTrack::iterator& track_iter,
+    const unsigned int init_layer = 0, const unsigned int end_layer = 66,
+    const bool use_fitted_state_once = false);
+
   //!
-  //PHGenFit::Measurement* SvtxClusterToPHGenFitMeasurement(const SvtxCluster* cluster);
   PHGenFit::Measurement* TrkrClusterToPHGenFitMeasurement(const TrkrCluster* cluster);
 
   //! TrackPropPatRec Call.
@@ -501,126 +490,122 @@ class PHGenFitTrkProp : public PHTrackPropagating
   float ptToKappa(float pt);
 
   /// convert the covariance from HelixHough coords to x,y,z,px,py,pz
-  void convertHelixCovarianceToEuclideanCovariance(float B, float phi,
-                                                   float d, float kappa, float z0, float dzdl,
-                                                   Eigen::Matrix<float, 5, 5> const& input,
-                                                   Eigen::Matrix<float, 6, 6>& output);
+  void convertHelixCovarianceToEuclideanCovariance(
+    float B, float phi,
+    float d, float kappa, float z0, float dzdl,
+    Eigen::Matrix<float, 5, 5> const& input,
+    Eigen::Matrix<float, 6, 6>& output);
 
   /// translate the clusters, tracks, and vertex from one origin to another
   void shift_coordinate_system(double dx, double dy, double dz);
 
-  int _event;
-  PHTimer* _t_seeds_cleanup;
-  PHTimer* _t_translate_to_PHGenFitTrack;
-  PHTimer* _t_translate1;
-  PHTimer* _t_translate2;
-  PHTimer* _t_translate3;
-  PHTimer* _t_kalman_pat_rec;
-  PHTimer* _t_search_clusters;
-  PHTimer* _t_search_clusters_encoding;
-  PHTimer* _t_search_clusters_map_iter;
-  PHTimer* _t_track_propagation;
-  PHTimer* _t_full_fitting;
-  PHTimer* _t_output_io;
+  int _event = 0;
+  PHTimer* _t_seeds_cleanup = nullptr;
+  PHTimer* _t_translate_to_PHGenFitTrack = nullptr;
+  PHTimer* _t_translate1 = nullptr;
+  PHTimer* _t_translate2 = nullptr;
+  PHTimer* _t_translate3 = nullptr;
+  PHTimer* _t_kalman_pat_rec = nullptr;
+  PHTimer* _t_search_clusters = nullptr;
+  PHTimer* _t_search_clusters_encoding = nullptr;
+  PHTimer* _t_search_clusters_map_iter = nullptr;
+  PHTimer* _t_track_propagation = nullptr;
+  PHTimer* _t_full_fitting = nullptr;
+  PHTimer* _t_output_io = nullptr;
 
   // object storage
 
   std::vector<std::vector<float>> _vertex;        ///< working array for collision vertex list
   std::vector<std::vector<float>> _vertex_error;  ///< sqrt(cov)
-  
-  //  std::vector<float> _vertex;        ///< working array for collision vertex
-  // std::vector<float> _vertex_error;  ///< sqrt(cov)
-  
+
   // node pointers
-  BbcVertexMap* _bbc_vertexes;
+  BbcVertexMap* _bbc_vertexes = nullptr;
 
   //nodes to get norm vector
   //SvtxHitMap* _svtxhitsmap;
 
-  int* _hit_used_map;
-  int _hit_used_map_size;
+  int* _hit_used_map = nullptr;
+  int _hit_used_map_size = 0;
   std::multimap<TrkrDefs::cluskey, unsigned int> _gftrk_hitkey_map;
-  // PHG4CellContainer* _cells_svtx;
-  // PHG4CellContainer* _cells_intt;
-  //PHG4CellContainer* _cells_maps;
 
-  PHG4CylinderGeomContainer* _geom_container_intt;
-  PHG4CylinderGeomContainer* _geom_container_maps;
+  PHG4CylinderGeomContainer* _geom_container_intt = nullptr;
+  PHG4CylinderGeomContainer* _geom_container_maps = nullptr;
 
-  bool _analyzing_mode;
-  TFile* _analyzing_file;
-  TNtuple* _analyzing_ntuple;
+  bool _analyzing_mode = false;
+  TFile* _analyzing_file = nullptr;
+  TNtuple* _analyzing_ntuple = nullptr;
 
   //! Cleanup Seeds
-  float _max_merging_dphi;
-  float _max_merging_deta;
-  float _max_merging_dr;
-  float _max_merging_dz;
+  float _max_merging_dphi = 0.1;
+  float _max_merging_deta = 0.1;
+  float _max_merging_dr = 0.1;
+  float _max_merging_dz = 0.1;
 
   //! if two seeds have common hits more than this number, merge them
-  unsigned int _max_share_hits;
+  unsigned int _max_share_hits = 3;
 
-  PHGenFit::Fitter* _fitter;
+  std::unique_ptr<PHGenFit::Fitter> _fitter;
 
   //! KalmanFitterRefTrack, KalmanFitter, DafSimple, DafRef
   //PHGenFit::Fitter::FitterType _track_fitting_alg_name;
-  std::string _track_fitting_alg_name;
+  std::string _track_fitting_alg_name = "KalmanFitter";
 
-  int _primary_pid_guess;
-  double _cut_min_pT;
+  // should use enumeration here
+  int _primary_pid_guess = 211;
 
-  bool _do_evt_display;
+  double _cut_min_pT = 0.2;
 
-  unsigned int _nlayers_maps;
-  unsigned int _nlayers_intt;
-  unsigned int _nlayers_tpc;
+  bool _do_evt_display = false;
 
-  int _nlayers_all;
+  unsigned int _nlayers_maps = 3;
+  unsigned int _nlayers_intt = 8;
+  unsigned int _nlayers_tpc = 60;
+
+  int _nlayers_all = 0;
 
   std::map<int, unsigned int> _layer_ilayer_map_all;
   std::vector<float> _radii_all;
 
-  float _max_search_win_phi_tpc;
-  float _min_search_win_phi_tpc;
-  float _max_search_win_theta_tpc;
-  float _min_search_win_theta_tpc;
+  float _max_search_win_phi_tpc = 0.004;
+  float _min_search_win_phi_tpc = 0;
+  float _max_search_win_theta_tpc = 0.004;
+  float _min_search_win_theta_tpc = 0;
 
-  float _max_search_win_phi_intt[8];
-  float _min_search_win_phi_intt[8];
-  float _max_search_win_theta_intt[8];
-  float _min_search_win_theta_intt[8];
+  std::array<float, 8> _max_search_win_phi_intt = {{ 0.2, 0.2, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005 }};
+  std::array<float, 8> _min_search_win_phi_intt = {{ 0.2, 0.2, 0, 0, 0, 0, 0, 0 }};
+  std::array<float, 8> _max_search_win_theta_intt = {{ 0.01, 0.01, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
+  std::array<float, 8> _min_search_win_theta_intt = {{ 0, 0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
 
-  float _max_search_win_phi_maps;
-  float _min_search_win_phi_maps;
-  float _max_search_win_theta_maps;
-  float _min_search_win_theta_maps;
+  float _max_search_win_phi_maps = 0.005;
+  float _min_search_win_phi_maps = 0;
+  float _max_search_win_theta_maps = 0.04;
+  float _min_search_win_theta_maps = 0;
 
-  float _search_win_phi;
-  float _search_win_theta;
+  float _search_win_phi = 0;
+  float _search_win_theta = 0;
   std::map<int, float> _search_wins_phi;
   std::map<int, float> _search_wins_theta;
 
   std::vector<std::multimap<unsigned int, TrkrDefs::cluskey>> _layer_thetaID_phiID_clusterID;
 
-  float _half_max_theta;
-  float _half_max_phi;
-  float _layer_thetaID_phiID_clusterID_phiSize;
-  float _layer_thetaID_phiID_clusterID_zSize;
+  float _half_max_theta = M_PI/2;
+  float _half_max_phi = M_PI;
+  float _layer_thetaID_phiID_clusterID_phiSize = 0.12/30;
+  float _layer_thetaID_phiID_clusterID_zSize = 0.17/30;
 
   MapPHGenFitTrack _PHGenFitTracks;
+
   //! +1: inside out; -1: outside in
-  int _init_direction;
-  float _blowup_factor;
+  int _init_direction = -1;
+  float _blowup_factor = 1;
 
-  unsigned int _max_consecutive_missing_layer;
-  float _max_incr_chi2;
+  unsigned int _max_consecutive_missing_layer = 20;
+  float _max_incr_chi2 = 20;
   std::map<int, float> _max_incr_chi2s;
+  float _max_splitting_chi2 = 20;
+  unsigned int _min_good_track_hits = 30;
 
-  float _max_splitting_chi2;
-
-  unsigned int _min_good_track_hits;
-
-#endif  // __CINT__
+  #endif  // __CINT__
 };
 
 #endif
