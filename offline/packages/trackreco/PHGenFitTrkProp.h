@@ -581,8 +581,8 @@ class PHGenFitTrkProp : public PHTrackPropagating
   float _max_search_win_theta_maps = 0.04;
   float _min_search_win_theta_maps = 0;
 
-  float _search_win_phi = 0;
-  float _search_win_theta = 0;
+  float _search_win_phi = 20;
+  float _search_win_theta = 20;
   std::map<int, float> _search_wins_phi;
   std::map<int, float> _search_wins_theta;
 
