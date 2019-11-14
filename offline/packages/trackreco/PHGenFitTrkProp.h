@@ -416,9 +416,19 @@ class PHGenFitTrkProp : public PHTrackPropagating
 #if !defined(__CINT__) || defined(__CLING__)
 
  private:
-  //--------------
-  // InitRun Calls
-  //--------------
+
+  //*@name utility methods
+  //@{
+  bool is_maps_layer( unsigned int layer ) const
+  { return layer >= _firstlayer_maps && layer < _firstlayer_maps + _nlayers_maps; }
+
+  bool is_intt_layer( unsigned int layer ) const
+  { return layer >= _firstlayer_intt && layer < _firstlayer_intt + _nlayers_intt; }
+
+  bool is_tpc_layer( unsigned int layer ) const
+  { return layer >= _firstlayer_tpc && layer < _firstlayer_tpc + _nlayers_tpc; }
+
+  //@}
 
   /// Init projection r
   int InitializeGeometry(PHCompositeNode* topNode);
@@ -426,25 +436,17 @@ class PHGenFitTrkProp : public PHTrackPropagating
   /// track propagation
   int InitializePHGenFit(PHCompositeNode* topNode);
 
-  //--------------------
-  // Process Event Calls
-  //--------------------
-
-  //!
+  ///
   int check_track_exists(MapPHGenFitTrack::iterator, SvtxTrackMap::Iter);
 
-  //! Main function
+  /// Main function
   int KalmanTrkProp();
 
-  //!
+  ///
   int ExportOutput();
 
-  //!
+  ///
   void print_timers();
-
-  //--------------------
-  //
-  //--------------------
 
   //! KalmanTrkProp Call.
   int BuildLayerZPhiHitMap(const unsigned int ivert);
