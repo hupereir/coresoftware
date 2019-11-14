@@ -453,10 +453,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
 
   //*@name default search windows in number of sigmas
   /** actual search window is multiplied by total uncertainty on the track */
+  //@{
   float _search_win_phi = 20;
   float _search_win_theta = 20;
   std::map<int, float> _search_wins_phi;
   std::map<int, float> _search_wins_theta;
+  //@}
 
   std::vector<std::multimap<unsigned int, TrkrDefs::cluskey>> _layer_thetaID_phiID_clusterID;
 

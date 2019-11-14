@@ -97,7 +97,7 @@ PHGenFitTrkProp::PHGenFitTrkProp(
   , _nlayers_maps(nlayers_maps)
   , _nlayers_intt(nlayers_intt)
   , _nlayers_tpc(nlayers_tpc)
-  , _nlayers_outer( nlayers_outer )
+  , _nlayers_outer(nlayers_outer)
   , _nlayers_all(_nlayers_maps + _nlayers_intt + _nlayers_tpc + _nlayers_outer)
   , _firstlayer_maps(0)
   , _firstlayer_intt(_firstlayer_maps + _nlayers_maps)
@@ -1120,7 +1120,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
           tq.ntpc + (is_tpc_layer( layer ) ? 1 : 0),
           tq.nintt + (is_intt_layer( layer ) ? 1 : 0),
           tq.nmaps + (is_maps_layer( layer ) ? 1 : 0) ),
-          std::shared_ptr<PHGenFit::Track>(iter->second)));
+          iter->second));
       }
 
       #ifdef _DEBUG_
