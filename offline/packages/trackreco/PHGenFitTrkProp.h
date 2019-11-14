@@ -79,6 +79,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
     float chi2 = 0;
     int ndf = 0;
 
+    int nouter = 0;
     int ntpc = 0;
     int nintt = 0;
     int nmaps = 0;
@@ -89,10 +90,11 @@ class PHGenFitTrkProp : public PHTrackPropagating
       , ndf(ndf_)
     {}
 
-    TrackQuality(int nhits_, float chi2_, int ndf_, int ntpc_, int nintt_, int nmaps_)
+    TrackQuality(int nhits_, float chi2_, int ndf_, int nouter_, int ntpc_, int nintt_, int nmaps_)
       : nhits(nhits_)
       , chi2(chi2_)
       , ndf(ndf_)
+      , nouter(nouter_)
       , ntpc(ntpc_)
       , nintt(nintt_)
       , nmaps(nmaps_)
@@ -111,9 +113,8 @@ class PHGenFitTrkProp : public PHTrackPropagating
       os
           << tq.nhits << ", "
           << tq.chi2 << ", " << tq.ndf << ", "
-          << tq.ntpc << ", " << tq.nintt << ", " << tq.nmaps
+          << tq.nouter << ", " << tq.ntpc << ", " << tq.nintt << ", " << tq.nmaps
           << std::endl;
-
       return os;
     }
   };

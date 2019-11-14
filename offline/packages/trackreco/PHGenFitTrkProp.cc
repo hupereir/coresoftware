@@ -776,7 +776,7 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
   float ndf = track->get_ndf();
 
   if (nhits > 0 && chi2 > 0 && ndf > 0)
-  { _PHGenFitTracks.push_back( std::make_pair( PHGenFitTrkProp::TrackQuality(nhits, chi2, ndf, nhits, 0, 0), track)); }
+  { _PHGenFitTracks.push_back( std::make_pair( PHGenFitTrkProp::TrackQuality(nhits, chi2, ndf, 0, nhits, 0, 0), track)); }
 
   if (Verbosity() > 1) _t_translate3->stop();
   if (Verbosity() > 1)
@@ -1066,6 +1066,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
         track_iter->first.nhits = tq.nhits + 1;
         track_iter->first.chi2 = tq.chi2 + iter->first;
         track_iter->first.ndf = tq.ndf + 2;
+        track_iter->first.nouter = tq.nouter + (is_outertracker_layer( layer ) ? 1 : 0);
         track_iter->first.ntpc = tq.ntpc + (is_tpc_layer( layer ) ? 1 : 0);
         track_iter->first.nintt = tq.nintt + (is_intt_layer( layer ) ? 1 : 0);
         track_iter->first.nmaps = tq.nmaps + (is_maps_layer( layer ) ? 1 : 0);
@@ -1115,6 +1116,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
           tq.nhits + 1,
           tq.chi2 + iter->first,
           tq.ndf + 2,
+          tq.nouter + (is_outertracker_layer( layer ) ? 1 : 0),
           tq.ntpc + (is_tpc_layer( layer ) ? 1 : 0),
           tq.nintt + (is_intt_layer( layer ) ? 1 : 0),
           tq.nmaps + (is_maps_layer( layer ) ? 1 : 0) ),
