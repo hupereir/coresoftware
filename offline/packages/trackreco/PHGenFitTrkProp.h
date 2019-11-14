@@ -122,205 +122,124 @@ class PHGenFitTrkProp : public PHTrackPropagating
 #endif
 
   float get_search_win_phi() const
-  {
-    return _search_win_phi;
-  }
+  { return _search_win_phi; }
 
   void set_search_win_phi(float searchWinMultiplier)
-  {
-    _search_win_phi = searchWinMultiplier;
-  }
+  { _search_win_phi = searchWinMultiplier; }
 
   bool is_do_evt_display() const
-  {
-    return _do_evt_display;
-  }
+  { return _do_evt_display; }
 
   void set_do_evt_display(bool doEvtDisplay)
-  {
-    _do_evt_display = doEvtDisplay;
-  }
+  { _do_evt_display = doEvtDisplay; }
 
   const std::string& get_track_fitting_alg_name() const
-  {
-    return _track_fitting_alg_name;
-  }
+  { return _track_fitting_alg_name; }
 
   void set_track_fitting_alg_name(const std::string& trackFittingAlgName)
-  {
-    _track_fitting_alg_name = trackFittingAlgName;
-  }
+  { _track_fitting_alg_name = trackFittingAlgName; }
 
   void set_analyzing_mode(bool analyzingMode)
-  {
-    _analyzing_mode = analyzingMode;
-  }
+  { _analyzing_mode = analyzingMode; }
 
   float get_max_merging_deta() const
-  {
-    return _max_merging_deta;
-  }
+  { return _max_merging_deta; }
 
   void set_max_merging_deta(float maxMergingDeta)
-  {
-    _max_merging_deta = maxMergingDeta;
-  }
+  { _max_merging_deta = maxMergingDeta; }
 
   float get_max_merging_dphi() const
-  {
-    return _max_merging_dphi;
-  }
+  { return _max_merging_dphi; }
 
   void set_max_merging_dphi(float maxMergingDphi)
-  {
-    _max_merging_dphi = maxMergingDphi;
-  }
+  { _max_merging_dphi = maxMergingDphi; }
 
   float get_max_merging_dr() const
-  {
-    return _max_merging_dr;
-  }
+  { return _max_merging_dr; }
 
   void set_max_merging_dr(float maxMergingDr)
-  {
-    _max_merging_dr = maxMergingDr;
-  }
+  { _max_merging_dr = maxMergingDr; }
 
   float get_max_merging_dz() const
-  {
-    return _max_merging_dz;
-  }
+  { return _max_merging_dz; }
 
   void set_max_merging_dz(float maxMergingDz)
-  {
-    _max_merging_dz = maxMergingDz;
-  }
+  { _max_merging_dz = maxMergingDz; }
 
   float get_search_win_theta() const
-  {
-    return _search_win_theta;
-  }
+  { return _search_win_theta; }
 
   void set_search_win_theta(float searchWinZ)
-  {
-    _search_win_theta = searchWinZ;
-  }
+  { _search_win_theta = searchWinZ; }
 
   float get_max_incr_chi2() const
-  {
-    return _max_incr_chi2;
-  }
+  { return _max_incr_chi2; }
 
   void set_max_incr_chi2(float maxIncrChi2)
-  {
-    _max_incr_chi2 = maxIncrChi2;
-  }
+  { _max_incr_chi2 = maxIncrChi2; }
 
   unsigned int get_max_consecutive_missing_layer() const
-  {
-    return _max_consecutive_missing_layer;
-  }
+  { return _max_consecutive_missing_layer; }
 
-  void set_max_consecutive_missing_layer(
-      unsigned int maxConsecutiveMissingLayer)
-  {
-    _max_consecutive_missing_layer = maxConsecutiveMissingLayer;
-  }
+  void set_max_consecutive_missing_layer( unsigned int maxConsecutiveMissingLayer)
+  { _max_consecutive_missing_layer = maxConsecutiveMissingLayer; }
 
   unsigned int get_min_good_track_hits() const
-  {
-    return _min_good_track_hits;
-  }
+  { return _min_good_track_hits; }
 
   void set_min_good_track_hits(unsigned int minGoodTrackHits)
-  {
-    _min_good_track_hits = minGoodTrackHits;
-  }
+  { _min_good_track_hits = minGoodTrackHits; }
 
   unsigned int get_max_share_hits() const
-  {
-    return _max_share_hits;
-  }
+  { return _max_share_hits; }
 
   void set_max_share_hits(unsigned int maxShareHits)
-  {
-    _max_share_hits = maxShareHits;
-  }
+  { _max_share_hits = maxShareHits; }
 
   float get_max_splitting_chi2() const
-  {
-    return _max_splitting_chi2;
-  }
+  { return _max_splitting_chi2; }
 
   void set_max_splitting_chi2(float maxSplittingChi2)
-  {
-    _max_splitting_chi2 = maxSplittingChi2;
-  }
+  { _max_splitting_chi2 = maxSplittingChi2; }
 
   int get_init_direction() const
-  {
-    return _init_direction;
-  }
+  { return _init_direction; }
 
   void set_init_direction(int initDirection)
-  {
-    _init_direction = initDirection;
-  }
+  { _init_direction = initDirection; }
 
   float get_max_search_win_phi_tpc() const
-  {
-    return _max_search_win_phi_tpc;
-  }
+  { return _max_search_win_phi_tpc; }
 
   void set_max_search_win_phi_tpc(float maxSearchWinPhi)
-  {
-    _max_search_win_phi_tpc = maxSearchWinPhi;
-  }
+  { _max_search_win_phi_tpc = maxSearchWinPhi; }
 
   float get_max_search_win_theta_tpc() const
-  {
-    return _max_search_win_theta_tpc;
-  }
+  { return _max_search_win_theta_tpc; }
 
   void set_max_search_win_theta_tpc(float maxSearchWinZ)
-  {
-    _max_search_win_theta_tpc = maxSearchWinZ;
-  }
+  { _max_search_win_theta_tpc = maxSearchWinZ; }
 
   float get_blowup_factor() const
-  {
-    return _blowup_factor;
-  }
+  { return _blowup_factor; }
 
   void set_blowup_factor(float blowupFactor)
-  {
-    _blowup_factor = blowupFactor;
-  }
+  { _blowup_factor = blowupFactor; }
 
   float get_max_search_win_phi_intt(int inttlayer) const
-  {
-    return _max_search_win_phi_intt[inttlayer];
-  }
+  { return _max_search_win_phi_intt[inttlayer]; }
 
   void set_max_search_win_phi_intt(int inttlayer, float maxSearchWinPhiIntt)
-  {
-    _max_search_win_phi_intt[inttlayer] = maxSearchWinPhiIntt;
-  }
+  { _max_search_win_phi_intt[inttlayer] = maxSearchWinPhiIntt; }
 
   float get_max_search_win_phi_maps() const
-  {
-    return _max_search_win_phi_maps;
-  }
+  { return _max_search_win_phi_maps; }
 
   void set_max_search_win_phi_maps(float maxSearchWinPhiMaps)
-  {
-    _max_search_win_phi_maps = maxSearchWinPhiMaps;
-  }
+  { _max_search_win_phi_maps = maxSearchWinPhiMaps; }
 
   float get_max_search_win_theta_intt(int inttlayer) const
-  {
-    return _max_search_win_theta_intt[inttlayer];
-  }
+  { return _max_search_win_theta_intt[inttlayer]; }
 
   void set_max_search_win_theta_intt(int inttlayer, float maxSearchWinThetaIntt)
   {
@@ -328,90 +247,52 @@ class PHGenFitTrkProp : public PHTrackPropagating
   }
 
   float get_max_search_win_theta_maps() const
-  {
-    return _max_search_win_theta_maps;
-  }
+  { return _max_search_win_theta_maps; }
 
   void set_max_search_win_theta_maps(float maxSearchWinThetaMaps)
-  {
-    _max_search_win_theta_maps = maxSearchWinThetaMaps;
-  }
+  { _max_search_win_theta_maps = maxSearchWinThetaMaps; }
 
   float get_min_search_win_phi_intt(int inttlayer) const
-  {
-    return _min_search_win_phi_intt[inttlayer];
-  }
+  { return _min_search_win_phi_intt[inttlayer]; }
 
   void set_min_search_win_phi_intt(int inttlayer, float minSearchWinPhiIntt)
-  {
-    _min_search_win_phi_intt[inttlayer] = minSearchWinPhiIntt;
-  }
+  { _min_search_win_phi_intt[inttlayer] = minSearchWinPhiIntt; }
 
   float get_min_search_win_phi_maps() const
-  {
-    return _min_search_win_phi_maps;
-  }
+  { return _min_search_win_phi_maps; }
 
   void set_min_search_win_phi_maps(float minSearchWinPhiMaps)
-  {
-    _min_search_win_phi_maps = minSearchWinPhiMaps;
-  }
+  { _min_search_win_phi_maps = minSearchWinPhiMaps; }
 
   float get_min_search_win_phi_tpc() const
-  {
-    return _min_search_win_phi_tpc;
-  }
+  { return _min_search_win_phi_tpc; }
 
   void set_min_search_win_phi_tpc(float minSearchWinPhiTpc)
-  {
-    _min_search_win_phi_tpc = minSearchWinPhiTpc;
-  }
+  { _min_search_win_phi_tpc = minSearchWinPhiTpc; }
 
   float get_min_search_win_theta_intt(int inttlayer) const
-  {
-    return _min_search_win_theta_intt[inttlayer];
-  }
+  { return _min_search_win_theta_intt[inttlayer]; }
 
   void set_min_search_win_theta_intt(int inttlayer, float minSearchWinThetaIntt)
-  {
-    _min_search_win_theta_intt[inttlayer] = minSearchWinThetaIntt;
-  }
+  { _min_search_win_theta_intt[inttlayer] = minSearchWinThetaIntt; }
 
   float get_min_search_win_theta_maps() const
-  {
-    return _min_search_win_theta_maps;
-  }
+  { return _min_search_win_theta_maps; }
 
   void set_min_search_win_theta_maps(float minSearchWinThetaMaps)
-  {
-    _min_search_win_theta_maps = minSearchWinThetaMaps;
-  }
+  { _min_search_win_theta_maps = minSearchWinThetaMaps; }
 
   float get_min_search_win_theta_tpc() const
-  {
-    return _min_search_win_theta_tpc;
-  }
+  { return _min_search_win_theta_tpc; }
 
   void set_min_search_win_theta_tpc(float minSearchWinThetaTpc)
-  {
-    _min_search_win_theta_tpc = minSearchWinThetaTpc;
-  }
-
-  void set_vertex_error(const float a)
-  {
-    _vertex_error.clear();
-    // _vertex_error.assign(3, a);
-  }
+  { _min_search_win_theta_tpc = minSearchWinThetaTpc; }
 
   int get_primary_pid_guess() const
-  {
-    return _primary_pid_guess;
-  }
+  { return _primary_pid_guess; }
 
   void set_primary_pid_guess(int primaryPidGuess)
-  {
-    _primary_pid_guess = primaryPidGuess;
-  }
+  { _primary_pid_guess = primaryPidGuess; }
 
 #if !defined(__CINT__) || defined(__CLING__)
 
@@ -474,26 +355,6 @@ class PHGenFitTrkProp : public PHTrackPropagating
   //! ExportOutput Call. Make SvtxTrack from PHGenFit::Track and set of clusters
   int OutputPHGenFitTrack(MapPHGenFitTrack::iterator, SvtxTrackMap::Iter);
 
-  //------------------
-  // Subfunction Calls
-  //------------------
-
-  /// convert from inverse curvature to momentum
-  float kappaToPt(float kappa);
-
-  /// convert from momentum to inverse curvature
-  float ptToKappa(float pt);
-
-  /// convert the covariance from HelixHough coords to x,y,z,px,py,pz
-  void convertHelixCovarianceToEuclideanCovariance(
-    float B, float phi,
-    float d, float kappa, float z0, float dzdl,
-    Eigen::Matrix<float, 5, 5> const& input,
-    Eigen::Matrix<float, 6, 6>& output);
-
-  /// translate the clusters, tracks, and vertex from one origin to another
-  void shift_coordinate_system(double dx, double dy, double dz);
-
   int _event = 0;
   PHTimer* _t_seeds_cleanup = nullptr;
   PHTimer* _t_translate_to_PHGenFitTrack = nullptr;
@@ -508,16 +369,14 @@ class PHGenFitTrkProp : public PHTrackPropagating
   PHTimer* _t_full_fitting = nullptr;
   PHTimer* _t_output_io = nullptr;
 
-  // object storage
+  /// collision vertex
+  std::vector<std::vector<float>> _vertex;
 
-  std::vector<std::vector<float>> _vertex;        ///< working array for collision vertex list
-  std::vector<std::vector<float>> _vertex_error;  ///< sqrt(cov)
+  /// collision vertex error
+  std::vector<std::vector<float>> _vertex_error;
 
   // node pointers
   BbcVertexMap* _bbc_vertexes = nullptr;
-
-  //nodes to get norm vector
-  //SvtxHitMap* _svtxhitsmap;
 
   int* _hit_used_map = nullptr;
   int _hit_used_map_size = 0;
