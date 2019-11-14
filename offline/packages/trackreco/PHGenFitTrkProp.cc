@@ -105,35 +105,27 @@ PHGenFitTrkProp::PHGenFitTrkProp(
 //___________________________________________
 int PHGenFitTrkProp::Setup(PHCompositeNode* topNode)
 {
-  // Start new interface ----
 
   int ret = PHTrackPropagating::Setup(topNode);
   if (ret != Fun4AllReturnCodes::EVENT_OK) return ret;
 
   ret = GetNodes(topNode);
   if (ret != Fun4AllReturnCodes::EVENT_OK) return ret;
-  // End new interface ----
 
   ret = InitializeGeometry(topNode);
   if (ret != Fun4AllReturnCodes::EVENT_OK)
     return ret;
 
   ret = InitializePHGenFit(topNode);
-  if (ret != Fun4AllReturnCodes::EVENT_OK)
-    return ret;
+  if (ret != Fun4AllReturnCodes::EVENT_OK) return ret;
 
   if (_analyzing_mode)
   {
     std::cout << "Ana Mode, creating ntuples! " << std::endl;
     _analyzing_file = new TFile("./PHGenFitTrkProp.root", "RECREATE");
-    //	  _analyzing_ntuple = new TNtuple("ana_nt","ana_nt","spt:seta:sphi:pt:eta:phi:layer:ncand:nmeas");
     _analyzing_ntuple = new TNtuple("ana_nt", "ana_nt", "pt:kappa:d:phi:dzdl:z0:nhit:ml:rec:dt");
     std::cout << "Done" << std::endl;
   }
-
-  //	ret = InitializeGeometry(topNode);
-  //	if(ret != Fun4AllReturnCodes::EVENT_OK)
-  //	  return ret;
 
   /*!
    * Initilize parameters
