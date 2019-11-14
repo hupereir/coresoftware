@@ -611,6 +611,7 @@ int PHGenFitTrkProp::OutputPHGenFitTrack( MapPHGenFitTrack::iterator gftrk_iter,
   Int_t n_maps = 0;
   Int_t n_intt = 0;
   Int_t n_tpc = 0;
+  Int_t n_outer = 0;
 
   for( auto iter = track->begin_cluster_keys(); iter != track->end_cluster_keys(); ++iter)
   {
@@ -633,6 +634,10 @@ int PHGenFitTrkProp::OutputPHGenFitTrack( MapPHGenFitTrack::iterator gftrk_iter,
 
       ++n_tpc;
 
+    } else if( is_outertracker_layer( layer ) ) {
+
+      ++n_outer;
+
     }
   }
 
@@ -643,8 +648,8 @@ int PHGenFitTrkProp::OutputPHGenFitTrack( MapPHGenFitTrack::iterator gftrk_iter,
   if (Verbosity() > 10)
   {
     std::cout
-      << "Output propagared track " << track->get_id() << " vertex " << track->get_vertex_id()<< " quality = " << track->get_quality()
-      << " clusters: mvtx " << n_maps << " intt " << n_intt << " tpc  " << n_tpc
+      << "Output propagated track " << track->get_id() << " vertex " << track->get_vertex_id()<< " quality = " << track->get_quality()
+      << " clusters mvtx: " << n_maps << " intt: " << n_intt << " tpc:  " << n_tpc << " outer tracker: " << n_outer
       << std::endl;
     std::cout << "px = " << track->get_px() << " py = " << track->get_py()  << " pz = " << track->get_pz() << std::endl;
   }
@@ -939,7 +944,6 @@ int PHGenFitTrkProp::TrackPropPatRec(
     float theta_center = pos.Theta();
 
     #ifdef _USE_CONSTANT_SEARCH_WIN_
-
     float phi_window = 25e-4;
     float theta_window = 25e-4;
 
@@ -956,10 +960,10 @@ int PHGenFitTrkProp::TrackPropPatRec(
     }
     #else
     TMatrixDSym cov = state->get6DCov();
-
     float phi_window = _search_wins_phi[layer] * std::sqrt(cov[0][0] + cov[1][1] + cov[0][1] + cov[1][0]) / pos.Perp();
     float theta_window = _search_wins_theta[layer] * std::sqrt(cov[2][2]) / pos.Perp();
 
+    // compare to built-in windows
     if( is_maps_layer( layer ) )
     {
 
@@ -983,8 +987,14 @@ int PHGenFitTrkProp::TrackPropPatRec(
       if (theta_window > _max_search_win_theta_tpc) theta_window = _max_search_win_theta_tpc;
       if (theta_window < _min_search_win_theta_tpc) theta_window = _min_search_win_theta_tpc;
 
-    }
+    } else if( is_outertracker_layer( layer ) ) {
 
+      if (phi_window > _max_search_win_phi_outer) phi_window = _max_search_win_phi_outer;
+      if (phi_window < _min_search_win_phi_outer) phi_window = _min_search_win_phi_outer;
+      if (theta_window > _max_search_win_theta_outer) theta_window = _max_search_win_theta_outer;
+      if (theta_window < _min_search_win_theta_outer) theta_window = _min_search_win_theta_outer;
+
+    }
     #endif
 
     #ifdef _DEBUG_
@@ -1159,6 +1169,7 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement( const 
   unsigned int trkrid = TrkrDefs::getTrkrId(cluster_id);
   int layer = TrkrDefs::getLayer(cluster_id);
 
+  // todo: check if this is also applicable to outer detector
   if(trkrid == TrkrDefs::mvtxId)
   {
 
@@ -1166,7 +1177,7 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement( const 
     int chip_index = MvtxDefs::getChipId(cluster_id);
 
     auto geom = dynamic_cast<CylinderGeom_Mvtx*>(_geom_container_maps->GetLayerGeom(layer));
-    std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
+    std::array<double,3> ladder_location;
     geom->find_sensor_center(stave_index, 0, 0, chip_index, &ladder_location[0]);
     n.SetXYZ(ladder_location[0], ladder_location[1], 0);
     n.RotateZ(geom->get_stave_phi_tilt());
@@ -1174,7 +1185,7 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement( const 
   } else if(trkrid == TrkrDefs::inttId) {
 
     auto geom = dynamic_cast<CylinderGeomIntt*>(_geom_container_intt->GetLayerGeom(layer));
-    std::array<double,3> hit_location = {{0.0, 0.0, 0.0}};
+    std::array<double,3> hit_location;
     geom->find_segment_center(InttDefs::getLadderZId(cluster_id), InttDefs::getLadderPhiId(cluster_id), &hit_location[0]);
     n.SetXYZ(hit_location[0], hit_location[1], 0);
     n.RotateZ(geom->get_strip_phi_tilt());

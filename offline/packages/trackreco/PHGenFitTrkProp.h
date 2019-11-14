@@ -347,7 +347,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
   int TrackPropPatRec(
     const unsigned int ivert,
     MapPHGenFitTrack::iterator& track_iter,
-    const unsigned int init_layer = 0, const unsigned int end_layer = 66,
+    const unsigned int init_layer, const unsigned int end_layer,
     const bool use_fitted_state_once = false);
 
   //!
@@ -428,21 +428,30 @@ class PHGenFitTrkProp : public PHTrackPropagating
   std::map<int, unsigned int> _layer_ilayer_map_all;
   std::vector<float> _radii_all;
 
-  float _max_search_win_phi_tpc = 0.004;
-  float _min_search_win_phi_tpc = 0;
-  float _max_search_win_theta_tpc = 0.004;
-  float _min_search_win_theta_tpc = 0;
-
-  std::array<float,8> _max_search_win_phi_intt = {{ 0.2, 0.2, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005 }};
-  std::array<float,8> _min_search_win_phi_intt = {{ 0.2, 0.2, 0, 0, 0, 0, 0, 0 }};
-  std::array<float,8> _max_search_win_theta_intt = {{ 0.01, 0.01, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
-  std::array<float,8> _min_search_win_theta_intt = {{ 0, 0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
-
-  float _max_search_win_phi_maps = 0.005;
   float _min_search_win_phi_maps = 0;
-  float _max_search_win_theta_maps = 0.04;
+  float _max_search_win_phi_maps = 0.005;
   float _min_search_win_theta_maps = 0;
+  float _max_search_win_theta_maps = 0.04;
 
+  std::array<float,8> _min_search_win_phi_intt = {{ 0.2, 0.2, 0, 0, 0, 0, 0, 0 }};
+  std::array<float,8> _max_search_win_phi_intt = {{ 0.2, 0.2, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005 }};
+  std::array<float,8> _min_search_win_theta_intt = {{ 0, 0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
+  std::array<float,8> _max_search_win_theta_intt = {{ 0.01, 0.01, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }};
+
+  float _min_search_win_phi_tpc = 0;
+  float _max_search_win_phi_tpc = 0.004;
+  float _min_search_win_theta_tpc = 0;
+  float _max_search_win_theta_tpc = 0.004;
+
+  // these are large windows
+  // todo: optimize
+  float _min_search_win_phi_outer = 1.0;
+  float _max_search_win_phi_outer = 1.0;
+  float _min_search_win_theta_outer = 1.0;
+  float _max_search_win_theta_outer = 1.0;
+
+  //*@name default search windows in number of sigmas
+  /** actual search window is multiplied by total uncertainty on the track */
   float _search_win_phi = 20;
   float _search_win_theta = 20;
   std::map<int, float> _search_wins_phi;
