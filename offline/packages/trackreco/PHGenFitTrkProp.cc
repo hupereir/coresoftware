@@ -91,15 +91,18 @@ PHGenFitTrkProp::PHGenFitTrkProp(
     const std::string& name,
     unsigned int nlayers_maps,
     unsigned int nlayers_intt,
-    unsigned int nlayers_tpc)
+    unsigned int nlayers_tpc,
+    unsigned int nlayers_outer)
   : PHTrackPropagating(name)
   , _nlayers_maps(nlayers_maps)
   , _nlayers_intt(nlayers_intt)
   , _nlayers_tpc(nlayers_tpc)
-  , _nlayers_all(_nlayers_maps + _nlayers_intt + _nlayers_tpc)
+  , _nlayers_outer( nlayers_outer )
+  , _nlayers_all(_nlayers_maps + _nlayers_intt + _nlayers_tpc + _nlayers_outer)
   , _firstlayer_maps(0)
   , _firstlayer_intt(_firstlayer_maps + _nlayers_maps)
   , _firstlayer_tpc(_firstlayer_intt + _nlayers_intt)
+  , _firstlayer_outer(_firstlayer_tpc + _nlayers_tpc)
 {}
 
 //___________________________________________
@@ -287,12 +290,13 @@ int PHGenFitTrkProp::End()
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
+//_______________________________________________________________________________-
 int PHGenFitTrkProp::InitializePHGenFit(PHCompositeNode* topNode)
 {
 
+  // create fitter
   auto tgeo_manager = PHGeomUtility::GetTGeoManager(topNode);
   auto field = PHFieldUtility::GetFieldMapNode(nullptr, topNode);
-
   _fitter.reset( PHGenFit::Fitter::getInstance(tgeo_manager, field, _track_fitting_alg_name, "RKTrackRep", _do_evt_display) );
 
   if (!_fitter)
@@ -1369,6 +1373,7 @@ unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer, con
 //_______________________________________________________________________________
 int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
 {
+  auto outergeos = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_OuterTracker");
   auto cellgeos = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
   auto laddergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_INTT");
   auto mapsladdergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_MVTX");
@@ -1378,27 +1383,35 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   _radii_all.assign(_nlayers_all, 0.0);
   _layer_ilayer_map_all.clear();
 
+  // outer tracker
+  if (outergeos)
+  {
+    const auto range = outergeos->get_begin_end();
+    for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
+    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
+  }
+
   // tpc
   if (cellgeos)
   {
-    const auto layerrange = cellgeos->get_begin_end();
-    for (auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    const auto range = cellgeos->get_begin_end();
+    for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
     { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
   // intt
   if (laddergeos)
   {
-    const auto layerrange = laddergeos->get_begin_end();
-    for (auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    const auto range = laddergeos->get_begin_end();
+    for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
     { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
   // maps
   if (mapsladdergeos)
   {
-    const auto layerrange = mapsladdergeos->get_begin_end();
-    for (auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    const auto range = mapsladdergeos->get_begin_end();
+    for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
     { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
@@ -1407,11 +1420,23 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   { _layer_ilayer_map_all.insert( std::make_pair(iter->second, _layer_ilayer_map_all.size())); }
 
   // now we extract the information from all geometries
+
+  // outer tracker
+  if (outergeos)
+  {
+    const auto range = outergeos->get_begin_end();
+    for( auto iter = range.first; iter != range.second; iter++)
+    {
+      auto geo = iter->second;
+      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius() + 0.5 * geo->get_thickness();
+    }
+  }
+
   // tpc
   if (cellgeos)
   {
-    const auto begin_end = cellgeos->get_begin_end();
-    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
+    const auto range = cellgeos->get_begin_end();
+    for( auto iter = range.first; iter != range.second; iter++)
     {
       auto geo = iter->second;
       _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius() + 0.5 * geo->get_thickness();
@@ -1421,8 +1446,8 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   // intt
   if (laddergeos)
   {
-    const auto begin_end = laddergeos->get_begin_end();
-    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
+    const auto range = laddergeos->get_begin_end();
+    for( auto iter = range.first; iter != range.second; iter++)
     {
       auto geo = iter->second;
       _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius() + 0.5 * geo->get_thickness();
@@ -1432,8 +1457,8 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   // maps
   if (mapsladdergeos)
   {
-    const auto begin_end = mapsladdergeos->get_begin_end();
-    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
+    const auto range = mapsladdergeos->get_begin_end();
+    for( auto iter = range.first; iter != range.second; iter++)
     {
       auto geo = iter->second;
       _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius();

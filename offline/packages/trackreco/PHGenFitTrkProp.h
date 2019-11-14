@@ -58,7 +58,8 @@ class PHGenFitTrkProp : public PHTrackPropagating
     const std::string& name = "PHGenFitTrkProp",
     unsigned int nlayers_maps = 3,
     unsigned int nlayers_intt = 8,
-    unsigned int nlayers_tpc = 60);
+    unsigned int nlayers_tpc = 60,
+    unsigned int nlayers_outer = 2);
 
   protected:
 
@@ -309,6 +310,9 @@ class PHGenFitTrkProp : public PHTrackPropagating
   bool is_tpc_layer( unsigned int layer ) const
   { return layer >= _firstlayer_tpc && layer < _firstlayer_tpc + _nlayers_tpc; }
 
+  bool is_outertracker_layer( unsigned int layer ) const
+  { return layer >= _firstlayer_outer && layer < _firstlayer_outer + _nlayers_outer; }
+
   //@}
 
   /// Init projection r
@@ -413,6 +417,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
   unsigned int _nlayers_maps = 3;
   unsigned int _nlayers_intt = 8;
   unsigned int _nlayers_tpc = 60;
+  unsigned int _nlayers_outer = 2;
   int _nlayers_all = 0;
 
   unsigned int _firstlayer_maps = 0;
