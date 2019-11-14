@@ -73,27 +73,13 @@
 #include <iostream>
 #include <memory>
 
-class PHField;
-class TGeoManager;
-namespace genfit { class AbsTrackRep; }
-
 #define LogDebug(exp) std::cout << "DEBUG: " << __FILE__ << ": " << __LINE__ << ": " << exp
 #define LogError(exp) std::cout << "ERROR: " << __FILE__ << ": " << __LINE__ << ": " << exp
 #define LogWarning(exp) std::cout << "WARNING: " << __FILE__ << ": " << __LINE__ << ": " << exp
 
 //#define _DEBUG_
-
-//#define _USE_ALAN_FULL_VERTEXING_
-#define _USE_ALAN_TRACK_REFITTING_
-
-//#define _MEARGE_SEED_CLUSTER_
-//#define _USE_ZERO_SEED_
-
 //#define _USE_CONSTANT_SEARCH_WIN_
-
 //#define _DO_FULL_FITTING_
-
-using namespace std;
 
 #ifdef _DEBUG_
 ofstream fout_kalman_pull("kalman_pull.txt");
@@ -102,7 +88,7 @@ ofstream fout_chi2("chi2.txt");
 
 //___________________________________________
 PHGenFitTrkProp::PHGenFitTrkProp(
-    const string& name,
+    const std::string& name,
     unsigned int nlayers_maps,
     unsigned int nlayers_intt,
     unsigned int nlayers_tpc)
@@ -138,11 +124,11 @@ int PHGenFitTrkProp::Setup(PHCompositeNode* topNode)
 
   if (_analyzing_mode)
   {
-    cout << "Ana Mode, creating ntuples! " << endl;
+    std::cout << "Ana Mode, creating ntuples! " << std::endl;
     _analyzing_file = new TFile("./PHGenFitTrkProp.root", "RECREATE");
     //	  _analyzing_ntuple = new TNtuple("ana_nt","ana_nt","spt:seta:sphi:pt:eta:phi:layer:ncand:nmeas");
     _analyzing_ntuple = new TNtuple("ana_nt", "ana_nt", "pt:kappa:d:phi:dzdl:z0:nhit:ml:rec:dt");
-    cout << "Done" << endl;
+    std::cout << "Done" << std::endl;
   }
 
   //	ret = InitializeGeometry(topNode);
@@ -159,18 +145,18 @@ int PHGenFitTrkProp::Setup(PHCompositeNode* topNode)
     _max_incr_chi2s.insert(std::make_pair(layer, _max_incr_chi2));
   }
 
-#ifdef _DEBUG_
+  #ifdef _DEBUG_
   for (int layer = 0; layer < _nlayers_all; ++layer)
   {
-    cout
-        << __LINE__
-        << ": layer: " << layer
-        << ": search_wins_rphi: " << _search_wins_phi[layer]
-        << ": search_wins_z: " << _search_wins_theta[layer]
-        << ": max_incr_chi2: " << _max_incr_chi2s[layer]
-        << endl;
+    std::cout
+      << __LINE__
+      << ": layer: " << layer
+      << ": search_wins_rphi: " << _search_wins_phi[layer]
+      << ": search_wins_z: " << _search_wins_theta[layer]
+      << ": max_incr_chi2: " << _max_incr_chi2s[layer]
+      << std::endl;
   }
-#endif
+  #endif
 
   _t_seeds_cleanup = new PHTimer("_t_seeds_cleanup");
   _t_seeds_cleanup->stop();
@@ -209,15 +195,17 @@ int PHGenFitTrkProp::Setup(PHCompositeNode* topNode)
   return ret;
 }
 
+//_________________________________________________________________________
 int PHGenFitTrkProp::Process()
 {
   if (Verbosity() > 10)
   {
-    cout << "PHGenFitTrkProp::process_event -- entered" << endl;
-    cout << "nMapsLayers = " << _nlayers_maps << endl;
-    cout << "nInttLayers = " << _nlayers_intt << endl;
-    cout << "nTPCLayers = " << _nlayers_tpc << endl;
+    std::cout << "PHGenFitTrkProp::process_event -- entered" << std::endl;
+    std::cout << "nMapsLayers = " << _nlayers_maps << std::endl;
+    std::cout << "nInttLayers = " << _nlayers_intt << std::endl;
+    std::cout << "nTPCLayers = " << _nlayers_tpc << std::endl;
   }
+
   // start fresh
   _gftrk_hitkey_map.clear();
 
@@ -225,18 +213,14 @@ int PHGenFitTrkProp::Process()
   _vertex_error.clear();
 
   if (_vertex_map)
-    {
-      for(unsigned int ivert=0; ivert<_vertex_map->size(); ++ivert)
   {
-    SvtxVertex* vertex = _vertex_map->get(ivert);
-
-    std::vector<float> v = { vertex->get_x(), vertex->get_y(), vertex->get_z() };
-    _vertex.push_back(v);
-
-    std::vector<float> v_err = { sqrt(vertex->get_error(0,0)), sqrt(vertex->get_error(1,1)), sqrt(vertex->get_error(2,2)) };
-    _vertex_error.push_back(v_err);
-  }
+    for(unsigned int ivert=0; ivert<_vertex_map->size(); ++ivert)
+    {
+      auto vertex = _vertex_map->get(ivert);
+      _vertex.push_back({vertex->get_x(), vertex->get_y(), vertex->get_z()});
+      _vertex_error.push_back({std::sqrt(vertex->get_error(0,0)), std::sqrt(vertex->get_error(1,1)), std::sqrt(vertex->get_error(2,2))});
     }
+  }
 
   {
     //-----------------------------------
@@ -255,6 +239,7 @@ int PHGenFitTrkProp::Process()
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
+//_________________________________________________________________________
 void PHGenFitTrkProp::print_timers()
 {
   std::cout << "=============== PHGenFitTrkProp::print_timers: ===============" << std::endl;
@@ -300,7 +285,7 @@ int PHGenFitTrkProp::End()
 
   if (_analyzing_mode)
   {
-    cout << " cleaning up " << endl;
+    std::cout << " cleaning up " << std::endl;
     _analyzing_file->cd();
     _analyzing_ntuple->Write();
     _analyzing_file->Close();
@@ -319,7 +304,7 @@ int PHGenFitTrkProp::InitializePHGenFit(PHCompositeNode* topNode)
   _fitter.reset( PHGenFit::Fitter::getInstance(tgeo_manager, field, _track_fitting_alg_name, "RKTrackRep", _do_evt_display ) );
   if (!_fitter)
   {
-    cerr << PHWHERE << endl;
+    std::cerr << PHWHERE << std::endl;
     return Fun4AllReturnCodes::ABORTRUN;
   }
 
@@ -366,12 +351,12 @@ int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTra
 
     if(_gftrk_hitkey_map.count(iCluId)>0) n_clu_used++;
     if (Verbosity() >= 10){
-      cout << " trk map size: " << _gftrk_hitkey_map.count(iCluId) << endl;
-      cout << "n: " << n << "#Clu_g = " << iCluId << " ntrack match: "  << _assoc_container->GetTracksFromCluster(cluster_ID).size()
+      std::cout << " trk map size: " << _gftrk_hitkey_map.count(iCluId) << std::endl;
+      std::cout << "n: " << n << "#Clu_g = " << iCluId << " ntrack match: "  << _assoc_container->GetTracksFromCluster(cluster_ID).size()
      << " layer: " << (float)TrkrDefs::getLayer(cluster_ID)
-     << " r: " << sqrt(_cluster_map->findCluster(cluster_ID)->getX()*_cluster_map->findCluster(cluster_ID)->getX() +_cluster_map->findCluster(cluster_ID)->getY()*_cluster_map->findCluster(cluster_ID)->getY() )
+     << " r: " << std::sqrt(_cluster_map->findCluster(cluster_ID)->getX()*_cluster_map->findCluster(cluster_ID)->getX() +_cluster_map->findCluster(cluster_ID)->getY()*_cluster_map->findCluster(cluster_ID)->getY() )
      << " used: " << n_clu_used
-     << endl;
+     << std::endl;
       n++;
     }
   }
@@ -380,7 +365,7 @@ int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTra
   if (((float) n_clu_used / n_clu) > 0.3)
   {
     if (Verbosity() >= 1)
-      cout << "Found duplicate track. n_clu: " << n_clu << " c_clu_used: " << n_clu_used << endl;
+      std::cout << "Found duplicate track. n_clu: " << n_clu << " c_clu_used: " << n_clu_used << std::endl;
     /*
     for(TrkrDefs::cluskey iCluId = 0; iCluId < clusterkeys.size(); ++iCluId){
       TrkrDefs::cluskey cluster_ID = clusterkeys[iCluId];
@@ -394,220 +379,194 @@ int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTra
   return code;
 }
 
+//_________________________________________________________________________
 int PHGenFitTrkProp::KalmanTrkProp()
 {
   // _track_map is created in PHHoughSeeding::ExportOutput at line 1714 and written to SvtxTrack node.
   // PHTrackPropagating (base class of this one) gets it from the node tree and calls this "Process" method.
   // The process method then calls this method.
 
-#ifdef _DEBUG_
+  #ifdef _DEBUG_
   std::cout << "=========================" << std::endl;
   std::cout << "PHGenFitTrkProp::KalmanTrkProp: Start: Event: " << _event << std::endl;
   std::cout << "Total Raw Tracks: " << _track_map->size() << std::endl;
   std::cout << "=========================" << std::endl;
-#endif
+  #endif
 
-  /*!
-   *   sort clusters
-   */
   // A map is needed for each vertex location. This is a vector of maps
   _layer_thetaID_phiID_clusterID.clear();
   for(unsigned int ivert=0; ivert<_vertex.size(); ++ivert)
-    {
-      BuildLayerZPhiHitMap(ivert);
-    }
+  { BuildLayerZPhiHitMap(ivert); }
 
-  vector<genfit::Track*> evt_disp_copy;
+  std::vector<genfit::Track*> evt_disp_copy;
 
   _PHGenFitTracks.clear();
+  if (Verbosity() > 1)
+  { std::cout << " found " << _track_map->size() << " track seeds " << std::endl; }
 
-  //_track_map->identify();
-
-  if (Verbosity() > 1){
-    cout << " found " << _track_map->size() << " track seeds " << endl;
-  }
-
-  for (auto phtrk_iter = _track_map->begin();
-       phtrk_iter != _track_map->end();)
+  for (auto phtrk_iter = _track_map->begin(); phtrk_iter != _track_map->end();)
+  {
+    auto tracklet = phtrk_iter->second;
+    if (Verbosity() >= 10)
     {
-      SvtxTrack* tracklet = phtrk_iter->second;
-      if (Verbosity() >= 10){
-  std::cout
-    << __LINE__
-    << ": Processing seed itrack: " << phtrk_iter->first
-    << ": Total tracks: " << _track_map->size()
-    << endl;
-      }
-      /*!
-       * Translate sPHENIX track To PHGenFitTracks
-       */
-      if (Verbosity() > 1) _t_translate_to_PHGenFitTrack->restart();
-      SvtxTrackToPHGenFitTracks(tracklet);
+      std::cout
+        << __LINE__
+        << ": Processing seed itrack: " << phtrk_iter->first
+        << ": Total tracks: " << _track_map->size()
+        << std::endl;
+    }
 
-      //if (Verbosity() > 1) _t_translate_to_PHGenFitTrack->stop();
+    /*!
+    * Translate sPHENIX track To PHGenFitTracks
+    */
+    if (Verbosity() > 1) _t_translate_to_PHGenFitTrack->restart();
+    SvtxTrackToPHGenFitTracks(tracklet);
 
-      /*!
-       * Handle track propagation, termination, output and evt disp.
-       */
-      bool is_splitting_track = false;
-#ifdef _DEBUG_
-      int i = 0;
-#endif
-      if (_PHGenFitTracks.empty())
-  {
-    cout << "Warning: Conversion of SvtxTrack tracklet " <<  phtrk_iter->first << " to PHGenFitTrack failed, moving to next tracklet " << endl;
-    ++phtrk_iter;
-    continue;
-  }
+    /*!
+    * Handle track propagation, termination, output and evt disp.
+    */
 
-      for (auto gftrk_iter = _PHGenFitTracks.begin();
-     gftrk_iter != _PHGenFitTracks.end(); ++gftrk_iter)
-  {
-    if(Verbosity() > 10)
+    bool is_splitting_track = false;
+    #ifdef _DEBUG_
+    int i = 0;
+    #endif
+    if( _PHGenFitTracks.empty() )
+    {
+      std::cout << "Warning: Conversion of SvtxTrack tracklet " <<  phtrk_iter->first << " to PHGenFitTrack failed, moving to next tracklet " << std::endl;
+      ++phtrk_iter;
+      continue;
+    }
+
+    for (auto gftrk_iter = _PHGenFitTracks.begin(); gftrk_iter != _PHGenFitTracks.end(); ++gftrk_iter)
+    {
+      if(Verbosity() > 10)
       {
-        cout
-    << __LINE__
-    << ": propagating Genfit track: " << phtrk_iter->first << endl;
+        std::cout
+          << __LINE__
+          << ": propagating Genfit track: " << phtrk_iter->first << std::endl;
       }
 
-    // associate this track with the same vertex as the seed track
-    unsigned int ivert = tracklet->get_vertex_id();
-    gftrk_iter->second->set_vertex_id(ivert);
-    //cout << PHWHERE << " read back track vertex ID from Genfit track " << gftrk_iter->second->get_vertex_id() << endl;
-    if(ivert > _vertex.size())
+      // associate this track with the same vertex as the seed track
+      unsigned int ivert = tracklet->get_vertex_id();
+      gftrk_iter->second->set_vertex_id(ivert);
+      if(ivert > _vertex.size())
       {
-        cout << PHWHERE << " Track vertex is screwed up, have to quit! " << endl;
+        std::cout << PHWHERE << " Track vertex is screwed up, have to quit! " << std::endl;
         return Fun4AllReturnCodes::ABORTRUN;
       }
 
-    std::vector<TrkrDefs::cluskey> clusterkeys = gftrk_iter->second->get_cluster_keys();
+      std::vector<TrkrDefs::cluskey> clusterkeys = gftrk_iter->second->get_cluster_keys();
 
-    unsigned int init_layer = UINT_MAX;
+      unsigned int init_layer = UINT_MAX;
 
-    if (!is_splitting_track)
+      if (!is_splitting_track)
       {
+
         if (_init_direction == 1)
-    {
-      //init_layer = _cluster_map->get(clusterkeys.front())->get_layer();
-      init_layer = TrkrDefs::getLayer(clusterkeys.front());
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, true);
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, false);
-    }
-        else
-    {
-      //init_layer = _cluster_map->get(clusterkeys.back())->get_layer();
-      init_layer = TrkrDefs::getLayer(clusterkeys.back());
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, true);
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, false);
-    }
+        {
+          init_layer = TrkrDefs::getLayer(clusterkeys.front());
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, true);
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, false);
+        } else {
+          init_layer = TrkrDefs::getLayer(clusterkeys.back());
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, true);
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, false);
+        }
+
         is_splitting_track = true;
-      }
-    else
-      {
+
+      } else {
+
         if (_init_direction == 1)
-    {
-      //init_layer = _cluster_map->get(clusterkeys.front())->get_layer();
-      init_layer = TrkrDefs::getLayer(clusterkeys.front());
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, false);
-    }
-        else
-    {
-      //init_layer = _cluster_map->get(clusterkeys.back())->get_layer();
-      init_layer = TrkrDefs::getLayer(clusterkeys.back());
-      TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, false);
-    }
+        {
+          init_layer = TrkrDefs::getLayer(clusterkeys.front());
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, _nlayers_all, false);
+        } else {
+          init_layer = TrkrDefs::getLayer(clusterkeys.back());
+          TrackPropPatRec(ivert, gftrk_iter, init_layer, 0, false);
+        }
+
       }
 
-#ifdef _DEBUG_
-    cout
-      << __LINE__
-      << ": tracki: " << i
-      << ": clusterkeys size:  " << gftrk_iter->second->get_cluster_keys().size()
-      << ": quality: " << gftrk_iter->first
-      << endl;
-    ++i;
-#endif
+      #ifdef _DEBUG_
+      std::cout
+        << __LINE__
+        << ": tracki: " << i
+        << ": clusterkeys size:  " << gftrk_iter->second->get_cluster_keys().size()
+        << ": quality: " << gftrk_iter->first
+        << std::endl;
+      ++i;
+      #endif
 
-    //_trackID_PHGenFitTrack.erase(iter);
-  }  // loop _PHGenFitTracks
+    }
 
+    #ifdef _DEBUG_
+    i = 0;
+    for (auto iter = _PHGenFitTracks.begin();
+    iter != _PHGenFitTracks.end(); ++iter)
+    {
+      std::cout
+        << __LINE__
+        << ": track: " << i++
+        << ": clusterkeys size:  " << iter->second->get_cluster_keys().size()
+        << ": quality: " << iter->first
+        << std::endl;
+    }
+    #endif
 
-#ifdef _DEBUG_
-      i = 0;
-      for (auto iter = _PHGenFitTracks.begin();
-     iter != _PHGenFitTracks.end(); ++iter)
-  {
-    cout
-      << __LINE__
-      << ": track: " << i++
-      << ": clusterkeys size:  " << iter->second->get_cluster_keys().size()
-      << ": quality: " << iter->first
-      << endl;
-  }
-#endif
+    _PHGenFitTracks.sort();
 
-      //std::sort(_PHGenFitTracks.begin(), _PHGenFitTracks.end());
-      _PHGenFitTracks.sort();
+    #ifdef _DEBUG_
+    for (auto iter = _PHGenFitTracks.begin(); iter != _PHGenFitTracks.end(); ++iter)
+    {
+      std::cout
+        << __LINE__
+        << ": clusterkeys size:  " << iter->second->get_cluster_keys().size()
+        << ": quality: " << iter->first
+        << std::endl;
+    }
+    #endif
 
-#ifdef _DEBUG_
-      for (auto iter = _PHGenFitTracks.begin();
-     iter != _PHGenFitTracks.end(); ++iter)
-  {
-    cout
-      << __LINE__
-      << ": clusterkeys size:  " << iter->second->get_cluster_keys().size()
-      << ": quality: " << iter->first
-      << endl;
-  }
-#endif
+    auto gftrk_iter_best = _PHGenFitTracks.begin();
+    int track_exists = check_track_exists(gftrk_iter_best,phtrk_iter);
 
-      auto gftrk_iter_best = _PHGenFitTracks.begin();
-
-      int track_exists = check_track_exists(gftrk_iter_best,phtrk_iter);
-
-      if (gftrk_iter_best->second->get_cluster_keys().size() >= _min_good_track_hits && track_exists)
-  {
-    OutputPHGenFitTrack(gftrk_iter_best, phtrk_iter);
-#ifdef _DEBUG_
-    cout << __LINE__ << endl;
-#endif
-    if (_do_evt_display)
+    if (gftrk_iter_best->second->get_cluster_keys().size() >= _min_good_track_hits && track_exists)
+    {
+      OutputPHGenFitTrack(gftrk_iter_best, phtrk_iter);
+      #ifdef _DEBUG_
+      std::cout << __LINE__ << std::endl;
+      #endif
+      if (_do_evt_display)
       {
-        evt_disp_copy.push_back(
-              new genfit::Track(*gftrk_iter_best->second->getGenFitTrack()));
+        evt_disp_copy.push_back( new genfit::Track(*gftrk_iter_best->second->getGenFitTrack()));
       }
-  }
-      else
-  {
-    auto key = phtrk_iter->first;
-    ++phtrk_iter;
-    _track_map->erase(key);
-    continue;
-  }
 
-      _PHGenFitTracks.clear();
+    } else {
 
+      auto key = phtrk_iter->first;
       ++phtrk_iter;
+      _track_map->erase(key);
+      continue;
+
     }
+
+    _PHGenFitTracks.clear();
+    ++phtrk_iter;
+  }
 
   if(Verbosity() > 1)
-    {
-      std::cout << "=========================" << std::endl;
-      std::cout << "PHGenFitTrkProp::KalmanTrkProp: End: Event: " << _event << std::endl;
-      std::cout << "PHGenFitTrkProp::KalmanTrkProp: End: Event: " << _event << std::endl;
-      std::cout << "Total Final Tracks: " << _track_map->size() << std::endl;
-    }
+  {
+    std::cout << "=========================" << std::endl;
+    std::cout << "PHGenFitTrkProp::KalmanTrkProp: End: Event: " << _event << std::endl;
+    std::cout << "PHGenFitTrkProp::KalmanTrkProp: End: Event: " << _event << std::endl;
+    std::cout << "Total Final Tracks: " << _track_map->size() << std::endl;
+  }
 
-  if (_do_evt_display)
-    {
-      _fitter->getEventDisplay()->addEvent(evt_disp_copy);
-    }
-  else
-    {
-      evt_disp_copy.clear();
-    }
+  if (_do_evt_display) _fitter->getEventDisplay()->addEvent(evt_disp_copy);
+  else evt_disp_copy.clear();
 
   return Fun4AllReturnCodes::EVENT_OK;
+
 }
 
 int PHGenFitTrkProp::OutputPHGenFitTrack(
@@ -686,7 +645,7 @@ int PHGenFitTrkProp::OutputPHGenFitTrack(
 
   for (TrkrDefs::cluskey cluster_key : gftrk_iter->second->get_cluster_keys())
     {
-      if(Verbosity() > 10) cout << " track id: " << phtrk_iter->first <<  " adding clusterkey " << cluster_key << endl;
+      if(Verbosity() > 10) std::cout << " track id: " << phtrk_iter->first <<  " adding clusterkey " << cluster_key << std::endl;
       _gftrk_hitkey_map.insert(std::make_pair(cluster_key, phtrk_iter->first));
       track->insert_cluster_key(cluster_key);
     }
@@ -713,7 +672,7 @@ int PHGenFitTrkProp::OutputPHGenFitTrack(
       n_intt++;
       if (n_intt > 4)
       {
-        cout << PHWHERE << " Can not have more than 4 INTT layers, quit!" << endl;
+        std::cout << PHWHERE << " Can not have more than 4 INTT layers, quit!" << std::endl;
         exit(1);
       }
 
@@ -730,11 +689,11 @@ int PHGenFitTrkProp::OutputPHGenFitTrack(
 
   if (Verbosity() > 10)
   {
-    cout << "Output propagared track " << track->get_id() << " vertex " << track->get_vertex_id()<< " quality = " << track->get_quality()
+    std::cout << "Output propagared track " << track->get_id() << " vertex " << track->get_vertex_id()<< " quality = " << track->get_quality()
       << " clusters: mvtx " << n_maps << " intt " << n_intt << " tpc  " << n_tpc
-      << endl;
-    cout << "px = " << track->get_px() << " py = " << track->get_py()
-      << " pz = " << track->get_pz() << endl;
+      << std::endl;
+    std::cout << "px = " << track->get_px() << " py = " << track->get_py()
+      << " pz = " << track->get_pz() << std::endl;
   }
 
   if (Verbosity() >= 1) _t_output_io->stop();
@@ -789,11 +748,11 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
     }
   }
 
-  if(Verbosity() > 10) cout << PHWHERE << "Converting SvtxTrack to PHGenFit track: track ID " << svtxtrack->get_id()
+  if(Verbosity() > 10) std::cout << PHWHERE << "Converting SvtxTrack to PHGenFit track: track ID " << svtxtrack->get_id()
        << " track z " << svtxtrack->get_z()
        << " vertex ID " << svtxtrack->get_vertex_id()
        << " vertex z " << _vertex[svtxtrack->get_vertex_id()][2]
-       << endl;
+       << std::endl;
   //svtxtrack->identify();
 
   genfit::AbsTrackRep* rep = new genfit::RKTrackRep(_primary_pid_guess);
@@ -807,14 +766,14 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
 
     TrkrDefs::cluskey clusterkey = *hit_iter;
     TrkrCluster *cluster = _cluster_map->findCluster(clusterkey);
-    float r = sqrt(
+    float r = std::sqrt(
        cluster->getPosition(0) * cluster->getPosition(0) +
        cluster->getPosition(1) * cluster->getPosition(1));
     m_r_clusterID.insert(std::pair<float, TrkrDefs::cluskey>(r, clusterkey));
     if (Verbosity() >= 10){
-    cout << PHWHERE << " inserted r " << r << " clusterkey " << clusterkey
+    std::cout << PHWHERE << " inserted r " << r << " clusterkey " << clusterkey
    << " layer: " << (float)TrkrDefs::getLayer(clusterkey)
-   <<  endl;
+   <<  std::endl;
     }
   }
 
@@ -854,7 +813,7 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
 
     if (meas)
       {
-  //cout << "   add meas with cluster key " << meas->get_cluster_key() << endl;
+  //cout << "   add meas with cluster key " << meas->get_cluster_key() << std::endl;
   measurements.push_back(meas);
       }
   }
@@ -910,20 +869,20 @@ int PHGenFitTrkProp::TrackPropPatRec(
              const bool use_fitted_state_once)
 {
 #ifdef _DEBUG_
-  cout
+  std::cout
       << __LINE__
       << " TrackPropPatRec"
       << " : init_layer: " << init_layer
       << " : end_layer: " << end_layer
       << " : use_fitted_state_once: " << use_fitted_state_once
-      << endl;
+      << std::endl;
   #endif
 
   std::shared_ptr<PHGenFit::Track>& track = track_iter->second;
-  if(Verbosity() > 10) cout << endl << PHWHERE << " Entering TrackPropPatRec for track with vertex ID " << ivert << endl;
+  if(Verbosity() > 10) std::cout << std::endl << PHWHERE << " Entering TrackPropPatRec for track with vertex ID " << ivert << std::endl;
   if(ivert >= _vertex.size())
     {
-      cout << PHWHERE << " WARNING: vertex ID out of range, something wrong, quit! " << endl;
+      std::cout << PHWHERE << " WARNING: vertex ID out of range, something wrong, quit! " << std::endl;
       return Fun4AllReturnCodes::ABORTRUN;
     }
 
@@ -983,7 +942,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     {
       if (Verbosity() > 1)
       {
-        LogWarning("consecutive_missing_layer > ") << _max_consecutive_missing_layer << endl;
+        LogWarning("consecutive_missing_layer > ") << _max_consecutive_missing_layer << std::endl;
       }
       if (track->get_cluster_keys().size() >= _min_good_track_hits)
         return 0;
@@ -1005,10 +964,10 @@ int PHGenFitTrkProp::TrackPropPatRec(
 #ifdef _DEBUG_
     {
       unsigned int tempIdx = extrapolate_base_TP_id >= 0 ? extrapolate_base_TP_id : extrapolate_base_TP_id + track->get_cluster_keys().size();
-      cout
+      std::cout
           << __LINE__
           << " tempIdx: " << tempIdx
-          << endl;
+          << std::endl;
       // tempIdx is unsigned int, checking for >=0 is meaningless
       if (tempIdx < track->get_cluster_keys().size())
       {
@@ -1016,14 +975,14 @@ int PHGenFitTrkProp::TrackPropPatRec(
         //SvtxCluster* extrapolate_base_cluster = _cluster_map->get(extrapolate_base_cluster_id);
   TrkrCluster* extrapolate_base_cluster = _cluster_map->findCluster(extrapolate_base_cluster_id);
   int from_layer = TrkrDefs::getLayer(extrapolate_base_cluster_id);
-        cout
+        std::cout
             << __LINE__
             << ": Target layer: { " << layer
             << ", " << layer_r
             << "} : From layer: { " << from_layer
-            << ", " << sqrt(extrapolate_base_cluster->getX() * extrapolate_base_cluster->getX() + extrapolate_base_cluster->getY() * extrapolate_base_cluster->getY())
+            << ", " << std::sqrt(extrapolate_base_cluster->getX() * extrapolate_base_cluster->getX() + extrapolate_base_cluster->getY() * extrapolate_base_cluster->getY())
             << "} : ID: " << extrapolate_base_cluster_id
-            << endl;
+            << std::endl;
       }
     }
 #endif
@@ -1079,7 +1038,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     // Need to use the correct vertex position for this track as well as for the theta-phi map.
 
     TVector3 pos = state->getPos();
-    if(Verbosity() > 10) cout << PHWHERE << " pos z " << pos.Z() << " _vertex z " << _vertex[ivert][2] << endl;
+    if(Verbosity() > 10) std::cout << PHWHERE << " pos z " << pos.Z() << " _vertex z " << _vertex[ivert][2] << std::endl;
     pos.SetXYZ(
         pos.X() - _vertex[ivert][0],
         pos.Y() - _vertex[ivert][1],
@@ -1107,8 +1066,8 @@ int PHGenFitTrkProp::TrackPropPatRec(
     #else
     TMatrixDSym cov = state->get6DCov();
 
-    float phi_window = _search_wins_phi[layer] * sqrt(cov[0][0] + cov[1][1] + cov[0][1] + cov[1][0]) / pos.Perp();
-    float theta_window = _search_wins_theta[layer] * sqrt(cov[2][2]) / pos.Perp();
+    float phi_window = _search_wins_phi[layer] * std::sqrt(cov[0][0] + cov[1][1] + cov[0][1] + cov[1][0]) / pos.Perp();
+    float theta_window = _search_wins_theta[layer] * std::sqrt(cov[2][2]) / pos.Perp();
 
     if( layer >= _firstlayer_maps && layer < _firstlayer_maps + _nlayers_maps )
     {
@@ -1136,7 +1095,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     #endif
 
     #ifdef _DEBUG_
-    cout << __LINE__ << ": ";
+    std::cout << __LINE__ << ": ";
     printf("layer: %u: r: %f: phi: %f +- %f; theta: %f +- %f\n",
       layer, pos.Perp(),
       phi_center, phi_window,
@@ -1149,7 +1108,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     if (Verbosity() >= 1) _t_search_clusters->stop();
 
     #ifdef _DEBUG_
-    cout << __LINE__ << ": new_cluster_keys size: " << new_cluster_keys.size() << std::endl;
+    std::cout << __LINE__ << ": new_cluster_keys size: " << new_cluster_keys.size() << std::endl;
     #endif
 
     std::vector<PHGenFit::Measurement*> measurements;
@@ -1167,10 +1126,10 @@ int PHGenFitTrkProp::TrackPropPatRec(
       if (meas)
         measurements.push_back(meas);
     }
-    std::map<double, shared_ptr<PHGenFit::Track> > incr_chi2s_new_tracks;
+    std::map<double, std::shared_ptr<PHGenFit::Track> > incr_chi2s_new_tracks;
 
     #ifdef _DEBUG_
-    cout << __LINE__ << ": measurements.size(): " << measurements.size() << endl;
+    std::cout << __LINE__ << ": measurements.size(): " << measurements.size() << std::endl;
     #endif
 
     if (Verbosity() >= 1) _t_track_propagation->restart();
@@ -1180,7 +1139,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     if (Verbosity() >= 1) _t_track_propagation->stop();
 
     #ifdef _DEBUG_
-    cout << __LINE__ << ": incr_chi2s_new_tracks.size(): " << incr_chi2s_new_tracks.size() << endl;
+    std::cout << __LINE__ << ": incr_chi2s_new_tracks.size(): " << incr_chi2s_new_tracks.size() << std::endl;
     #endif
 
     PHGenFitTrkProp::TrackQuality tq(track_iter->first);
@@ -1194,12 +1153,12 @@ int PHGenFitTrkProp::TrackPropPatRec(
       {
 
         #ifdef _DEBUG_
-        cout
+        std::cout
           << __LINE__
-          << ": iPHGenFitTrack: " << iPHGenFitTrack << endl
-          << ": First accepted IncrChi2: " << iter->first << endl
+          << ": iPHGenFitTrack: " << iPHGenFitTrack << std::endl
+          << ": First accepted IncrChi2: " << iter->first << std::endl
           << "; before update: " << track->get_cluster_keys().back()
-          << endl;
+          << std::endl;
         #endif
 
         track_iter->first.nhits = tq.nhits + 1;
@@ -1216,17 +1175,17 @@ int PHGenFitTrkProp::TrackPropPatRec(
         extrapolate_base_TP_id = -1;
 
         #ifdef _DEBUG_
-        cout
+        std::cout
           << __LINE__
           << ": after update: " << track->get_cluster_keys().back()
-          << endl;
+          << std::endl;
 
         fout_chi2
           << _event << "\t"
           << iPHGenFitTrack << "\t"
           << layer << "\t "
           << iter->first
-          << endl;
+          << std::endl;
         #endif
       }
     }
@@ -1268,7 +1227,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     }
 
     #ifdef _DEBUG_
-    cout<<__LINE__<<": updateOneMeasurementKalman:"<<endl;
+    std::cout<<__LINE__<<": updateOneMeasurementKalman:"<<endl;
     std::cout<<"iPHGenFitTrack: "<<iPHGenFitTrack
       <<", layer: "<<layer
       <<", #meas: "<<measurements.size()
@@ -1285,10 +1244,10 @@ int PHGenFitTrkProp::TrackPropPatRec(
   }
 
   #ifdef _DEBUG_
-  cout
+  std::cout
     << __LINE__
     << ": cluster keys size:  " << track->get_cluster_keys().size()
-    << endl;
+    << std::endl;
   #endif
 
   //! Track succesfully propagated and return 0
@@ -1336,7 +1295,7 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement(
       n.RotateZ(geom->get_strip_phi_tilt());
     }
 
-  //double radius = sqrt(cluster->getPosition(0)*cluster->getPosition(0)  + cluster->getPosition(1)*cluster->getPosition(1));
+  //double radius = std::sqrt(cluster->getPosition(0)*cluster->getPosition(0)  + cluster->getPosition(1)*cluster->getPosition(1));
   PHGenFit::Measurement* meas = new PHGenFit::PlanarMeasurement(pos, n,
                 cluster->getRPhiError(), cluster->getZError());
 
@@ -1344,7 +1303,7 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement(
 
 #ifdef _DEBUG_
   int layer_out = TrkrDefs::getLayer(cluster->getClusKey());
-  cout
+  std::cout
       << __LINE__
       << ": ID: " << cluster->getClusKey()
       << ": layer: " << layer_out
@@ -1352,12 +1311,13 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement(
       << ": n: {" << n.X() << ", " << n.Y() << ", " << n.Z() << "}"
       << ": r*phi_error: " << cluster->getRPhiError()
       << ": z error: " << cluster->getZError()
-      << endl;
+      << std::endl;
 #endif
 
   return meas;
 }
 
+//_____________________________________________________________________________
 int PHGenFitTrkProp::BuildLayerZPhiHitMap(unsigned int ivert)
 {
   // make this map for each collision vertex
@@ -1365,53 +1325,25 @@ int PHGenFitTrkProp::BuildLayerZPhiHitMap(unsigned int ivert)
 
   TrkrClusterContainer::ConstRange clusrange = _cluster_map->getClusters();
   for(TrkrClusterContainer::ConstIterator clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
-    {
-      TrkrCluster *cluster = clusiter->second;
-      TrkrDefs::cluskey cluskey = clusiter->first;
+  {
+    TrkrCluster *cluster = clusiter->second;
+    TrkrDefs::cluskey cluskey = clusiter->first;
 
-      // This z-phi map relative to the collision vertex includes all clusters,
-      // we do not know whch clusters belong to which vertices yet
-      // make a map for every vertex?
+    // This z-phi map relative to the collision vertex includes all clusters,
+    // we do not know whch clusters belong to which vertices yet
+    // make a map for every vertex?
 
-      unsigned int layer = TrkrDefs::getLayer(cluskey);
-      float x = cluster->getPosition(0) - _vertex[ivert][0];
-      float y = cluster->getPosition(1) - _vertex[ivert][1];
-      float z = cluster->getPosition(2) - _vertex[ivert][2];
+    unsigned int layer = TrkrDefs::getLayer(cluskey);
+    float x = cluster->getPosition(0) - _vertex[ivert][0];
+    float y = cluster->getPosition(1) - _vertex[ivert][1];
+    float z = cluster->getPosition(2) - _vertex[ivert][2];
 
-      float phi = atan2(y, x);
-      float r = sqrt(x * x + y * y);
-      float theta = atan2(r, z);
-
-#ifdef _DEBUG_
-//		//float rphi = r*phi;
-//		std::cout
-//		<< __LINE__
-//		<<": ID: " << cluster->get_id()
-//		<<": layer: "<<cluster->get_layer()
-//		<<", r: "<<r
-//		<<", z: "<<z
-//		<<", phi: "<<phi
-//		<<", theta: "<<theta
-//		<<endl;
-#endif
+    float phi = atan2(y, x);
+    float r = std::sqrt(x * x + y * y);
+    float theta = atan2(r, z);
 
     unsigned int idx = encode_cluster_index(layer, theta, phi);
-
-// #ifdef _DEBUG_
-// 			cout
-// 			<<__LINE__<<": "
-// 			<<"{ "
-// 			<<layer <<", "
-// 			<<z <<", "
-// 			<<phi << "} =>"
-// 			<<idx << ": size: "
-// 			<<_layer_thetaID_phiID_clusterID.count(idx)
-// 			<<endl;
-// #endif
-
     this_layer_thetaID_phiID_clusterID.insert(std::make_pair(idx, cluster->getClusKey()));
-    //cout << "BuildLayerPhiZHitmap for ivert "
-    //	 << ivert << " : Inserted pair with  x" << x << " y " << y << " z " << z << " idx " << idx << " cluskey " << cluster->getClusKey() << endl;
   }
 
   _layer_thetaID_phiID_clusterID.push_back(this_layer_thetaID_phiID_clusterID);
@@ -1419,11 +1351,13 @@ int PHGenFitTrkProp::BuildLayerZPhiHitMap(unsigned int ivert)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-std::vector<TrkrDefs::cluskey> PHGenFitTrkProp::SearchHitsNearBy(const unsigned int ivert, const unsigned int layer,
-                                                            const float theta_center, const float phi_center, const float theta_window,
-                                                            const float phi_window)
+//_____________________________________________________________________________
+std::vector<TrkrDefs::cluskey> PHGenFitTrkProp::SearchHitsNearBy(
+  const unsigned int ivert, const unsigned int layer,
+  const float theta_center, const float phi_center, const float theta_window,
+  const float phi_window)
 {
-  if(Verbosity() > 10) cout << "SearchHitsNearBy for ivert = " << ivert << endl;
+  if(Verbosity() > 10) std::cout << "SearchHitsNearBy for ivert = " << ivert << std::endl;
 
   std::vector<TrkrDefs::cluskey> cluster_keys;
 
@@ -1448,59 +1382,51 @@ std::vector<TrkrDefs::cluskey> PHGenFitTrkProp::SearchHitsNearBy(const unsigned 
 
   for (unsigned int iz = lower_z_bin; iz <= upper_z_bin; ++iz)
   {
-    for (unsigned int irphi = lower_phi_bin; irphi <= upper_phi_bin;
-         ++irphi)
+    for (unsigned int irphi = lower_phi_bin; irphi <= upper_phi_bin; ++irphi)
     {
       if (Verbosity() >= 2) _t_search_clusters_encoding->restart();
       unsigned int idx = encode_cluster_index(layer, iz, irphi);
       if (Verbosity() >= 2) _t_search_clusters_encoding->stop();
 
       if(Verbosity() > 10)
-  {
-    if(_layer_thetaID_phiID_clusterID[ivert].count(idx) > 0)
       {
-        cout
-    <<__LINE__<<": "
-    <<"{ "
-    <<layer <<", "
-    <<iz <<", "
-    <<irphi << "} =>"
-    <<idx << ": size: "
-    <<_layer_thetaID_phiID_clusterID[ivert].count(idx)
-    <<endl;
+        if(_layer_thetaID_phiID_clusterID[ivert].count(idx) > 0)
+        {
+          std::cout
+            <<__LINE__<<": "
+            <<"{ "
+            <<layer <<", "
+            <<iz <<", "
+            <<irphi << "} =>"
+            <<idx << ": size: "
+            <<_layer_thetaID_phiID_clusterID[ivert].count(idx)
+            << std::endl;
+        }
       }
-  }
 
       if (Verbosity() >= 2) _t_search_clusters_map_iter->restart();
-      for (auto iter = _layer_thetaID_phiID_clusterID[ivert].lower_bound(idx);
-      iter != _layer_thetaID_phiID_clusterID[ivert].upper_bound(idx);
-      ++iter)
-  {
-      if(Verbosity() > 10) cout << "      adding cluster with key " << iter->second << endl;
-      cluster_keys.push_back(iter->second);
-    }
+      for (auto iter = _layer_thetaID_phiID_clusterID[ivert].lower_bound(idx); iter != _layer_thetaID_phiID_clusterID[ivert].upper_bound(idx); ++iter)
+      {
+        if(Verbosity() > 10) std::cout << "      adding cluster with key " << iter->second << std::endl;
+        cluster_keys.push_back(iter->second);
+      }
+
       if (Verbosity() >= 2) _t_search_clusters_map_iter->stop();
     }
-    }
+  }
 
-      if(Verbosity() > 10)
+  if(Verbosity() > 10)
   {
-      //	std::cout
-      //			<<__LINE__<<": "
-      //			<<"layer: "<<layer
-      //			<<": "<<phi_center <<" +- "<<phi_window
-      //			<<": "<<theta_center <<" +- "<<theta_window
-      //			<<endl;
-      std::cout
-  << __LINE__ << ": "
-  << "layer: " << layer
-  << ", rphi: {" << lower_phi_bin
-  << ", " << upper_phi_bin
-  << "}, z: {" << lower_z_bin
-  << ", " << upper_z_bin
-  << "}, found #clusters: " << cluster_keys.size()
-  << endl;
-    }
+    std::cout
+      << __LINE__ << ": "
+      << "layer: " << layer
+      << ", rphi: {" << lower_phi_bin
+      << ", " << upper_phi_bin
+      << "}, z: {" << lower_z_bin
+      << ", " << upper_z_bin
+      << "}, found #clusters: " << cluster_keys.size()
+      << std::endl;
+  }
 
   return cluster_keys;
 }
@@ -1541,25 +1467,24 @@ unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer,
   return encode_cluster_index(layer, itheta, irphi);
 }
 
-unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer,
-                                                   const unsigned int iz, const unsigned int irphi)
+//_______________________________________________________________________________
+unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer, const unsigned int iz, const unsigned int irphi)
 {
   if (layer >= 128)
   {
-    LogError("layer >= 128: ") << layer << endl;
-    ;
+    LogError("layer >= 128: ") << layer << std::endl;
     return UINT_MAX;
   }
 
   if (iz >= 2048)
   {
-    LogError("iz >= 2048: ") << iz << endl;
+    LogError("iz >= 2048: ") << iz << std::endl;
     return UINT_MAX;
   }
 
   if (irphi >= 16384)
   {
-    LogError("irphi >= 16384: ") << irphi << endl;
+    LogError("irphi >= 16384: ") << irphi << std::endl;
     return UINT_MAX;
   }
 
@@ -1572,107 +1497,70 @@ unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer,
   return index;
 }
 
+//_______________________________________________________________________________
 int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
 {
-  PHG4CylinderCellGeomContainer* cellgeos = findNode::getClass<
-      PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
-  PHG4CylinderGeomContainer* laddergeos = findNode::getClass<
-      PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_INTT");
-  PHG4CylinderGeomContainer* mapsladdergeos = findNode::getClass<
-      PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_MVTX");
+  PHG4CylinderCellGeomContainer* cellgeos = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
+  PHG4CylinderGeomContainer* laddergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_INTT");
+  PHG4CylinderGeomContainer* mapsladdergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_MVTX");
 
-  map<float, int> radius_layer_map;
+  std::map<float, int> radius_layer_map;
 
   _radii_all.assign(_nlayers_all, 0.0);
   _layer_ilayer_map_all.clear();
   if (cellgeos)
   {
-    PHG4CylinderCellGeomContainer::ConstRange layerrange =
-        cellgeos->get_begin_end();
-    for (PHG4CylinderCellGeomContainer::ConstIterator layeriter =
-             layerrange.first;
-         layeriter != layerrange.second; ++layeriter)
-    {
-      radius_layer_map.insert(
-          make_pair(layeriter->second->get_radius(),
-                    layeriter->second->get_layer()));
-    }
+    const auto layerrange = cellgeos->get_begin_end();
+    for( auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
   if (laddergeos)
   {
-    PHG4CylinderGeomContainer::ConstRange layerrange =
-        laddergeos->get_begin_end();
-    for (PHG4CylinderGeomContainer::ConstIterator layeriter =
-             layerrange.first;
-         layeriter != layerrange.second; ++layeriter)
-    {
-      radius_layer_map.insert(
-          make_pair(layeriter->second->get_radius(),
-                    layeriter->second->get_layer()));
-    }
+    const auto layerrange = laddergeos->get_begin_end();
+    for( auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
   if (mapsladdergeos)
   {
-    PHG4CylinderGeomContainer::ConstRange layerrange =
-        mapsladdergeos->get_begin_end();
-    for (PHG4CylinderGeomContainer::ConstIterator layeriter =
-             layerrange.first;
-         layeriter != layerrange.second; ++layeriter)
-    {
-      radius_layer_map.insert(
-          make_pair(layeriter->second->get_radius(),
-                    layeriter->second->get_layer()));
-    }
+    const auto layerrange = mapsladdergeos->get_begin_end();
+    for( auto layeriter = layerrange.first; layeriter != layerrange.second; ++layeriter)
+    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
-  for (map<float, int>::iterator iter = radius_layer_map.begin();
-       iter != radius_layer_map.end(); ++iter)
-  {
-    _layer_ilayer_map_all.insert(make_pair(iter->second, _layer_ilayer_map_all.size()));
-  }
+  // map layer id to index
+  for( auto iter = radius_layer_map.begin(); iter != radius_layer_map.end(); ++iter)
+  { _layer_ilayer_map_all.insert( std::make_pair(iter->second, _layer_ilayer_map_all.size())); }
 
   // now we extract the information from the cellgeos first
-  if (cellgeos)
+  if(cellgeos)
   {
-    PHG4CylinderCellGeomContainer::ConstRange begin_end =
-        cellgeos->get_begin_end();
-    PHG4CylinderCellGeomContainer::ConstIterator miter = begin_end.first;
-    for (; miter != begin_end.second; miter++)
+    const auto begin_end = cellgeos->get_begin_end();
+    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
     {
-      PHG4CylinderCellGeom* geo = miter->second;
-
-      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] =
-          geo->get_radius() + 0.5 * geo->get_thickness();
+      auto geo = iter->second;
+      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius() + 0.5 * geo->get_thickness();
     }
   }
 
-  if (laddergeos)
+  if(laddergeos)
   {
-    PHG4CylinderGeomContainer::ConstRange begin_end =
-        laddergeos->get_begin_end();
-    PHG4CylinderGeomContainer::ConstIterator miter = begin_end.first;
-    for (; miter != begin_end.second; miter++)
+    const auto begin_end = laddergeos->get_begin_end();
+    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
     {
-      PHG4CylinderGeom* geo = miter->second;
-
-      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] =
-          geo->get_radius() + 0.5 * geo->get_thickness();
+      auto geo = iter->second;
+      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius() + 0.5 * geo->get_thickness();
     }
   }
 
-  if (mapsladdergeos)
+  if( mapsladdergeos)
   {
-    PHG4CylinderGeomContainer::ConstRange begin_end =
-        mapsladdergeos->get_begin_end();
-    PHG4CylinderGeomContainer::ConstIterator miter = begin_end.first;
-    for (; miter != begin_end.second; miter++)
+    const auto begin_end = mapsladdergeos->get_begin_end();
+    for( auto iter = begin_end.first; iter != begin_end.second; iter++)
     {
-      PHG4CylinderGeom* geo = miter->second;
-
-      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] =
-          geo->get_radius();
+      auto geo = iter->second;
+      _radii_all[_layer_ilayer_map_all[geo->get_layer()]] = geo->get_radius();
     }
   }
   return Fun4AllReturnCodes::EVENT_OK;
