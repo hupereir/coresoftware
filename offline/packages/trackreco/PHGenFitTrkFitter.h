@@ -10,11 +10,11 @@
 
 #include <fun4all/SubsysReco.h>
 
-#include <TMatrixFfwd.h>         // for TMatrixF
-#include <TVector3.h>            // for TVector3
+#include <TMatrixFfwd.h>
+#include <TVector3.h>
 
-#include <cstddef>              // for NULL
-#include <memory>                // for shared_ptr
+#include <cstddef>
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -23,20 +23,20 @@ class TClonesArray;
 
 namespace PHGenFit
 {
-class Track;
+  class Track;
 } /* namespace PHGenFit */
 
 namespace genfit
 {
-class GFRaveVertex;
-class GFRaveVertexFactory;
-class Track;
+  class GFRaveVertex;
+  class GFRaveVertexFactory;
+  class Track;
 } /* namespace genfit */
 
 class SvtxTrack;
 namespace PHGenFit
 {
-class Fitter;
+  class Fitter;
 } /* namespace PHGenFit */
 
 class SvtxTrackMap;
@@ -52,10 +52,10 @@ class PHGenFitTrkFitter : public SubsysReco
 {
  public:
   /*!
-	 * OverwriteOriginalNode: default mode, overwrite original node
-	 * MakeNewNode: Output extra new refit nodes
-	 * DebugMode: overwrite original node also make extra new refit nodes
-	 */
+   * OverwriteOriginalNode: default mode, overwrite original node
+   * MakeNewNode: Output extra new refit nodes
+   * DebugMode: overwrite original node also make extra new refit nodes
+   */
   enum OutPutMode
   {
     MakeNewNode,
@@ -77,20 +77,17 @@ class PHGenFitTrkFitter : public SubsysReco
   //! Default constructor
   PHGenFitTrkFitter(const std::string& name = "PHGenFitTrkFitter");
 
-  //! dtor
-  ~PHGenFitTrkFitter();
-
   //!Initialization, called for initialization
-  int Init(PHCompositeNode*);
+  int Init(PHCompositeNode*) override;
 
   //!Initialization Run, called for initialization of a run
-  int InitRun(PHCompositeNode*);
+  int InitRun(PHCompositeNode*) override;
 
   //!Process Event, called for each event
-  int process_event(PHCompositeNode*);
+  int process_event(PHCompositeNode*) override;
 
   //!End, write and close files
-  int End(PHCompositeNode*);
+  int End(PHCompositeNode*) override;
 
   //Flags of different kinds of outputs
   enum Flag
@@ -112,53 +109,35 @@ class PHGenFitTrkFitter : public SubsysReco
   //! For evalution
   //! Change eval output filename
   void set_eval_filename(const char* file)
-  {
-    if (file)
-      _eval_outname = file;
-  }
+  { if (file) _eval_outname = file; }
+
   std::string get_eval_filename() const
-  {
-    return _eval_outname;
-  }
+  { return _eval_outname; }
 
   void fill_eval_tree(PHCompositeNode*);
   void init_eval_tree();
   void reset_eval_variables();
 
   bool is_do_eval() const
-  {
-    return _do_eval;
-  }
+  { return _do_eval; }
 
   void set_do_eval(bool doEval)
-  {
-    _do_eval = doEval;
-  }
+  { _do_eval = doEval; }
 
   bool is_do_evt_display() const
-  {
-    return _do_evt_display;
-  }
+  { return _do_evt_display; }
 
   void set_do_evt_display(bool doEvtDisplay)
-  {
-    _do_evt_display = doEvtDisplay;
-  }
+  { _do_evt_display = doEvtDisplay; }
 
   const std::string& get_vertexing_method() const
-  {
-    return _vertexing_method;
-  }
+  { return _vertexing_method; }
 
   void set_vertexing_method(const std::string& vertexingMethod)
-  {
-    _vertexing_method = vertexingMethod;
-  }
+  { _vertexing_method = vertexingMethod; }
 
   bool is_fit_primary_tracks() const
-  {
-    return _fit_primary_tracks;
-  }
+  { return _fit_primary_tracks; }
 
   void set_fit_primary_tracks(bool fitPrimaryTracks)
   {
@@ -171,8 +150,8 @@ class PHGenFitTrkFitter : public SubsysReco
   }
 
   /*!
-	 * set output mode, default is OverwriteOriginalNode
-	 */
+   * set output mode, default is OverwriteOriginalNode
+   */
   void set_output_mode(OutPutMode outputMode)
   {
     _output_mode = outputMode;
@@ -239,9 +218,10 @@ class PHGenFitTrkFitter : public SubsysReco
     _vertex_min_ndf = vertexMinPT;
   }
 
- private:
+  private:
+
   //! Event counter
-  int _event;
+  int _event = 0;
 
   //! Get all the nodes
   int GetNodes(PHCompositeNode*);
@@ -250,10 +230,10 @@ class PHGenFitTrkFitter : public SubsysReco
   int CreateNodes(PHCompositeNode*);
 
   /*
-	 * fit track with SvtxTrack as input seed.
-	 * \param intrack Input SvtxTrack
-	 * \param invertex Input Vertex, if fit track as a primary vertex
-	 */
+   * fit track with SvtxTrack as input seed.
+   * \param intrack Input SvtxTrack
+   * \param invertex Input Vertex, if fit track as a primary vertex
+   */
   std::shared_ptr<PHGenFit::Track> ReFitTrack(PHCompositeNode*, const SvtxTrack* intrack, const SvtxVertex* invertex = NULL);
 
   //! Make SvtxTrack from PHGenFit::Track and SvtxTrack
@@ -288,9 +268,9 @@ class PHGenFitTrkFitter : public SubsysReco
       TMatrixF& cov_out) const;
 
   /*!
-	 * Get 3D Rotation Matrix that rotates frame (x,y,z) to (x',y',z')
-	 * Default rotate local to global, or rotate vector in global to local representation
-	 */
+   * Get 3D Rotation Matrix that rotates frame (x,y,z) to (x',y',z')
+   * Default rotate local to global, or rotate vector in global to local representation
+   */
   TMatrixF get_rotation_matrix(
       const TVector3 x,
       const TVector3 y,
@@ -300,70 +280,68 @@ class PHGenFitTrkFitter : public SubsysReco
       const TVector3 zp = TVector3(0., 0., 1.)) const;
 
   //!flags
-  unsigned int _flags;
+  unsigned int _flags = NONE;
 
   //bool _make_separate_nodes;
-  OutPutMode _output_mode;
+  OutPutMode _output_mode = PHGenFitTrkFitter::MakeNewNode;
 
-  bool _over_write_svtxtrackmap;
+  bool _over_write_svtxtrackmap = true;
 
-  bool _fit_primary_tracks;
+  bool _fit_primary_tracks = false;
 
   //!
-  bool _use_truth_vertex;
+  bool _use_truth_vertex = false;
 
-  PHGenFit::Fitter* _fitter;
+  std::unique_ptr<PHGenFit::Fitter> _fitter;
 
   //! KalmanFitterRefTrack, KalmanFitter, DafSimple, DafRef
-  std::string _track_fitting_alg_name;
+  std::string _track_fitting_alg_name = "DafRef";
 
-  int _primary_pid_guess;
-  double _fit_min_pT;
-  double _vertex_min_ndf;
+  int _primary_pid_guess = 211;
+  double _fit_min_pT = 0.1;
+  double _vertex_min_ndf = 20;
 
-  genfit::GFRaveVertexFactory* _vertex_finder;
+  std::unique_ptr<genfit::GFRaveVertexFactory> _vertex_finder;
 
   //! https://rave.hepforge.org/trac/wiki/RaveMethods
-  std::string _vertexing_method;
-
-  //PHRaveVertexFactory* _vertex_finder;
+  std::string _vertexing_method = "avr-smoothing:1-minweight:0.5-primcut:9-seccut:9";
 
   //! Input Node pointers
-  PHG4TruthInfoContainer* _truth_container;
-  TrkrClusterContainer* _clustermap;
-  SvtxTrackMap* _trackmap;
-  SvtxVertexMap* _vertexmap;
+  PHG4TruthInfoContainer* _truth_container = nullptr;
+  TrkrClusterContainer* _clustermap = nullptr;
+  SvtxTrackMap* _trackmap = nullptr;
+  SvtxVertexMap* _vertexmap = nullptr;
 
   //! Output Node pointers
-  SvtxTrackMap* _trackmap_refit;
-  SvtxTrackMap* _primary_trackmap;
-  SvtxVertexMap* _vertexmap_refit;
+  SvtxTrackMap* _trackmap_refit = nullptr;
+  SvtxTrackMap* _primary_trackmap = nullptr;
+  SvtxVertexMap* _vertexmap_refit = nullptr;
 
   //! Evaluation
   //! switch eval out
-  bool _do_eval;
+  bool _do_eval = false;
 
   //! eval output filename
-  std::string _eval_outname;
+  std::string _eval_outname = "PHGenFitTrkFitter_eval.root";
 
-  TTree* _eval_tree;
-  TClonesArray* _tca_particlemap;
-  TClonesArray* _tca_vtxmap;
-  TClonesArray* _tca_trackmap;
-  TClonesArray* _tca_vertexmap;
-  TClonesArray* _tca_trackmap_refit;
-  TClonesArray* _tca_primtrackmap;
-  TClonesArray* _tca_vertexmap_refit;
+  TTree* _eval_tree = nullptr;
+  TClonesArray* _tca_particlemap = nullptr;
+  TClonesArray* _tca_vtxmap = nullptr;
+  TClonesArray* _tca_trackmap = nullptr;
+  TClonesArray* _tca_vertexmap = nullptr;
+  TClonesArray* _tca_trackmap_refit = nullptr;
+  TClonesArray* _tca_primtrackmap = nullptr;
+  TClonesArray* _tca_vertexmap_refit = nullptr;
 
-  TTree* _cluster_eval_tree;
-  float _cluster_eval_tree_x;
-  float _cluster_eval_tree_y;
-  float _cluster_eval_tree_z;
-  float _cluster_eval_tree_gx;
-  float _cluster_eval_tree_gy;
-  float _cluster_eval_tree_gz;
+  TTree* _cluster_eval_tree = nullptr;
+  float _cluster_eval_tree_x = 0;
+  float _cluster_eval_tree_y = 0;
+  float _cluster_eval_tree_z = 0;
+  float _cluster_eval_tree_gx = 0;
+  float _cluster_eval_tree_gy = 0;
+  float _cluster_eval_tree_gz = 0;
 
-  bool _do_evt_display;
+  bool _do_evt_display = false;
 
   std::map<unsigned int, unsigned int> _rave_vertex_gf_track_map;
 
