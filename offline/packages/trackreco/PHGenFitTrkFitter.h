@@ -234,50 +234,52 @@ class PHGenFitTrkFitter : public SubsysReco
    * \param intrack Input SvtxTrack
    * \param invertex Input Vertex, if fit track as a primary vertex
    */
-  std::shared_ptr<PHGenFit::Track> ReFitTrack(PHCompositeNode*, const SvtxTrack* intrack, const SvtxVertex* invertex = NULL);
+  std::shared_ptr<PHGenFit::Track> ReFitTrack(PHCompositeNode*, const SvtxTrack* intrack, const SvtxVertex* invertex = nullptr);
 
   //! Make SvtxTrack from PHGenFit::Track and SvtxTrack
-  std::shared_ptr<SvtxTrack> MakeSvtxTrack(const SvtxTrack* svtxtrack, const std::shared_ptr<PHGenFit::Track>& genfit_track, const SvtxVertex* vertex = NULL);
+  std::shared_ptr<SvtxTrack> MakeSvtxTrack(const SvtxTrack* svtxtrack, const std::shared_ptr<PHGenFit::Track>& genfit_track, const SvtxVertex* vertex = nullptr);
 
   //! Fill SvtxVertexMap from GFRaveVertexes and Tracks
   bool FillSvtxVertexMap(
-      const std::vector<genfit::GFRaveVertex*>& rave_vertices,
-      const std::vector<genfit::Track*>& gf_tracks);
+    const std::vector<genfit::GFRaveVertex*>& rave_vertices,
+    const std::vector<genfit::Track*>& gf_tracks);
 
+  // TODO: these should only be defined as regular methods in the cc file
+  // since they do not use any class member
   bool pos_cov_uvn_to_rz(
-      const TVector3& u,
-      const TVector3& v,
-      const TVector3& n,
-      const TMatrixF& pos_in,
-      const TMatrixF& cov_in,
-      TMatrixF& pos_out,
-      TMatrixF& cov_out) const;
+    const TVector3& u,
+    const TVector3& v,
+    const TVector3& n,
+    const TMatrixF& pos_in,
+    const TMatrixF& cov_in,
+    TMatrixF& pos_out,
+    TMatrixF& cov_out) const;
 
   bool get_vertex_error_uvn(
-      const TVector3& u,
-      const TVector3& v,
-      const TVector3& n,
-      const TMatrixF& cov_in,
-      TMatrixF& cov_out) const;
+    const TVector3& u,
+    const TVector3& v,
+    const TVector3& n,
+    const TMatrixF& cov_in,
+    TMatrixF& cov_out) const;
 
   bool pos_cov_XYZ_to_RZ(
-      const TVector3& n,
-      const TMatrixF& pos_in,
-      const TMatrixF& cov_in,
-      TMatrixF& pos_out,
-      TMatrixF& cov_out) const;
+    const TVector3& n,
+    const TMatrixF& pos_in,
+    const TMatrixF& cov_in,
+    TMatrixF& pos_out,
+    TMatrixF& cov_out) const;
 
   /*!
    * Get 3D Rotation Matrix that rotates frame (x,y,z) to (x',y',z')
    * Default rotate local to global, or rotate vector in global to local representation
    */
   TMatrixF get_rotation_matrix(
-      const TVector3 x,
-      const TVector3 y,
-      const TVector3 z,
-      const TVector3 xp = TVector3(1., 0., 0.),
-      const TVector3 yp = TVector3(0., 1., 0.),
-      const TVector3 zp = TVector3(0., 0., 1.)) const;
+    const TVector3 x,
+    const TVector3 y,
+    const TVector3 z,
+    const TVector3 xp = TVector3(1., 0., 0.),
+    const TVector3 yp = TVector3(0., 1., 0.),
+    const TVector3 zp = TVector3(0., 0., 1.)) const;
 
   //!flags
   unsigned int _flags = NONE;
