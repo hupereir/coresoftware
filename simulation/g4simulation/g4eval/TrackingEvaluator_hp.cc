@@ -25,24 +25,24 @@ ClassImp(ClusterContainer)
 namespace
 {
 
-  // square
+  /// square
   template<class T> T square( T x ) { return x*x; }
 
-  // radius
+  /// radius
   template<class T> T get_r( T x, T y ) { return std::sqrt( square(x) + square(y) ); }
 
-  // radius
+  /// radius
   float get_r( PHG4Hit* hit, int i )
   {  return get_r( hit->get_x(i), hit->get_y(i) ); }
 
-  // phi
+  /// phi
   template<class T> T get_phi( T x, T y ) { return std::atan2( y, x ); }
 
-  // phi
+  /// phi
   float get_phi( PHG4Hit* hit, int i )
   {  return get_phi( hit->get_x(i), hit->get_y(i) ); }
 
-  // calculate the average of member function called on all members in collection
+  /// calculate the average of member function called on all members in collection
   template< float (PHG4Hit::*accessor)(int) const>
   float interpolate( std::set<PHG4Hit*> hits, float rextrap )
   {
@@ -76,7 +76,7 @@ namespace
     return ( alpha*rextrap + beta )/denom;
   }
 
-  // create cluster struct from svx cluster
+  /// create cluster struct from svx cluster
   ClusterStruct create_cluster( TrkrDefs::cluskey key, TrkrCluster* cluster )
   {
     ClusterStruct clusterStruct;
@@ -89,7 +89,7 @@ namespace
     return clusterStruct;
   }
 
-  // add track information
+  /// add track information
   void add_trk_information( ClusterStruct& cluster, SvtxTrackState* state )
   {
     cluster._trk_x = state->get_x();
@@ -279,6 +279,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
   {
 
     auto track = trackIter->second;
+    print_track( track );
 
     // loop over clusters
     auto stateIter = track->begin_states();
@@ -289,7 +290,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
       auto cluster = _cluster_map->findCluster( cluster_key );
       if( !cluster )
       {
-        std::cout << "TrackingEvaluator_hp::print_track - unable to find cluster for key " << cluster_key << std::endl;
+        std::cout << "TrackingEvaluator_hp::evaluate_tracks - unable to find cluster for key " << cluster_key << std::endl;
         continue;
       }
 
@@ -340,6 +341,11 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   std::cout << "TrackingEvaluator_hp::print_track - track: " << track << std::endl;
   if( !track ) return;
 
+  // print track position and momentum
+  std::cout << "TrackingEvaluator_hp::print_track - id: " << track->get_id() << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - position: (" << track->get_x() << ", " << track->get_y() << ", " << track->get_z() << ")" << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - momentum: (" << track->get_px() << ", " << track->get_py() << ", " << track->get_pz() << ")" << std::endl;
+
   // loop over cluster keys
   if( _cluster_map )
   {
@@ -362,7 +368,6 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
         << std::endl;
 
     }
-
   }
 
   // loop over track states
@@ -372,11 +377,11 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
     if( !state ) return;
 
     std::cout
-        << "TrackingEvaluator_hp::print_track -"
-        << " state pathLength: " << stateIter->first
-        << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
-        << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
-        << std::endl;
+      << "TrackingEvaluator_hp::print_track -"
+      << " state pathLength: " << stateIter->first
+      << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
+      << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
+      << std::endl;
   }
 
   std::cout << "TrackingEvaluator_hp::print_track - done." << std::endl;
