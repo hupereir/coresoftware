@@ -87,6 +87,9 @@ ofstream fout_chi2("chi2.txt");
 #endif
 
 //___________________________________________
+template< class T > T square( T x ) { return x*x; }
+
+//___________________________________________
 PHGenFitTrkProp::PHGenFitTrkProp(
     const std::string& name,
     unsigned int nlayers_maps,
@@ -339,7 +342,7 @@ int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTra
       std::cout << " trk map size: " << _gftrk_hitkey_map.count(iCluId) << std::endl;
       std::cout << "n: " << n << "#Clu_g = " << iCluId << " ntrack match: "  << _assoc_container->GetTracksFromCluster(cluster_ID).size()
         << " layer: " << (float)TrkrDefs::getLayer(cluster_ID)
-        << " r: " << std::sqrt(_cluster_map->findCluster(cluster_ID)->getX()*_cluster_map->findCluster(cluster_ID)->getX() +_cluster_map->findCluster(cluster_ID)->getY()*_cluster_map->findCluster(cluster_ID)->getY() )
+        << " r: " << std::sqrt( square( _cluster_map->findCluster(cluster_ID)->getX()) + square(_cluster_map->findCluster(cluster_ID)->getY()) )
         << " used: " << n_clu_used
         << std::endl;
       ++n;
@@ -714,18 +717,18 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
        << std::endl;
 
   auto rep = new genfit::RKTrackRep(_primary_pid_guess);
-  std::shared_ptr<PHGenFit::Track> track(
-      new PHGenFit::Track(rep, seed_pos, seed_mom, seed_cov));
+  std::shared_ptr<PHGenFit::Track> track( new PHGenFit::Track(rep, seed_pos, seed_mom, seed_cov));
 
   std::multimap<float, TrkrDefs::cluskey> m_r_clusterID;
   for (auto hit_iter = svtxtrack->begin_cluster_keys(); hit_iter != svtxtrack->end_cluster_keys(); ++hit_iter)
   {
 
-    TrkrDefs::cluskey clusterkey = *hit_iter;
-    TrkrCluster *cluster = _cluster_map->findCluster(clusterkey);
+    auto clusterkey = *hit_iter;
+    auto cluster = _cluster_map->findCluster(clusterkey);
     float r = std::sqrt(
-       cluster->getPosition(0) * cluster->getPosition(0) +
-       cluster->getPosition(1) * cluster->getPosition(1));
+      square( cluster->getPosition(0) ) +
+      square( cluster->getPosition(1) ) );
+
     m_r_clusterID.insert(std::make_pair(r, clusterkey));
     if (Verbosity() >= 10)
     {
@@ -738,9 +741,9 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
   std::vector<PHGenFit::Measurement*> measurements;
   for (auto iter = m_r_clusterID.begin();  iter != m_r_clusterID.end();  ++iter)
   {
-    TrkrDefs::cluskey cluster_key = iter->second;
 
-    TrkrCluster *cluster = _cluster_map->findCluster(cluster_key);
+    auto cluster_key = iter->second;
+    auto cluster = _cluster_map->findCluster(cluster_key);
     ml += TrkrDefs::getLayer(cluster_key);
     if (!cluster)
     {
@@ -767,7 +770,7 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
     }
     dt = time2 - time1;
     if (_analyzing_mode == true)
-      _analyzing_ntuple->Fill(svtxtrack->get_pt(), kappa, d, phi, dzdl, z0, nhit, ml / nhit, rec, dt);
+    { _analyzing_ntuple->Fill(svtxtrack->get_pt(), kappa, d, phi, dzdl, z0, nhit, ml / nhit, rec, dt); }
     return -1;
   }
 
@@ -901,7 +904,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
           << ": Target layer: { " << layer
           << ", " << layer_r
           << "} : From layer: { " << from_layer
-          << ", " << std::sqrt(extrapolate_base_cluster->getX() * extrapolate_base_cluster->getX() + extrapolate_base_cluster->getY() * extrapolate_base_cluster->getY())
+          << ", " << std::sqrt( square(extrapolate_base_cluster->getX()) + square(extrapolate_base_cluster->getY()))
           << "} : ID: " << extrapolate_base_cluster_id
           << std::endl;
       }
@@ -1235,7 +1238,7 @@ int PHGenFitTrkProp::BuildLayerZPhiHitMap(unsigned int ivert)
     float z = cluster->getPosition(2) - _vertex[ivert][2];
 
     float phi = atan2(y, x);
-    float r = std::sqrt(x * x + y * y);
+    float r = std::sqrt( square(x) + square(y) );
     float theta = std::atan2(r, z);
 
     unsigned int idx = encode_cluster_index(layer, theta, phi);
