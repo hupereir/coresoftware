@@ -1096,13 +1096,14 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
     } catch (...) {
 
       if (Verbosity() > 1)
-      { LogWarning("Exrapolation failed!"); }
+      { LogWarning("Failed to get kf fitted state"); }
 
     }
 
     if (!gf_state)
     {
-      if (Verbosity() > 1) LogWarning("Exrapolation failed!");
+      if (Verbosity() > 1)
+      { LogWarning("Failed to get kf fitted state"); }
       continue;
     }
 
@@ -1128,6 +1129,7 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
   if( !_disabled_layers.empty() )
   {
 
+    int id_min = 0;
     for (auto iter = svtx_track->begin_cluster_keys(); iter != svtx_track->end_cluster_keys(); ++iter)
     {
 
@@ -1145,10 +1147,11 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
 
       // find closest state
       float dr_min = -1;
-      int id_min = -1;
 
       // loop over states
-      for ( unsigned int id = 0; id < gftrack->getNumPointsWithMeasurement(); ++id)
+      /* find state closest to cluster
+      this assumes that both clusters and states are sorted along r */
+      for ( unsigned int id = id_min; id < gftrack->getNumPointsWithMeasurement(); ++id)
       {
 
         auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
@@ -1166,7 +1169,7 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
         } catch (...) {
 
           if (Verbosity() > 1)
-          { LogWarning("Exrapolation failed!"); }
+          { LogWarning("Failed to get kf fitted state"); }
 
         }
 
@@ -1183,17 +1186,11 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
 
         } else {
 
-          /* assume measurements are sorted along r,
-          and break as soon as current measurement is further away from cluster as previous
-          */
           break;
 
         }
 
       }
-
-      // check state
-      if( id_min < 0 ) continue;
 
       // extrapolate closest measurement to cluster point
       genfit::MeasuredStateOnPlane gf_state;
