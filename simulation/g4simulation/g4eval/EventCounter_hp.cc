@@ -32,7 +32,7 @@ int EventCounter_hp::InitRun(PHCompositeNode* )
 int EventCounter_hp::process_event(PHCompositeNode* topNode)
 {
   // print event number
-  if( _ievent % 100 == 0 )
+  if( _ievent % 10 == 0 )
   { std::cout << "EventCounter_hp::process_event - Event = " << _ievent << std::endl; }
   ++_ievent;
 
