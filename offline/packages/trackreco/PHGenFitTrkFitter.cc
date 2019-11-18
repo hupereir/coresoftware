@@ -106,8 +106,35 @@
 #define _DEBUG_MODE_ 0
 
 //______________________________________________________
-template< class T >
-T square( T x ) { return x*x; }
+namespace {
+
+  // square
+  template< class T > T square( T x ) { return x*x; }
+
+  // convert gf state to SvtxTrackState_v1
+  SvtxTrackState_v1 create_track_state( float pathlength, const genfit::MeasuredStateOnPlane* gf_state )
+  {
+
+    SvtxTrackState_v1 out( pathlength );
+    out.set_x(gf_state->getPos().x());
+    out.set_y(gf_state->getPos().y());
+    out.set_z(gf_state->getPos().z());
+
+    out.set_px(gf_state->getMom().x());
+    out.set_py(gf_state->getMom().y());
+    out.set_pz(gf_state->getMom().z());
+
+    for (int i = 0; i < 6; i++)
+    {
+      for (int j = i; j < 6; j++)
+      { out.set_error(i, j, gf_state->get6DCov()[i][j]); }
+    }
+
+    return out;
+
+  }
+
+}
 
 //______________________________________________________
 PHGenFitTrkFitter::PHGenFitTrkFitter(const std::string& name)
@@ -1048,28 +1075,29 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
     { out_track->set_error(i, j, cov[i][j]); }
   }
 
-  // todo: here one should also include state vectors for the disabled layers
+  // loop over genfit track measurements, convert to SvtxTrackState
   const auto gftrack = phgf_track->getGenFitTrack();
   const auto rep = gftrack->getCardinalRep();
   for (unsigned int id = 0; id < gftrack->getNumPointsWithMeasurement(); ++id)
   {
 
-    auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, gftrack->getCardinalRep());
+    auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
     if (!trpoint) continue;
 
     auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
     if (!kfi) continue;
 
-    std::unique_ptr<const genfit::MeasuredStateOnPlane> gf_state;
+    const genfit::MeasuredStateOnPlane* gf_state = nullptr;
     try
     {
-      const auto temp_state = &kfi->getFittedState(true);
-      gf_state.reset( new genfit::MeasuredStateOnPlane(*temp_state) );
-    }
-    catch (...)
-    {
+
+      gf_state = &kfi->getFittedState(true);
+
+    } catch (...) {
+
       if (Verbosity() > 1)
       { LogWarning("Exrapolation failed!"); }
+
     }
 
     if (!gf_state)
@@ -1078,37 +1106,112 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
       continue;
     }
 
+    // get path lenght to the vertex
     genfit::MeasuredStateOnPlane temp;
     float pathlength = -phgf_track->extrapolateToPoint(temp, vertex_position, id);
 
-    std::unique_ptr<SvtxTrackState> state(new SvtxTrackState_v1(pathlength));
-    state->set_x(gf_state->getPos().x());
-    state->set_y(gf_state->getPos().y());
-    state->set_z(gf_state->getPos().z());
+    // create new svtx state and add to track
+    auto state = create_track_state( pathlength, gf_state );
+    out_track->insert_state( &state );
 
-    state->set_px(gf_state->getMom().x());
-    state->set_py(gf_state->getMom().y());
-    state->set_pz(gf_state->getMom().z());
-
-    for (int i = 0; i < 6; i++)
-    {
-      for (int j = i; j < 6; j++)
-      { state->set_error(i, j, gf_state->get6DCov()[i][j]); }
-    }
-
-    out_track->insert_state(state.get());
-
-#ifdef _DEBUG_
+    #ifdef _DEBUG_
     std::cout
       << __LINE__
       << ": " << id
       << ": " << pathlength << " => "
       << sqrt(state->get_x() * state->get_x() + state->get_y() * state->get_y())
       << std::endl;
-#endif
+    #endif
+  }
+
+  // loop over clusters, check if layer is disabled, include extrapolated SvtxTrackState
+  if( !_disabled_layers.empty() )
+  {
+
+    for (auto iter = svtx_track->begin_cluster_keys(); iter != svtx_track->end_cluster_keys(); ++iter)
+    {
+
+      auto cluster_key = *iter;
+      auto cluster = _clustermap->findCluster(cluster_key);
+      const int layer = TrkrDefs::getLayer(cluster_key);
+
+      // skip enabled layers
+      if( _disabled_layers.find( layer ) == _disabled_layers.end() )
+      { continue; }
+
+      // get position
+      TVector3 pos(cluster->getPosition(0), cluster->getPosition(1), cluster->getPosition(2));
+      float r_cluster = std::sqrt( square(pos[0]) + square(pos[1]) );
+
+      // find closest state
+      float dr_min = -1;
+      int id_min = -1;
+
+      // loop over states
+      for ( unsigned int id = 0; id < gftrack->getNumPointsWithMeasurement(); ++id)
+      {
+
+        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
+        if (!trpoint) continue;
+
+        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
+        if (!kfi) continue;
+
+        const genfit::MeasuredStateOnPlane* gf_state = nullptr;
+        try
+        {
+
+          gf_state = &kfi->getFittedState(true);
+
+        } catch (...) {
+
+          if (Verbosity() > 1)
+          { LogWarning("Exrapolation failed!"); }
+
+        }
+
+        if( !gf_state ) continue;
+
+        float r_track = std::sqrt( square( gf_state->getPos().x() ) + square( gf_state->getPos().y() ) );
+        float dr = std::abs( r_cluster - r_track );
+
+        if( dr_min < 0 || dr < dr_min )
+        {
+
+          dr_min = dr;
+          id_min = id;
+
+        } else {
+
+          /* assume measurements are sorted along r,
+          and break as soon as current measurement is further away from cluster as previous
+          */
+          break;
+
+        }
+
+      }
+
+      // check state
+      if( id_min < 0 ) continue;
+
+      // extrapolate closest measurement to cluster point
+      genfit::MeasuredStateOnPlane gf_state;
+      float pathlength = phgf_track->extrapolateToPoint( gf_state, pos, id_min);
+
+      genfit::MeasuredStateOnPlane tmp;
+      float pathlength_to_vertex = phgf_track->extrapolateToPoint(tmp, vertex_position, id_min);
+
+      // create new svtx state and add to track
+      auto state = create_track_state(  pathlength-pathlength_to_vertex, &gf_state );
+      out_track->insert_state( &state );
+
+    }
+
   }
 
   return out_track;
+
 }
 
 //_______________________________________________________
