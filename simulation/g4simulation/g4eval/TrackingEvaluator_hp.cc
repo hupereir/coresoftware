@@ -279,14 +279,14 @@ void TrackingEvaluator_hp::evaluate_tracks()
   {
 
     auto track = trackIter->second;
-    print_track( track );
+    // print_track( track );
 
     // loop over clusters
-    auto stateIter = track->begin_states();
-    for( auto keyIter = track->begin_cluster_keys(); keyIter != track->end_cluster_keys(); ++keyIter )
+    auto state_iter = track->begin_states();
+    for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
     {
 
-      const auto& cluster_key = *keyIter;
+      const auto& cluster_key = *key_iter;
       auto cluster = _cluster_map->findCluster( cluster_key );
       if( !cluster )
       {
@@ -299,28 +299,21 @@ void TrackingEvaluator_hp::evaluate_tracks()
       auto clusterStruct = create_cluster( cluster_key, cluster );
       const auto radius( clusterStruct._r );
 
-      // find first track state element whose radius is larger than current
-      using StatePair = SvtxTrack::StateMap::value_type;
-      stateIter = std::find_if( stateIter, track->end_states(), [radius](const StatePair& pair )
-         { return get_r( pair.second->get_x(), pair.second->get_y() ) > radius; } );
-
-      // copy and compare distance also to previous state to get the closest
-      auto iter = stateIter;
-      if( iter == track->end_states() ) --iter;
-      else if( iter !=  track->begin_states() )
+      // find track state that is the closest to cluster
+      /* this assumes that both clusters and states are sorted along r */
+      float dr_min = -1;
+      for( auto iter = state_iter; iter != track->end_states(); ++iter )
       {
-
-        // get previous
-        auto previous = iter; previous--;
-
-        // compare radius difference
-        const auto delta_r =  std::abs( radius - get_r(iter->second->get_x(), iter->second->get_y() ) );
-        const auto delta_r_prev =  std::abs( radius - get_r(previous->second->get_x(), previous->second->get_y() ) );
-        if( delta_r_prev < delta_r ) iter = previous;
+        const auto dr = std::abs( radius - get_r( iter->second->get_x(), iter->second->get_y() ) );
+        if( dr_min < 0 || dr < dr_min )
+        {
+          state_iter = iter;
+          dr_min = dr;
+        } else break;
       }
 
       // store track state in cluster struct
-      add_trk_information( clusterStruct, iter->second );
+      add_trk_information( clusterStruct, state_iter->second );
 
       // truth information
       add_truth_information( clusterStruct, find_g4hits( cluster_key ) );
@@ -338,21 +331,21 @@ void TrackingEvaluator_hp::evaluate_tracks()
 void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
 {
 
-  std::cout << "TrackingEvaluator_hp::print_track - track: " << track << std::endl;
   if( !track ) return;
 
   // print track position and momentum
   std::cout << "TrackingEvaluator_hp::print_track - id: " << track->get_id() << std::endl;
   std::cout << "TrackingEvaluator_hp::print_track - position: (" << track->get_x() << ", " << track->get_y() << ", " << track->get_z() << ")" << std::endl;
   std::cout << "TrackingEvaluator_hp::print_track - momentum: (" << track->get_px() << ", " << track->get_py() << ", " << track->get_pz() << ")" << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - clusters: " << track->size_cluster_keys() << ", states: " << track->size_states() << std::endl;
 
   // loop over cluster keys
-  if( _cluster_map )
+  if( false && _cluster_map )
   {
-    for( auto keyIter = track->begin_cluster_keys(); keyIter != track->end_cluster_keys(); ++keyIter )
+    for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
     {
 
-      const auto& cluster_key = *keyIter;
+      const auto& cluster_key = *key_iter;
       auto cluster = _cluster_map->findCluster( cluster_key );
       if( !cluster )
       {
@@ -371,20 +364,23 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   }
 
   // loop over track states
-  for( auto stateIter = track->begin_states(); stateIter != track->end_states(); ++ stateIter )
+  if( false )
   {
-    auto state = stateIter->second;
-    if( !state ) return;
+    for( auto state_iter = track->begin_states(); state_iter != track->end_states(); ++ state_iter )
+    {
+      auto state = state_iter->second;
+      if( !state ) return;
 
-    std::cout
-      << "TrackingEvaluator_hp::print_track -"
-      << " state pathLength: " << stateIter->first
-      << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
-      << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
-      << std::endl;
+      std::cout
+        << "TrackingEvaluator_hp::print_track -"
+        << " state pathLength: " << state_iter->first
+        << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
+        << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
+        << std::endl;
+    }
   }
 
-  std::cout << "TrackingEvaluator_hp::print_track - done." << std::endl;
+  std::cout << std::endl;
 
 }
 
