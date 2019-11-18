@@ -155,6 +155,10 @@ int PHGenFitTrkFitter::InitRun(PHCompositeNode* topNode)
     init_eval_tree();
   }
 
+  // print disabled vertex
+  for( const auto& layer:_disabled_layers )
+  { std::cout << PHWHERE << " Layer " << layer << " is disabled." << std::endl; }
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -549,10 +553,26 @@ int PHGenFitTrkFitter::CreateNodes(PHCompositeNode* topNode)
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
-/*
- * GetNodes():
- *  Get all the all the required nodes off the node tree
- */
+//______________________________________________________
+void PHGenFitTrkFitter::disable_layer( int layer, bool disabled )
+{
+  if( disabled ) _disabled_layers.insert( layer );
+  else _disabled_layers.erase( layer );
+}
+
+//______________________________________________________
+void PHGenFitTrkFitter::set_disabled_layers( const std::set<int>& layers )
+{ _disabled_layers = layers; }
+
+//______________________________________________________
+void PHGenFitTrkFitter::clear_disabled_layers()
+{ _disabled_layers.clear(); }
+
+//______________________________________________________
+const std::set<int>& PHGenFitTrkFitter::get_disabled_layers() const
+{ return _disabled_layers; }
+
+//______________________________________________________
 int PHGenFitTrkFitter::GetNodes(PHCompositeNode* topNode)
 {
   //DST objects
@@ -723,7 +743,7 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
     m_r_cluster_id.insert(std::make_pair(r, cluster_key));
     if(Verbosity() > 10)
     {
-      int layer_out = TrkrDefs::getLayer(cluster_key);
+      const auto layer_out = TrkrDefs::getLayer(cluster_key);
       std::cout << "    Layer " << layer_out << " cluster " << cluster_key << " radius " << r << std::endl;
     }
   }
@@ -731,18 +751,22 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
   for (auto iter = m_r_cluster_id.begin(); iter != m_r_cluster_id.end(); ++iter)
   {
 
-    // TODO: check if layer is enabled
-    /* when disabled, one should not include it in the fit */
+    // get cluster key and layer
+    const auto cluster_key = iter->second;
+    const int layer = TrkrDefs::getLayer(cluster_key);
 
-    auto cluster_key = iter->second;
+    // skip disabled layers
+    if( _disabled_layers.find( layer ) != _disabled_layers.end() )
+    { continue; }
+
+    // find matching cluster
     auto cluster = _clustermap->findCluster(cluster_key);
 
     #ifdef _DEBUG_
-    int output_layer = TrkrDefs::getLayer(cluster_key);
     std::cout
         << __LINE__
         << ": ID: " << cluster_key
-        << ": layer: " << output_layer
+        << ": layer: " << layer
         << std::endl;
     #endif
 
@@ -759,14 +783,12 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
     // Replace n for the silicon subsystems
 
     // get the trkrid
-    unsigned int trkrid = TrkrDefs::getTrkrId(cluster_key);
-    int layer = TrkrDefs::getLayer(cluster_key);
-
+    const unsigned int trkrid = TrkrDefs::getTrkrId(cluster_key);
     if(trkrid == TrkrDefs::mvtxId)
     {
 
-      int stave_index = MvtxDefs::getStaveId(cluster_key);
-      int chip_index = MvtxDefs::getChipId(cluster_key);
+      const int stave_index = MvtxDefs::getStaveId(cluster_key);
+      const int chip_index = MvtxDefs::getChipId(cluster_key);
 
       std::array<double,3> ladder_location;
       auto geom = dynamic_cast<CylinderGeom_Mvtx*>(geom_container_mvtx->GetLayerGeom(layer));
@@ -783,6 +805,7 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
       n.RotateZ(geom->get_strip_phi_tilt());
 
     }
+
     // end new
     //-----------------
 

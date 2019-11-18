@@ -15,6 +15,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include <map>
@@ -89,23 +90,6 @@ class PHGenFitTrkFitter : public SubsysReco
   //!End, write and close files
   int End(PHCompositeNode*) override;
 
-  //Flags of different kinds of outputs
-  enum Flag
-  {
-    //all disabled
-    NONE = 0,
-  };
-
-  //Set the flag
-  //Flags should be set like set_flag(PHGenFitTrkFitter::TRUTH, true) from macro
-  void set_flag(const Flag& flag, const bool& value)
-  {
-    if (value)
-      _flags |= flag;
-    else
-      _flags &= (~flag);
-  }
-
   //! For evalution
   //! Change eval output filename
   void set_eval_filename(const char* file)
@@ -140,83 +124,69 @@ class PHGenFitTrkFitter : public SubsysReco
   { return _fit_primary_tracks; }
 
   void set_fit_primary_tracks(bool fitPrimaryTracks)
-  {
-    _fit_primary_tracks = fitPrimaryTracks;
-  }
+  { _fit_primary_tracks = fitPrimaryTracks; }
 
   OutPutMode get_output_mode() const
-  {
-    return _output_mode;
-  }
+  { return _output_mode; }
 
   /*!
    * set output mode, default is OverwriteOriginalNode
    */
   void set_output_mode(OutPutMode outputMode)
-  {
-    _output_mode = outputMode;
-  }
+  { _output_mode = outputMode; }
 
   const std::string& get_track_fitting_alg_name() const
-  {
-    return _track_fitting_alg_name;
-  }
+  { return _track_fitting_alg_name; }
 
   void set_track_fitting_alg_name(const std::string& trackFittingAlgName)
-  {
-    _track_fitting_alg_name = trackFittingAlgName;
-  }
+  { _track_fitting_alg_name = trackFittingAlgName; }
 
   int get_primary_pid_guess() const
-  {
-    return _primary_pid_guess;
-  }
+  { return _primary_pid_guess; }
 
   void set_primary_pid_guess(int primaryPidGuess)
-  {
-    _primary_pid_guess = primaryPidGuess;
-  }
+  { _primary_pid_guess = primaryPidGuess; }
 
   double get_fit_min_pT() const
-  {
-    return _fit_min_pT;
-  }
+  { return _fit_min_pT; }
 
   void set_fit_min_pT(double cutMinPT)
-  {
-    _fit_min_pT = cutMinPT;
-  }
-
+  { _fit_min_pT = cutMinPT; }
 
   bool is_over_write_svtxtrackmap() const
-  {
-    return _over_write_svtxtrackmap;
-  }
+  { return _over_write_svtxtrackmap; }
 
   void set_over_write_svtxtrackmap(bool overWriteSvtxtrackmap)
-  {
-    _over_write_svtxtrackmap = overWriteSvtxtrackmap;
-  }
+  { _over_write_svtxtrackmap = overWriteSvtxtrackmap; }
 
   bool is_use_truth_vertex() const
-  {
-    return _use_truth_vertex;
-  }
+  { return _use_truth_vertex; }
 
   void set_use_truth_vertex(bool useTruthVertex)
-  {
-    _use_truth_vertex = useTruthVertex;
-  }
+  { _use_truth_vertex = useTruthVertex; }
 
   double get_vertex_min_ndf() const
-  {
-    return _vertex_min_ndf;
-  }
+  { return _vertex_min_ndf; }
 
   void set_vertex_min_ndf(double vertexMinPT)
-  {
-    _vertex_min_ndf = vertexMinPT;
-  }
+  { _vertex_min_ndf = vertexMinPT; }
+
+  //!@name disabled layers interface
+  //@{
+
+  //! mark layer as disbled
+  void disable_layer( int layer, bool disabled = true );
+
+  //! set disabled layers
+  void set_disabled_layers( const std::set<int>& );
+
+  //! clear disabled layers
+  void clear_disabled_layers();
+
+  //! get disabled layers
+  const std::set<int>& get_disabled_layers() const;
+
+  //@}
 
   private:
 
@@ -281,9 +251,6 @@ class PHGenFitTrkFitter : public SubsysReco
     const TVector3 yp = TVector3(0., 1., 0.),
     const TVector3 zp = TVector3(0., 0., 1.)) const;
 
-  //!flags
-  unsigned int _flags = NONE;
-
   //bool _make_separate_nodes;
   OutPutMode _output_mode = PHGenFitTrkFitter::MakeNewNode;
 
@@ -293,6 +260,10 @@ class PHGenFitTrkFitter : public SubsysReco
 
   //!
   bool _use_truth_vertex = false;
+
+  //! disabled layers
+  /** clusters belonging to disabled layers are not included in track fit */
+  std::set<int> _disabled_layers;
 
   std::unique_ptr<PHGenFit::Fitter> _fitter;
 
