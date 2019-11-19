@@ -205,9 +205,6 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
     {
       SvtxTrack* svtx_track = iter->second;
 
-      //svtx_track->identify();
-      //continue;
-
       std::cout<< "Track ID: " << svtx_track->get_id() << ", Dummy Track pT: "
            << svtx_track->get_pt() << ", Truth Track/Particle ID: "
            << svtx_track->get_truth_track_id() << std::endl;
