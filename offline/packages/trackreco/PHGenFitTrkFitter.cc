@@ -940,7 +940,18 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
   double du2 = gf_state_beam_line_ca->getCov()[3][3];
   double dv2 = gf_state_beam_line_ca->getCov()[4][4];
 
-  std::shared_ptr<SvtxTrack_v1> out_track( new SvtxTrack_v1(*static_cast<const SvtxTrack_v1*>(svtx_track) ) );
+  // create new track
+  std::shared_ptr<SvtxTrack_v1> out_track( new SvtxTrack_v1() );
+
+  // assign all members from old
+  /* we need asignment operator instead of copy constructor, because the former makes a deep copy of the track state, as opposed to the former */
+  *out_track = *static_cast<const SvtxTrack_v1*>(svtx_track);
+
+  // clear states and insert empty one for vertex position
+  out_track->clear_states();
+  out_track->insert_state( new SvtxTrackState_v1(0.0) );
+
+  // start filling
   out_track->set_dca2d(u);
   out_track->set_dca2d_error(sqrt(du2 + dvr2));
 
