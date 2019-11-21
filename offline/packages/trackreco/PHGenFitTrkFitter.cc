@@ -1157,6 +1157,7 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
       float r_cluster = std::sqrt( square(pos[0]) + square(pos[1]) );
 
       // find closest state
+      float r_track_min = -1;
       float dr_min = -1;
 
       // loop over states
@@ -1192,6 +1193,7 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
         if( dr_min < 0 || dr < dr_min )
         {
 
+          r_track_min = r_track;
           dr_min = dr;
           id_min = id;
 
