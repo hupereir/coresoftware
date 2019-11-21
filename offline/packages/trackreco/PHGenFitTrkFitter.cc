@@ -1140,7 +1140,7 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
   if( !_disabled_layers.empty() )
   {
 
-    int id_min = 0;
+    unsigned int id_min = 0;
     for (auto iter = svtx_track->begin_cluster_keys(); iter != svtx_track->end_cluster_keys(); ++iter)
     {
 
@@ -1156,14 +1156,10 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
       TVector3 pos(cluster->getPosition(0), cluster->getPosition(1), cluster->getPosition(2));
       float r_cluster = std::sqrt( square(pos[0]) + square(pos[1]) );
 
-      // find closest state
-      float r_track_min = -1;
-      float dr_min = -1;
-
       // loop over states
-      /* find state closest to cluster
-      this assumes that both clusters and states are sorted along r */
-      for ( unsigned int id = id_min; id < gftrack->getNumPointsWithMeasurement(); ++id)
+      /* find first state whose radius is larger than that of cluster if any */
+      unsigned int id = id_min;
+      for( ; id < gftrack->getNumPointsWithMeasurement(); ++id)
       {
 
         auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
@@ -1188,32 +1184,44 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
         if( !gf_state ) continue;
 
         float r_track = std::sqrt( square( gf_state->getPos().x() ) + square( gf_state->getPos().y() ) );
-        float dr = std::abs( r_cluster - r_track );
-
-        if( dr_min < 0 || dr < dr_min )
-        {
-
-          r_track_min = r_track;
-          dr_min = dr;
-          id_min = id;
-
-        } else {
-
-          break;
-
-        }
+        if( r_track > r_cluster ) break;
 
       }
 
-      // extrapolate closest measurement to cluster point
+      // forward extrapolation
       genfit::MeasuredStateOnPlane gf_state;
-      float pathlength = phgf_track->extrapolateToPoint( gf_state, pos, id_min);
+      float pathlength = 0;
 
-      genfit::MeasuredStateOnPlane tmp;
-      float pathlength_to_vertex = phgf_track->extrapolateToPoint(tmp, vertex_position, id_min);
+      // first point is previous, if valid
+      if( id > 0 )  id_min = id-1;
+
+      // extrapolate forward
+      /*
+      TODO: should better understand difference between getForwardUpdate and getBackwardUpdate
+      current combination is what gives the smallest residuals it seems
+      */
+      {
+        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id_min, rep);
+        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
+        gf_state = *kfi->getBackwardUpdate();
+        pathlength = gf_state.extrapolateToPoint( pos );
+        auto tmp = *kfi->getForwardUpdate();
+        pathlength -= tmp.extrapolateToPoint( vertex_position );
+      }
+
+      // also extrapolate backward from next state if any
+      // and take the weighted average between both points
+      if( id > 0 && id < gftrack->getNumPointsWithMeasurement() )
+      {
+        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
+        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
+        genfit::KalmanFittedStateOnPlane gf_state_backward = *kfi->getForwardUpdate();
+        gf_state_backward.extrapolateToPlane( gf_state.getPlane() );
+        gf_state = genfit::calcAverageState( gf_state, gf_state_backward );
+      }
 
       // create new svtx state and add to track
-      auto state = create_track_state(  pathlength-pathlength_to_vertex, &gf_state );
+      auto state = create_track_state(  pathlength, &gf_state );
       out_track->insert_state( &state );
 
     }
