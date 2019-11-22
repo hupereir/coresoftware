@@ -99,6 +99,18 @@ namespace
     cluster._trk_phi = get_phi( state->get_x(), state->get_y() );
   }
 
+  /// number of hits associated to cluster
+  unsigned int cluster_size( TrkrDefs::cluskey key, TrkrClusterHitAssoc* cluster_hit_map )
+  {
+    if( cluster_hit_map )
+    {
+      const auto range = cluster_hit_map->getHits(key);
+      return std::distance( range.first, range.second );
+    } else {
+      return 0;
+    }
+  }
+
   // add truth information
   void add_truth_information( ClusterStruct& cluster, std::set<PHG4Hit*> hits )
   {
@@ -260,6 +272,7 @@ void TrackingEvaluator_hp::evaluate_clusters()
 
     // create cluster structure and add in array
     auto clusterStruct = create_cluster( key, cluster );
+    clusterStruct._size = cluster_size( key, _cluster_hit_map );
     new((*_cluster_container->get())[_clusterCount++]) ClusterStruct( clusterStruct );
 
   }
@@ -295,8 +308,9 @@ void TrackingEvaluator_hp::evaluate_tracks()
       }
 
       // create new cluster struct
-      // and add in array
       auto clusterStruct = create_cluster( cluster_key, cluster );
+      clusterStruct._size = cluster_size( cluster_key, _cluster_hit_map );
+
       const auto radius( clusterStruct._r );
 
       // find track state that is the closest to cluster

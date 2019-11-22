@@ -29,6 +29,7 @@ class ClusterStruct: public TObject
   { return "ClusterStruct"; }
 
   unsigned int _layer = 0;
+  unsigned int _size = 0;
 
   ///@name cluster position
   //@{
