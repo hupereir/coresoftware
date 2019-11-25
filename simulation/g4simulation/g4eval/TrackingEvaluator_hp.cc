@@ -93,7 +93,6 @@ namespace
   void add_trk_information( ClusterStruct& cluster, SvtxTrackState* state )
   {
 
-    #if 1
     // need to extrapolate to the right r
     const auto trk_r = get_r( state->get_x(), state->get_y() );
     const auto dr = cluster._r - trk_r;
@@ -108,14 +107,7 @@ namespace
     cluster._trk_z = state->get_z() + dr*trk_dzdr;
     cluster._trk_r = get_r( cluster._trk_x, cluster._trk_y );
     cluster._trk_phi = get_phi( cluster._trk_x, cluster._trk_y );
-    #else
-    // store
-    cluster._trk_x = state->get_x();
-    cluster._trk_y = state->get_y();
-    cluster._trk_z = state->get_z();
-    cluster._trk_r = get_r( cluster._trk_x, cluster._trk_y );
-    cluster._trk_phi = get_phi( cluster._trk_x, cluster._trk_y );
-    #endif
+
   }
 
   /// number of hits associated to cluster
