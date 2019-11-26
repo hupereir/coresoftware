@@ -19,7 +19,8 @@
 #include <algorithm>
 
 ClassImp(ClusterStruct)
-ClassImp(ClusterContainer)
+ClassImp(TrackStruct)
+ClassImp(Container)
 
 //_____________________________________________________________________
 namespace
@@ -77,6 +78,30 @@ namespace
   }
 
   /// create cluster struct from svx cluster
+  TrackStruct create_track( SvtxTrack* track )
+  {
+    TrackStruct trackStruct;
+
+    trackStruct._charge = track->get_charge();
+    trackStruct._x = track->get_x();
+    trackStruct._y = track->get_y();
+    trackStruct._z = track->get_z();
+    trackStruct._r = get_r( trackStruct._x, trackStruct._y );
+    trackStruct._phi = get_phi( trackStruct._x, trackStruct._y );
+
+    trackStruct._px = track->get_px();
+    trackStruct._py = track->get_py();
+    trackStruct._pz = track->get_pz();
+    trackStruct._pt = std::sqrt( square(trackStruct._px) + square( trackStruct._py ) );
+    trackStruct._p = std::sqrt( square(trackStruct._px) + square( trackStruct._py ) + square( trackStruct._pz ) );
+
+    const auto p = std::sqrt( square( trackStruct._pt ) + square( trackStruct._pz ) );
+    trackStruct._eta = std::log( (p+trackStruct._pz)/(p-trackStruct._pz) )/2;
+
+    return trackStruct;
+  }
+
+  /// create cluster struct from svx cluster
   ClusterStruct create_cluster( TrkrDefs::cluskey key, TrkrCluster* cluster )
   {
     ClusterStruct clusterStruct;
@@ -84,8 +109,8 @@ namespace
     clusterStruct._x = cluster->getX();
     clusterStruct._y = cluster->getY();
     clusterStruct._z = cluster->getZ();
-    clusterStruct._r = get_r( cluster->getX(), cluster->getY() );
-    clusterStruct._phi = get_phi( cluster->getX(), cluster->getY() );
+    clusterStruct._r = get_r( clusterStruct._x, clusterStruct._y );
+    clusterStruct._phi = get_phi( clusterStruct._x, clusterStruct._y );
     return clusterStruct;
   }
 
@@ -147,23 +172,30 @@ namespace
 }
 
 //_____________________________________________________________________
-ClusterContainer::ClusterContainer()
+Container::Container()
 {
+  _clusters = new TClonesArray( "ClusterStruct" );
+  _clusters->SetName( "ClusterArray" );
+  _clusters->SetOwner( kTRUE );
 
-  // create TClonesArray
-  _array = new TClonesArray( "ClusterStruct" );
-  _array->SetName( "ClusterArray" );
-  _array->SetOwner( kTRUE );
-
+  _tracks = new TClonesArray( "TrackStruct" );
+  _tracks->SetName( "TrackArray" );
+  _tracks->SetOwner( kTRUE );
 }
 
 //_____________________________________________________________________
-ClusterContainer::~ClusterContainer()
-{ delete _array; }
+Container::~Container()
+{
+  delete _clusters;
+  delete _tracks;
+}
 
 //_____________________________________________________________________
-void ClusterContainer::Reset()
-{ _array->Clear(); }
+void Container::Reset()
+{
+  _clusters->Clear();
+  _tracks->Clear();
+}
 
 //_____________________________________________________________________
 TrackingEvaluator_hp::TrackingEvaluator_hp( const std::string& name ):
@@ -198,11 +230,8 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
     dstNode->addNode(evalNode);
   }
 
-  // create TClonesArray
-  _cluster_container = new ClusterContainer;
-
-  // add node tree
-  auto newNode = new PHIODataNode<PHObject>( _cluster_container, "ClusterContainer","PHObject");
+  _container = new Container;
+  auto newNode = new PHIODataNode<PHObject>( _container, "Container","PHObject");
   evalNode->addNode(newNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -251,8 +280,8 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   // cluster hit association map
   _hit_truth_map = findNode::getClass<TrkrHitTruthAssoc>(topNode,"TRKR_HITTRUTHASSOC");
 
-  // cluster container
-  _cluster_container = findNode::getClass<ClusterContainer>(topNode, "ClusterContainer");
+  // local container
+  _container = findNode::getClass<Container>(topNode, "Container");
 
   // g4hits
   _g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
@@ -268,11 +297,11 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 void TrackingEvaluator_hp::evaluate_clusters()
 {
 
-  if( !( _cluster_map && _cluster_container ) ) return;
+  if( !( _cluster_map && _container ) ) return;
 
   // clear array
-  _cluster_container->get()->Clear();
-  _clusterCount = 0;
+  _container->clusters()->Clear();
+  _cluster_count = 0;
 
   auto range = _cluster_map->getClusters();
   for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
@@ -284,7 +313,7 @@ void TrackingEvaluator_hp::evaluate_clusters()
     // create cluster structure and add in array
     auto clusterStruct = create_cluster( key, cluster );
     clusterStruct._size = cluster_size( key, _cluster_hit_map );
-    new((*_cluster_container->get())[_clusterCount++]) ClusterStruct( clusterStruct );
+    new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
 
   }
 
@@ -293,17 +322,23 @@ void TrackingEvaluator_hp::evaluate_clusters()
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_tracks()
 {
-  if( !( _track_map && _cluster_map && _cluster_container ) ) return;
+  if( !( _track_map && _cluster_map && _container ) ) return;
 
   // clear array
-  _cluster_container->get()->Clear();
-  _clusterCount = 0;
+  _container->clusters()->Clear();
+  _cluster_count = 0;
+
+  _container->tracks()->Clear();
+  _track_count = 0;
 
   for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
   {
 
     auto track = trackIter->second;
-    // print_track( track );
+    auto trackStruct = create_track( track );
+
+    // add to array
+    new((*_container->tracks())[_track_count++]) TrackStruct( trackStruct );
 
     // loop over clusters
     auto state_iter = track->begin_states();
@@ -344,7 +379,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
       add_truth_information( clusterStruct, find_g4hits( cluster_key ) );
 
       // add to array
-      new((*_cluster_container->get())[_clusterCount++]) ClusterStruct( clusterStruct );
+      new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
 
     }
 

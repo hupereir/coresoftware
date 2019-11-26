@@ -62,37 +62,78 @@ class ClusterStruct: public TObject
 
 };
 
-/// cluster container
-class ClusterContainer: public PHObject
+// cluster information to be stored in tree
+class TrackStruct: public TObject
+{
+  public:
+
+  const char* GetName() const override
+  { return "TrackStruct"; }
+
+  int _charge = 0;
+
+  ///@name position
+  //@{
+  float _x = 0;
+  float _y = 0;
+  float _z = 0;
+  float _r = 0;
+  float _phi = 0;
+  //@}
+
+  ///@name momentum
+  //@{
+  float _px = 0;
+  float _py = 0;
+  float _pz = 0;
+  float _pt = 0;
+  float _p = 0;
+  float _eta = 0;
+  //@}
+
+  ClassDef(TrackStruct,1)
+
+};
+
+/// track container
+class Container: public PHObject
 {
 
   public:
 
   /// constructor
-  ClusterContainer();
+  Container();
 
   /// copy constructor
-  explicit ClusterContainer(const ClusterContainer &) = delete;
+  explicit Container(const Container &) = delete;
 
   /// assignment operator
-  ClusterContainer& operator = ( const ClusterContainer& ) = delete;
+  Container& operator = ( const Container& ) = delete;
 
   /// destructor
-  ~ClusterContainer() override;
+  ~Container() override;
 
   /// reset
   void Reset() override;
 
-  /// accessor
-  TClonesArray* get() const
-  { return _array; }
+  ///@name accessors
+  //@{
+  TClonesArray* clusters() const
+  { return _clusters; }
+
+  TClonesArray* tracks() const
+  { return _tracks; }
+  //@}
 
   private:
 
-  /// cluster array
-  TClonesArray* _array = nullptr;
+  /// clusters array
+  TClonesArray* _clusters = nullptr;
 
-  ClassDef(ClusterContainer,1)
+  /// tracks array
+  TClonesArray* _tracks = nullptr;
+
+  ClassDef(Container,1)
 
 };
 
@@ -137,8 +178,9 @@ class TrackingEvaluator_hp : public SubsysReco
   G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
 
   // cluster array
-  ClusterContainer* _cluster_container = nullptr;
-  int _clusterCount = 0;
+  Container* _container = nullptr;
+  int _cluster_count = 0;
+  int _track_count = 0;
 
   // nodes
   SvtxTrackMap* _track_map = nullptr;
