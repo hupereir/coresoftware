@@ -49,6 +49,9 @@ class ClusterStruct: public TObject
   float _trk_phi = 0;
   //@}
 
+  /// number of G4Hits contributing to this cluster
+  unsigned int _truth_size = 0;
+
   ///@name truth position
   //@{
   float _truth_x = 0;

@@ -152,6 +152,7 @@ namespace
   {
     const auto rextrap = get_r( cluster._x, cluster._y );
 
+    cluster._truth_size = hits.size();
     cluster._truth_x = interpolate<&PHG4Hit::get_x>( hits, rextrap );
     cluster._truth_y = interpolate<&PHG4Hit::get_y>( hits, rextrap );
     cluster._truth_z = interpolate<&PHG4Hit::get_z>( hits, rextrap );
