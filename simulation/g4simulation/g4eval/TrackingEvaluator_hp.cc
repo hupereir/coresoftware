@@ -32,6 +32,15 @@ namespace
   /// radius
   template<class T> T get_r( T x, T y ) { return std::sqrt( square(x) + square(y) ); }
 
+  /// pt
+  template<class T> T get_pt( T px, T py ) { return std::sqrt( square(px) + square(py) ); }
+
+  /// p
+  template<class T> T get_p( T px, T py, T pz ) { return std::sqrt( square(px) + square(py) + square(pz) ); }
+
+  /// eta
+  template<class T> T get_eta( T p, T pz ) { return std::log( (p+pz)/(p-pz) )/2; }
+
   /// radius
   float get_r( PHG4Hit* hit, int i )
   {  return get_r( hit->get_x(i), hit->get_y(i) ); }
@@ -49,30 +58,31 @@ namespace
   {
     // calculate all terms needed for the interpolation
     // need to use double everywhere here due to numerical divergences
-    double s1 = 0;
-    double sr = 0;
-    double sr2 = 0;
-    double sphi = 0;
-    double srphi = 0;
+    double sw = 0;
+    double swr = 0;
+    double swr2 = 0;
+    double swx = 0;
+    double swrx = 0;
 
     for( const auto& hit:hits )
     {
+      const double w = hit->get_edep();
       const double r0 = get_r( hit, 0 );
       const double r1 = get_r( hit, 1 );
 
-      const double phi0 = (hit->*accessor)(0);
-      const double phi1 = (hit->*accessor)(1);
+      const double x0 = (hit->*accessor)(0);
+      const double x1 = (hit->*accessor)(1);
 
-      s1 += 2;
-      sr += r0 + r1;
-      sr2 += square(r0) + square(r1);
-      sphi += phi0 + phi1;
-      srphi += r0*phi0 + r1*phi1;
+      sw += w*2;
+      swr += w*(r0 + r1);
+      swr2 += w*(square(r0) + square(r1));
+      swx += w*(x0 + x1);
+      swrx += w*(r0*x0 + r1*x1);
     }
 
-    const auto alpha = (s1*srphi - sr*sphi);
-    const auto beta = (sr2*sphi - sr*srphi);
-    const auto denom = (s1*sr2 - square(sr));
+    const auto alpha = (sw*swrx - swr*swx);
+    const auto beta = (swr2*swx - swr*swrx);
+    const auto denom = (sw*swr2 - square(swr));
 
     return ( alpha*rextrap + beta )/denom;
   }
@@ -92,11 +102,9 @@ namespace
     trackStruct._px = track->get_px();
     trackStruct._py = track->get_py();
     trackStruct._pz = track->get_pz();
-    trackStruct._pt = std::sqrt( square(trackStruct._px) + square( trackStruct._py ) );
-    trackStruct._p = std::sqrt( square(trackStruct._px) + square( trackStruct._py ) + square( trackStruct._pz ) );
-
-    const auto p = std::sqrt( square( trackStruct._pt ) + square( trackStruct._pz ) );
-    trackStruct._eta = std::log( (p+trackStruct._pz)/(p-trackStruct._pz) )/2;
+    trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
+    trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
+    trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
 
     return trackStruct;
   }
@@ -135,6 +143,17 @@ namespace
 
   }
 
+  /// add track momentum at vertex information
+  void add_trk_momentum_information( ClusterStruct& cluster, SvtxTrack* track )
+  {
+    cluster._trk_px = track->get_px();
+    cluster._trk_py = track->get_py();
+    cluster._trk_pz = track->get_pz();
+    cluster._trk_pt = get_pt( cluster._trk_px, cluster._trk_py );
+    cluster._trk_p = get_p( cluster._trk_px, cluster._trk_py, cluster._trk_pz );
+    cluster._trk_eta = get_eta( cluster._trk_p, cluster._trk_pz );
+  }
+
   /// number of hits associated to cluster
   unsigned int cluster_size( TrkrDefs::cluskey key, TrkrClusterHitAssoc* cluster_hit_map )
   {
@@ -151,7 +170,6 @@ namespace
   void add_truth_information( ClusterStruct& cluster, std::set<PHG4Hit*> hits )
   {
     const auto rextrap = get_r( cluster._x, cluster._y );
-
     cluster._truth_size = hits.size();
     cluster._truth_x = interpolate<&PHG4Hit::get_x>( hits, rextrap );
     cluster._truth_y = interpolate<&PHG4Hit::get_y>( hits, rextrap );
@@ -357,6 +375,9 @@ void TrackingEvaluator_hp::evaluate_tracks()
       // create new cluster struct
       auto clusterStruct = create_cluster( cluster_key, cluster );
       clusterStruct._size = cluster_size( cluster_key, _cluster_hit_map );
+
+      // track momentum information
+      add_trk_momentum_information( clusterStruct, track );
 
       const auto radius( clusterStruct._r );
 

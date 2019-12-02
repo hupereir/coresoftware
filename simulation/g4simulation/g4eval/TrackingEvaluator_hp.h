@@ -49,6 +49,15 @@ class ClusterStruct: public TObject
   float _trk_phi = 0;
   //@}
 
+  ///@name track momentum
+  float _trk_px = 0;
+  float _trk_py = 0;
+  float _trk_pz = 0;
+  float _trk_pt = 0;
+  float _trk_p = 0;
+  float _trk_eta = 0;
+  //@}
+
   /// number of G4Hits contributing to this cluster
   unsigned int _truth_size = 0;
 
