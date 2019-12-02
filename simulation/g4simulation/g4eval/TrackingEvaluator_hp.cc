@@ -3,6 +3,8 @@
 #include <fun4all/Fun4AllReturnCodes.h>
 #include <g4main/PHG4Hit.h>
 #include <g4main/PHG4HitContainer.h>
+#include <g4main/PHG4Particle.h>
+#include <g4main/PHG4TruthInfoContainer.h>
 #include <phool/getClass.h>
 #include <phool/PHCompositeNode.h>
 #include <phool/PHNodeIterator.h>
@@ -87,7 +89,7 @@ namespace
     return ( alpha*rextrap + beta )/denom;
   }
 
-  /// create cluster struct from svx cluster
+  /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
   {
     TrackStruct trackStruct;
@@ -99,6 +101,20 @@ namespace
     trackStruct._r = get_r( trackStruct._x, trackStruct._y );
     trackStruct._phi = get_phi( trackStruct._x, trackStruct._y );
 
+    trackStruct._px = track->get_px();
+    trackStruct._py = track->get_py();
+    trackStruct._pz = track->get_pz();
+    trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
+    trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
+    trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
+
+    return trackStruct;
+  }
+
+  /// create track struct from struct from PHG4Particle
+  TrackStruct create_mc_track( PHG4Particle* track )
+  {
+    TrackStruct trackStruct;
     trackStruct._px = track->get_px();
     trackStruct._py = track->get_py();
     trackStruct._pz = track->get_pz();
@@ -178,6 +194,17 @@ namespace
     cluster._truth_phi = get_phi( cluster._truth_x, cluster._truth_y );
   }
 
+  // add truth information
+  void add_truth_momentum_information( ClusterStruct& cluster, PHG4Particle* track )
+  {
+    cluster._truth_px = track->get_px();
+    cluster._truth_py = track->get_py();
+    cluster._truth_pz = track->get_pz();
+    cluster._truth_pt = get_pt( cluster._truth_px, cluster._truth_py );
+    cluster._truth_p = get_p( cluster._truth_px, cluster._truth_py, cluster._truth_pz );
+    cluster._truth_eta = get_eta( cluster._truth_p, cluster._truth_pz );
+  }
+
   // print to stream
   std::ostream& operator << (std::ostream& out, const ClusterStruct& cluster )
   {
@@ -200,6 +227,10 @@ Container::Container()
   _tracks = new TClonesArray( "TrackStruct" );
   _tracks->SetName( "TrackArray" );
   _tracks->SetOwner( kTRUE );
+
+  _mc_tracks = new TClonesArray( "TrackStruct" );
+  _mc_tracks->SetName( "TrackArray" );
+  _mc_tracks->SetOwner( kTRUE );
 }
 
 //_____________________________________________________________________
@@ -207,6 +238,7 @@ Container::~Container()
 {
   delete _clusters;
   delete _tracks;
+  delete _mc_tracks;
 }
 
 //_____________________________________________________________________
@@ -214,6 +246,7 @@ void Container::Reset()
 {
   _clusters->Clear();
   _tracks->Clear();
+  _mc_tracks->Clear();
 }
 
 //_____________________________________________________________________
@@ -272,6 +305,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 
   // evaluate_clusters();
   evaluate_tracks();
+  evaluate_mc_tracks();
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -307,6 +341,9 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   _g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
   _g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
   _g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
+
+  // g4 truth info
+  _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
 
   return Fun4AllReturnCodes::EVENT_OK;
 
@@ -353,8 +390,8 @@ void TrackingEvaluator_hp::evaluate_tracks()
   for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
   {
 
-    auto track = trackIter->second;
-    auto trackStruct = create_track( track );
+    const auto track = trackIter->second;
+    const auto trackStruct = create_track( track );
 
     // add to array
     new((*_container->tracks())[_track_count++]) TrackStruct( trackStruct );
@@ -398,12 +435,70 @@ void TrackingEvaluator_hp::evaluate_tracks()
       add_trk_information( clusterStruct, state_iter->second );
 
       // truth information
-      add_truth_information( clusterStruct, find_g4hits( cluster_key ) );
+      const auto g4hits = find_g4hits( cluster_key );
+      add_truth_information( clusterStruct, g4hits );
+
+      // truth momentum information
+      if( _g4truthinfo && !g4hits.empty() )
+      {
+        auto trkid = (*g4hits.cbegin())->get_trkid();
+        auto track = _g4truthinfo->GetParticle(trkid);
+
+        for( const auto& hit:g4hits )
+        {
+          const auto local_trkid = hit->get_trkid();
+          if( local_trkid != trkid )
+          {
+
+            // get particle, check if primary
+            const auto local_track = _g4truthinfo->GetParticle(local_trkid);
+            if( local_trkid == local_track->get_primary_id() )
+            {
+              // if primary, store and stop here
+              trkid = local_trkid;
+              track = local_track;
+              break;
+            }
+
+          }
+
+        }
+
+        add_truth_momentum_information( clusterStruct, track );
+      }
 
       // add to array
       new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
 
     }
+
+  }
+
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::evaluate_mc_tracks()
+{
+
+  // reset container
+  _container->mc_tracks()->Clear();
+  _mc_track_count = 0;
+
+  if( !_g4truthinfo )
+  {
+    std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks - could not find truth info" << std::endl;
+    return;
+  }
+
+  const auto range = _g4truthinfo->GetPrimaryParticleRange();
+  for( auto iter = range.first; iter != range.second; ++iter )
+  {
+
+    const auto track = iter->second;
+    const auto trackStruct = create_mc_track( track );
+
+    // add to array
+    new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( trackStruct );
 
   }
 
@@ -510,12 +605,11 @@ void TrackingEvaluator_hp::print_cluster( TrkrDefs::cluskey key, TrkrCluster* cl
 TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::cluskey cluster_key ) const
 {
 
-  G4HitSet out;
-
   // check maps
-  if( !( _cluster_hit_map && _hit_truth_map ) ) return out;
+  if( !( _cluster_hit_map && _hit_truth_map ) ) return G4HitSet();
 
   // find hitset associated to cluster
+  G4HitSet out;
   const auto hitset_key = TrkrDefs::getHitSetKeyFromClusKey(cluster_key);
 
   // loop over hits associated to clusters

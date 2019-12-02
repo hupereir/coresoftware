@@ -13,6 +13,7 @@
 
 class PHG4Hit;
 class PHG4HitContainer;
+class PHG4TruthInfoContainer;
 class SvtxTrack;
 class SvtxTrackMap;
 class TrkrCluster;
@@ -68,6 +69,16 @@ class ClusterStruct: public TObject
   float _truth_z = 0;
   float _truth_r = 0;
   float _truth_phi = 0;
+  //@}
+
+  ///@name truth momentum
+  //@{
+  float _truth_px = 0;
+  float _truth_py = 0;
+  float _truth_pz = 0;
+  float _truth_pt = 0;
+  float _truth_p = 0;
+  float _truth_eta = 0;
   //@}
 
   ClassDef(ClusterStruct,1)
@@ -135,6 +146,10 @@ class Container: public PHObject
 
   TClonesArray* tracks() const
   { return _tracks; }
+
+  TClonesArray* mc_tracks() const
+  { return _mc_tracks; }
+
   //@}
 
   private:
@@ -144,6 +159,9 @@ class Container: public PHObject
 
   /// tracks array
   TClonesArray* _tracks = nullptr;
+
+  /// tracks array
+  TClonesArray* _mc_tracks = nullptr;
 
   ClassDef(Container,1)
 
@@ -179,6 +197,9 @@ class TrackingEvaluator_hp : public SubsysReco
   // evaluate clusters
   void evaluate_tracks();
 
+  // evaluate clusters
+  void evaluate_mc_tracks();
+
   // print track content
   void print_track( SvtxTrack* ) const;
 
@@ -193,6 +214,7 @@ class TrackingEvaluator_hp : public SubsysReco
   Container* _container = nullptr;
   int _cluster_count = 0;
   int _track_count = 0;
+  int _mc_track_count = 0;
 
   // nodes
   SvtxTrackMap* _track_map = nullptr;
@@ -204,6 +226,8 @@ class TrackingEvaluator_hp : public SubsysReco
   PHG4HitContainer* _g4hits_intt = nullptr;
   PHG4HitContainer* _g4hits_mvtx = nullptr;
   PHG4HitContainer* _g4hits_outertracker = nullptr;
+
+  PHG4TruthInfoContainer* _g4truthinfo = nullptr;
 
 };
 
