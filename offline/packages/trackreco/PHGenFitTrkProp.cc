@@ -886,6 +886,8 @@ int PHGenFitTrkProp::TrackPropPatRec(
       std::cout << "=========================" << std::endl;
     }
 
+
+
     #ifdef _DEBUG_
     {
       unsigned int tempIdx = extrapolate_base_TP_id >= 0 ? extrapolate_base_TP_id : extrapolate_base_TP_id + track->get_cluster_keys().size();
@@ -919,14 +921,16 @@ int PHGenFitTrkProp::TrackPropPatRec(
         TVector3(0, 0, 1), extrapolate_base_TP_id, direction));
     } catch (...) {
 
-      if (Verbosity() > 1) LogWarning("Can not extrapolate to Cylinder!") << std::endl;
+      // if (Verbosity() > 1)
+      LogWarning("Can not extrapolate to Cylinder!") << " layer: " << layer << std::endl;
       continue;
 
     }
 
     if (!state)
     {
-      if (Verbosity() > 1) LogWarning("Can not extrapolate to Cylinder!") << std::endl;
+      // if (Verbosity() > 1)
+      LogWarning("Can not extrapolate to Cylinder!") << " layer: " << layer << std::endl;
       continue;
     }
 
@@ -996,7 +1000,6 @@ int PHGenFitTrkProp::TrackPropPatRec(
       if (phi_window < _min_search_win_phi_outer) phi_window = _min_search_win_phi_outer;
       if (theta_window > _max_search_win_theta_outer) theta_window = _max_search_win_theta_outer;
       if (theta_window < _min_search_win_theta_outer) theta_window = _min_search_win_theta_outer;
-
     }
     #endif
 
