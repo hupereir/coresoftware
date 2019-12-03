@@ -303,6 +303,9 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
+  // print_clusters();
+  // print_tracks();
+
   // evaluate_clusters();
   evaluate_tracks();
   evaluate_mc_tracks();
@@ -505,59 +508,34 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
 }
 
 //_____________________________________________________________________
-void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
+void TrackingEvaluator_hp::print_clusters() const
 {
 
-  if( !track ) return;
+  if( !_cluster_map ) return;
 
-  // print track position and momentum
-  std::cout << "TrackingEvaluator_hp::print_track - id: " << track->get_id() << std::endl;
-  std::cout << "TrackingEvaluator_hp::print_track - position: (" << track->get_x() << ", " << track->get_y() << ", " << track->get_z() << ")" << std::endl;
-  std::cout << "TrackingEvaluator_hp::print_track - momentum: (" << track->get_px() << ", " << track->get_py() << ", " << track->get_pz() << ")" << std::endl;
-  std::cout << "TrackingEvaluator_hp::print_track - clusters: " << track->size_cluster_keys() << ", states: " << track->size_states() << std::endl;
-
-  // loop over cluster keys
-  if( false && _cluster_map )
+  auto range = _cluster_map->getClusters();
+  for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
   {
-    for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
-    {
-
-      const auto& cluster_key = *key_iter;
-      auto cluster = _cluster_map->findCluster( cluster_key );
-      if( !cluster )
-      {
-        std::cout << "TrackingEvaluator_hp::print_track - unable to find cluster for key " << cluster_key << std::endl;
-        continue;
-      }
-
-      std::cout
-        << "TrackingEvaluator_hp::print_track -"
-        << " cluster layer: "  << (int)TrkrDefs::getLayer(cluster_key)
-        << " position: (" << cluster->getX() << ", " << cluster->getY() << ", " << cluster->getZ() << ")"
-        << " polar: (" << get_r( cluster->getX(), cluster->getY() ) << ", " << get_phi( cluster->getX(), cluster->getY() ) << "," << cluster->getZ() << ")"
-        << std::endl;
-
-    }
+    const auto& key = clusterIter->first;
+    const auto& cluster = clusterIter->second;
+    print_cluster( key, cluster );
   }
 
-  // loop over track states
-  if( false )
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::print_tracks() const
+{
+
+  if( !_track_map ) return;
+
+  for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
   {
-    for( auto state_iter = track->begin_states(); state_iter != track->end_states(); ++ state_iter )
-    {
-      auto state = state_iter->second;
-      if( !state ) return;
 
-      std::cout
-        << "TrackingEvaluator_hp::print_track -"
-        << " state pathLength: " << state_iter->first
-        << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
-        << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
-        << std::endl;
-    }
+    const auto track = trackIter->second;
+    print_track( track );
+
   }
-
-  std::cout << std::endl;
 
 }
 
@@ -598,6 +576,65 @@ void TrackingEvaluator_hp::print_cluster( TrkrDefs::cluskey key, TrkrCluster* cl
         << " interpolation: (" << xextrap << "," << yextrap << "," << zextrap << ")"
         << " polar: (" << get_r( xextrap, yextrap ) << "," << get_phi( xextrap, yextrap ) << "," << zextrap << ")"
         << std::endl;
+
+      std::cout << std::endl;
+
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
+{
+
+  if( !track ) return;
+
+  // print track position and momentum
+  std::cout << "TrackingEvaluator_hp::print_track - id: " << track->get_id() << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - position: (" << track->get_x() << ", " << track->get_y() << ", " << track->get_z() << ")" << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - momentum: (" << track->get_px() << ", " << track->get_py() << ", " << track->get_pz() << ")" << std::endl;
+  std::cout << "TrackingEvaluator_hp::print_track - clusters: " << track->size_cluster_keys() << ", states: " << track->size_states() << std::endl;
+
+  // loop over cluster keys
+  if( true && _cluster_map )
+  {
+    for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
+    {
+
+      const auto& cluster_key = *key_iter;
+      auto cluster = _cluster_map->findCluster( cluster_key );
+      if( !cluster )
+      {
+        std::cout << "TrackingEvaluator_hp::print_track - unable to find cluster for key " << cluster_key << std::endl;
+        continue;
+      }
+
+      std::cout
+        << "TrackingEvaluator_hp::print_track -"
+        << " cluster layer: "  << (int)TrkrDefs::getLayer(cluster_key)
+        << " position: (" << cluster->getX() << ", " << cluster->getY() << ", " << cluster->getZ() << ")"
+        << " polar: (" << get_r( cluster->getX(), cluster->getY() ) << ", " << get_phi( cluster->getX(), cluster->getY() ) << "," << cluster->getZ() << ")"
+        << std::endl;
+
+    }
+  }
+
+  // loop over track states
+  if( false )
+  {
+    for( auto state_iter = track->begin_states(); state_iter != track->end_states(); ++ state_iter )
+    {
+      auto state = state_iter->second;
+      if( !state ) return;
+
+      std::cout
+        << "TrackingEvaluator_hp::print_track -"
+        << " state pathLength: " << state_iter->first
+        << " position: (" << state->get_x() << ", " << state->get_y() << ", " << state->get_z() << ")"
+        << " polar: (" << get_r( state->get_x(), state->get_y() ) << ", " << get_phi( state->get_x(), state->get_y() ) << "," << state->get_z() << ")"
+        << std::endl;
+    }
+  }
+
+  std::cout << std::endl;
 
 }
 

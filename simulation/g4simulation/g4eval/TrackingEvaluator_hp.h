@@ -200,11 +200,17 @@ class TrackingEvaluator_hp : public SubsysReco
   // evaluate clusters
   void evaluate_mc_tracks();
 
-  // print track content
-  void print_track( SvtxTrack* ) const;
+  // print clusters
+  void print_clusters() const;
+
+  // print tracks
+  void print_tracks() const;
 
   // print cluster and association
   void print_cluster( TrkrDefs::cluskey, TrkrCluster* ) const;
+
+  // print track content
+  void print_track( SvtxTrack* ) const;
 
   // get geant hits associated to a cluster
   using G4HitSet = std::set<PHG4Hit*>;
