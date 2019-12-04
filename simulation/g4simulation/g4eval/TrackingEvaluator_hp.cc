@@ -303,7 +303,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
-  // print_clusters();
+  print_clusters();
   // print_tracks();
 
   // evaluate_clusters();
@@ -557,6 +557,8 @@ void TrackingEvaluator_hp::print_cluster( TrkrDefs::cluskey key, TrkrCluster* cl
 
         std::cout
           << "TrackingEvaluator_hp::print_cluster -"
+          << " layer: " << g4hit->get_layer()
+          << " track: " << g4hit->get_trkid()
           << " in: (" << g4hit->get_x(0) << "," << g4hit->get_y(0) << "," << g4hit->get_z(0) << ")"
           << " out: (" << g4hit->get_x(1) << "," << g4hit->get_y(1) << "," << g4hit->get_z(1) << ")"
           << " polar in: (" << get_r( g4hit->get_x(0), g4hit->get_y(0) ) << "," << get_phi( g4hit->get_x(0), g4hit->get_y(0) ) << "," << g4hit->get_z(0) << ")"
