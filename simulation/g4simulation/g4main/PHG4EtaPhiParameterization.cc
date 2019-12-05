@@ -12,26 +12,26 @@
 #include <iterator>
 
 PHG4EtaPhiParameterization::PHG4EtaPhiParameterization(
-						 unsigned int neta, // Binning in eta
-						 double minEta,  // "
-						 double maxEta,  // "
-						 unsigned int nphi, // number of phi bins
-						 double startPhi,
-						 double deltaPhi,
-						 double radiusIn,  // Radius of inner face of cylinder
-						 double radiusOut,  // Radius of outer face of cylinder
-						 double centerZ  // Z of center of set
-						 ) :
-  _neta(neta), _minEta(minEta), _maxEta(maxEta), 
+             unsigned int neta, // Binning in eta
+             double minEta,  // "
+             double maxEta,  // "
+             unsigned int nphi, // number of phi bins
+             double startPhi,
+             double deltaPhi,
+             double radiusIn,  // Radius of inner face of cylinder
+             double radiusOut,  // Radius of outer face of cylinder
+             double centerZ  // Z of center of set
+             ) :
+  _neta(neta), _minEta(minEta), _maxEta(maxEta),
   _nphi(nphi), _startPhi(startPhi), _deltaPhi(deltaPhi),
   _radiusIn(radiusIn), _radiusOut(radiusOut),
   _centerZ(centerZ)
 {
   if ( _maxEta < _minEta )
     {
-      std::cout << " invalid eta, max<min" 
-	   << " etamin: " << _minEta
-	   << " etamax: " << _maxEta
+      std::cout << " invalid eta, max<min"
+     << " etamin: " << _minEta
+     << " etamax: " << _maxEta
            << std::endl;
       exit(1);
     }
@@ -39,8 +39,8 @@ PHG4EtaPhiParameterization::PHG4EtaPhiParameterization(
   if ( (_radiusIn<0.0) || (_radiusOut<0.0) || (_radiusOut<_radiusIn) )
     {
       std::cout << " invalid radius parameters:"
-	   << " radiusIn: "  << radiusIn 
-	   << " radiusOut: "  << radiusOut 
+     << " radiusIn: "  << radiusIn
+     << " radiusOut: "  << radiusOut
            << std::endl;
       exit(1);
     }
@@ -69,11 +69,11 @@ PHG4EtaPhiParameterization::PHG4EtaPhiParameterization(
       _phi1.push_back(_startPhi+(i+1)*_deltaPhi);
     }
 
-  // Build lookup vectors for the copyNo->(ieta, iphi) translation 
+  // Build lookup vectors for the copyNo->(ieta, iphi) translation
   //
   for(unsigned int i=0; i<_neta*_nphi; i++)
     {
-      div_t q = div(i,_nphi);
+      div_t q = div(static_cast<int>(i),static_cast<int>(_nphi));
       int ieta = q.quot;
       int iphi = q.rem;
       _ieta.push_back(ieta);
@@ -84,7 +84,7 @@ PHG4EtaPhiParameterization::PHG4EtaPhiParameterization(
 PHG4EtaPhiParameterization::~PHG4EtaPhiParameterization()
 {
   std::cout << "PHG4EtaPhiParameterization::~PHG4EtaPhiParameterization: Alas, poor Yorick! I knew him, Horatio"
-	    << std::endl;
+      << std::endl;
 }
 
 void
@@ -112,8 +112,8 @@ PHG4EtaPhiParameterization::ComputeTransformation(const G4int copyNo, G4VPhysica
 }
 
 void
-PHG4EtaPhiParameterization::ComputeDimensions(G4Tubs& ring, const G4int copyNo, 
-					      const G4VPhysicalVolume*) const
+PHG4EtaPhiParameterization::ComputeDimensions(G4Tubs& ring, const G4int copyNo,
+                const G4VPhysicalVolume*) const
 {
   int ieta = GetIEta(copyNo);
   int iphi = GetIPhi(copyNo);
