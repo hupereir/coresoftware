@@ -26,12 +26,9 @@ class PHG4OuterTrackerDetector : public PHG4Detector
  public:
   //! constructor
   PHG4OuterTrackerDetector(PHG4OuterTrackerSubsystem* subsys, const int layer, PHCompositeNode* Node, const PHParametersContainer* _paramsContainer, const std::string& dnam = "OTRACK");
-  
-  //! destructor
-  virtual ~PHG4OuterTrackerDetector() {}
-  
+
   //! construct
-  virtual void ConstructMe(G4LogicalVolume* world);
+  void ConstructMe(G4LogicalVolume* world) override;
 
   //!@name volume accessors
   //@{
@@ -50,22 +47,20 @@ class PHG4OuterTrackerDetector : public PHG4Detector
   void SetDisplayProperty(G4AssemblyVolume* av);
   void SetDisplayProperty(G4LogicalVolume* lv);
 
-  PHG4OuterTrackerDisplayAction* m_DisplayAction;
-  const PHParametersContainer* m_Params;
-  const PHParameters *params;
+  PHG4OuterTrackerDisplayAction* m_DisplayAction = nullptr;
+  const PHParameters *params = nullptr;
 
-  int layer;
-  int nseg_phi;
-  int nseg_z;
-  double inner_radius;
-  double outer_radius;
-  double length;
+  int layer = 0;
+  int nseg_phi = 0;
+  int nseg_z = 0;
+  double inner_radius = 0;
+  double outer_radius = 0;
+  double length = 0;
 
   std::string m_Detector;
   std::string m_SuperDetector;
   std::string m_StaveGeometryFile;
 
-  std::set<G4VPhysicalVolume *> absorbervols;
   std::set<G4VPhysicalVolume *> activevols;
 
 };

@@ -61,8 +61,6 @@ params = _paramsContainer->GetParameters(layer);
 }
 
 //_______________________________________________________________
-//_______________________________________________________________
-
 int PHG4OuterTrackerDetector::IsInOuterTracker(G4VPhysicalVolume* volume) const
 {
 
@@ -73,27 +71,12 @@ int PHG4OuterTrackerDetector::IsInOuterTracker(G4VPhysicalVolume* volume) const
       return 1;
     }
   }
-  if(params->get_int_param("absorberactive"))
-  {
-    if (absorbervols.find(volume) != absorbervols.end())
-    {
-      return -1;
-    }
-  }
+
   return 0;
 
-
-  if(params->get_int_param("active"))
-  {
-      return 1;
-  }
-  if(params->get_int_param("absorberactive"))
-  {
-      return -1;
-  }
-  return 0;
 }
 
+//_______________________________________________________________
 int PHG4OuterTrackerDetector::IsBlackHole(G4VPhysicalVolume* volume) const
 {
   if(params->get_int_param("blackhole"))
@@ -105,7 +88,7 @@ int PHG4OuterTrackerDetector::IsBlackHole(G4VPhysicalVolume* volume) const
 
 void PHG4OuterTrackerDetector::ConstructMe(G4LogicalVolume* logicWorld)
 {
-// This is called from PHG4PhenixDetector::Construct()
+  // This is called from PHG4PhenixDetector::Construct()
 
   if (Verbosity() > 0)
     cout << endl
@@ -120,38 +103,37 @@ void PHG4OuterTrackerDetector::ConstructMe(G4LogicalVolume* logicWorld)
 
 int PHG4OuterTrackerDetector::ConstructOuterTracker(G4LogicalVolume* ot_envelope)
 {
-if (Verbosity() > 0)
+  if (Verbosity() > 0)
   {
     cout << " PHG4OuterTrackerDetector::ConstructOuterTracker:" << endl;
     cout << endl;
   }
 
-length = params->get_double_param("ot_length");
-inner_radius = params->get_double_param("ot_inner_radius");
-outer_radius = params->get_double_param("ot_outer_radius");
-nseg_phi = params->get_int_param("ot_nseg_phi");
-nseg_z = params->get_int_param("ot_nseg_z");
+  length = params->get_double_param("ot_length");
+  inner_radius = params->get_double_param("ot_inner_radius");
+  outer_radius = params->get_double_param("ot_outer_radius");
+  nseg_phi = params->get_int_param("ot_nseg_phi");
+  nseg_z = params->get_int_param("ot_nseg_z");
 
   // We make a simple cylinder of silicon
-  
+
  G4VSolid *ot_si = new G4Tubs("ot_si", inner_radius * cm, outer_radius * cm, length * cm, 0.0, 2.0 * M_PI);
- 
- // needs a unique name - add layer 
+
+ // needs a unique name - add layer
 
   G4LogicalVolume *ot_si_logic = new G4LogicalVolume(ot_si,
-						     G4Material::GetMaterial("G4_Si"),
-						     (boost::format("outertracker_si_volume_%d") % layer).str()  );
-  
+                 G4Material::GetMaterial("G4_Si"),
+                 (boost::format("outertracker_si_volume_%d") % layer).str()  );
+
   m_DisplayAction->AddVolume(ot_si_logic, "OuterTrackerSi");
- 
-G4VPhysicalVolume *ot_si_phys = new G4PVPlacement(0, G4ThreeVector(0, 0, 0),
-						    ot_si_logic,
-						  (boost::format("outertracker_si_%d") % layer).str(),
-						    ot_envelope, false, 0, OverlapCheck() );  
+  G4VPhysicalVolume *ot_si_phys = new G4PVPlacement(0, G4ThreeVector(0, 0, 0),
+    ot_si_logic,
+    (boost::format("outertracker_si_%d") % layer).str(),
+    ot_envelope, false, 0, OverlapCheck() );
 
- activevols.insert(ot_si_phys);
+  activevols.insert(ot_si_phys);
 
-cout << ot_si_phys->GetCopyNo() << endl;
+  cout << ot_si_phys->GetCopyNo() << endl;
   return 0;
 }
 
@@ -227,21 +209,21 @@ void PHG4OuterTrackerDetector::AddGeometryNode()
     }
     // here in the detector class we have internal units, convert to cm
     // before putting into the geom object
-    
+
     CylinderGeomOuterTracker* mygeom = new CylinderGeomOuterTracker(
-								      layer,
-								      inner_radius,
-								      outer_radius,
-								      length,
-								      nseg_phi,
-								      nseg_z);
-									
+                      layer,
+                      inner_radius,
+                      outer_radius,
+                      length,
+                      nseg_phi,
+                      nseg_z);
+
       geo->AddLayerGeom(layer, mygeom);  // only one layer per instance
 
     if (Verbosity())
       {
-	geo->identify();
+        geo->identify();
       }
-  }  //is active
-}  // AddGeometryNode
+    }  //is active
+  }  // AddGeometryNode
 
