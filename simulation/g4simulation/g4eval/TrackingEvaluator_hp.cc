@@ -20,10 +20,6 @@
 #include <iostream>
 #include <algorithm>
 
-ClassImp(ClusterStruct)
-ClassImp(TrackStruct)
-ClassImp(Container)
-
 //_____________________________________________________________________
 namespace
 {
