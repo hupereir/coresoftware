@@ -85,7 +85,7 @@ class ClusterStruct: public TObject
 
 };
 
-// cluster information to be stored in tree
+// track information to be stored in tree
 class TrackStruct: public TObject
 {
   public:
@@ -112,9 +112,43 @@ class TrackStruct: public TObject
   float _pt = 0;
   float _p = 0;
   float _eta = 0;
+
+  // layer mask
+  int64_t _mask = 0;
+
   //@}
 
   ClassDef(TrackStruct,1)
+
+};
+
+// pair information to be stored in tree
+class TrackPairStruct: public TObject
+{
+  public:
+
+  const char* GetName() const override
+  { return "TrackPairStruct"; }
+
+  int _charge = 0;
+
+  ///@name momentum
+  //@{
+  float _px = 0;
+  float _py = 0;
+  float _pz = 0;
+  float _pt = 0;
+  float _p = 0;
+  float _e = 0;
+  float _m = 0;
+  float _eta = 0;
+
+  std::array<float,2> _trk_pt = {{0,0}};
+  std::array<int64_t,2> _trk_mask = {{0,0}};
+
+  //@}
+
+  ClassDef(TrackPairStruct,1)
 
 };
 
@@ -147,6 +181,9 @@ class Container: public PHObject
   TClonesArray* tracks() const
   { return _tracks; }
 
+  TClonesArray* track_pairs() const
+  { return _track_pairs; }
+
   TClonesArray* mc_tracks() const
   { return _mc_tracks; }
 
@@ -159,6 +196,9 @@ class Container: public PHObject
 
   /// tracks array
   TClonesArray* _tracks = nullptr;
+
+  /// track pairs array
+  TClonesArray* _track_pairs = nullptr;
 
   /// tracks array
   TClonesArray* _mc_tracks = nullptr;
@@ -194,10 +234,13 @@ class TrackingEvaluator_hp : public SubsysReco
   // evaluate clusters
   void evaluate_clusters();
 
-  // evaluate clusters
+  // evaluate tracks
   void evaluate_tracks();
 
-  // evaluate clusters
+  // evaluate track pairs
+  void evaluate_track_pairs();
+
+  // evaluate mc tracks
   void evaluate_mc_tracks();
 
   // print clusters
@@ -220,6 +263,7 @@ class TrackingEvaluator_hp : public SubsysReco
   Container* _container = nullptr;
   int _cluster_count = 0;
   int _track_count = 0;
+  int _track_pair_count = 0;
   int _mc_track_count = 0;
 
   // nodes

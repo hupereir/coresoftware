@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 
 //_____________________________________________________________________
 namespace
@@ -85,6 +86,12 @@ namespace
     return ( alpha*rextrap + beta )/denom;
   }
 
+  /// get mask from track clusters
+  int64_t get_mask( SvtxTrack* track )
+  { return std::accumulate( track->begin_cluster_keys(), track->end_cluster_keys(), int64_t(0),
+      []( int64_t value, const TrkrDefs::cluskey& key ) { return value|(1LL<<TrkrDefs::getLayer(key)); } );
+  }
+
   /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
   {
@@ -103,8 +110,38 @@ namespace
     trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
     trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
     trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
+    trackStruct._mask = get_mask( track );
 
     return trackStruct;
+  }
+
+  /// create track struct from struct from svx track
+  TrackPairStruct create_track_pair( SvtxTrack* first, SvtxTrack* second )
+  {
+    TrackPairStruct trackPairStruct;
+
+    trackPairStruct._charge = first->get_charge() + second->get_charge();
+    trackPairStruct._px = first->get_px() + second->get_px();
+    trackPairStruct._py = first->get_py() + second->get_py();
+    trackPairStruct._pz = first->get_pz() + second->get_pz();
+    trackPairStruct._pt = get_pt( trackPairStruct._px, trackPairStruct._py );
+    trackPairStruct._p = get_p( trackPairStruct._px, trackPairStruct._py, trackPairStruct._pz );
+    trackPairStruct._eta = get_eta( trackPairStruct._p, trackPairStruct._pz );
+
+    // electron mass
+    static constexpr double electronMass = 0.511e-3;
+    auto firstE = std::sqrt( square( electronMass ) + square( get_p( first->get_px(), first->get_py(), first->get_pz() ) ) );
+    auto secondE = std::sqrt( square( electronMass ) + square( get_p( second->get_px(), second->get_py(), second->get_pz() ) ) );
+    trackPairStruct._e = firstE + secondE;
+    trackPairStruct._m = std::sqrt( square( trackPairStruct._e ) - square( trackPairStruct._p ) );
+
+    trackPairStruct._trk_pt[0] = get_pt( first->get_px(), first->get_py()  );
+    trackPairStruct._trk_mask[0] = get_mask( first );
+
+    trackPairStruct._trk_pt[1] = get_pt( second->get_px(), second->get_py()  );
+    trackPairStruct._trk_mask[1] = get_mask( second );
+
+    return trackPairStruct;
   }
 
   /// create track struct from struct from PHG4Particle
@@ -117,7 +154,6 @@ namespace
     trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
     trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
     trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
-
     return trackStruct;
   }
 
@@ -224,6 +260,10 @@ Container::Container()
   _tracks->SetName( "TrackArray" );
   _tracks->SetOwner( kTRUE );
 
+  _track_pairs = new TClonesArray( "TrackPairStruct" );
+  _track_pairs->SetName( "TrackPairArray" );
+  _track_pairs->SetOwner( kTRUE );
+
   _mc_tracks = new TClonesArray( "TrackStruct" );
   _mc_tracks->SetName( "TrackArray" );
   _mc_tracks->SetOwner( kTRUE );
@@ -234,6 +274,7 @@ Container::~Container()
 {
   delete _clusters;
   delete _tracks;
+  delete _track_pairs;
   delete _mc_tracks;
 }
 
@@ -242,6 +283,7 @@ void Container::Reset()
 {
   _clusters->Clear();
   _tracks->Clear();
+  _track_pairs->Clear();
   _mc_tracks->Clear();
 }
 
@@ -304,6 +346,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 
   // evaluate_clusters();
   evaluate_tracks();
+  evaluate_track_pairs();
   evaluate_mc_tracks();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -468,6 +511,34 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
       // add to array
       new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
+
+    }
+
+  }
+
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::evaluate_track_pairs()
+{
+  if( !( _track_map && _container ) ) return;
+
+  // clear array
+  _container->track_pairs()->Clear();
+  _track_pair_count = 0;
+
+  for( auto firstIter = _track_map->begin(); firstIter != _track_map->end(); ++firstIter )
+  {
+
+    const auto first = firstIter->second;
+    for( auto  secondIter = _track_map->begin(); secondIter != firstIter; ++secondIter )
+    {
+
+      const auto second = secondIter->second;
+      auto trackPairStruct = create_track_pair( first, second );
+
+      // add to array
+      new((*_container->track_pairs())[_track_pair_count++]) TrackPairStruct( trackPairStruct );
 
     }
 
