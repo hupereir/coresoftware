@@ -25,7 +25,7 @@
 
 using namespace std;
 
-PHG4SimpleEventGenerator::PHG4SimpleEventGenerator(const string &name): 
+PHG4SimpleEventGenerator::PHG4SimpleEventGenerator(const string &name):
   PHG4ParticleGeneratorBase(name),
   _particle_codes(),
   _particle_names(),
@@ -55,7 +55,7 @@ PHG4SimpleEventGenerator::PHG4SimpleEventGenerator(const string &name):
   _p_min(NAN),
   _p_max(NAN),
   _p_gaus_width(NAN),
-  _ineve(nullptr) 
+  _ineve(nullptr)
 {
   return;
 }
@@ -100,9 +100,33 @@ void PHG4SimpleEventGenerator::set_pt_range(const double min, const double max, 
     }
   assert(pt_gaus_width >=0 );
 
+  _pt_bins.clear();
+  _pt_dist.clear();
+
   _pt_min = min;
   _pt_max = max;
   _pt_gaus_width = pt_gaus_width;
+  _p_min = NAN;
+  _p_max = NAN;
+  _p_gaus_width = NAN;
+  return;
+}
+
+void PHG4SimpleEventGenerator::set_pt_range(const std::vector<double>& pt_bins, const std::vector<double>& pt_dist) {
+
+  assert( !pt_dist.empty() && pt_bins.size() == pt_dist.size()+1 );
+  _pt_bins = pt_bins;
+
+  // store the cumullated distribution in pt_dist
+  _pt_dist.clear();
+  for( const auto& pt:pt_dist )
+  {
+    if( _pt_dist.empty() ) _pt_dist.push_back( pt );
+    else _pt_dist.push_back( _pt_dist.back() + pt );
+  }
+  _pt_min = NAN;
+  _pt_max = NAN;
+  _pt_gaus_width = NAN;
   _p_min = NAN;
   _p_max = NAN;
   _p_gaus_width = NAN;
@@ -116,6 +140,10 @@ void PHG4SimpleEventGenerator::set_p_range(const double min, const double max, c
       return;
     }
   assert(p_gaus_width >=0 );
+
+  _pt_bins.clear();
+  _pt_dist.clear();
+
   _pt_min = NAN;
   _pt_max = NAN;
   _pt_gaus_width = NAN;
@@ -184,7 +212,7 @@ int PHG4SimpleEventGenerator::InitRun(PHCompositeNode *topNode) {
     PHNodeIterator iter( topNode );
     PHCompositeNode *dstNode;
     dstNode = dynamic_cast<PHCompositeNode*>(iter.findFirst("PHCompositeNode", "DST"));
-      
+
     _ineve = new PHG4InEvent();
     PHDataNode<PHObject> *newNode = new PHDataNode<PHObject>(_ineve, "PHG4INEVENT", "PHObject");
     dstNode->addNode(newNode);
@@ -204,7 +232,7 @@ int PHG4SimpleEventGenerator::InitRun(PHCompositeNode *topNode) {
       cout << " Vertex Distribution: Set to reuse a previously generated sim vertex" << endl;
       cout << " Vertex offset vector (x,y,z) = (" << _vertex_offset_x << ","<< _vertex_offset_y << ","<< _vertex_offset_z << ")" << endl;
     } else {
-      cout << " Vertex Distribution Function (x,y,z) = ("; 
+      cout << " Vertex Distribution Function (x,y,z) = (";
       if (_vertex_func_x == Uniform) cout << "Uniform,";
       else if (_vertex_func_x == Gaus) cout << "Gaus,";
       if (_vertex_func_y == Uniform) cout << "Uniform,";
@@ -255,7 +283,7 @@ int PHG4SimpleEventGenerator::process_event(PHCompositeNode *topNode) {
       vtx_x = smearvtx(_vertex_x,_vertex_width_x,_vertex_func_x);
       vtx_y = smearvtx(_vertex_y,_vertex_width_y,_vertex_func_y);
       vtx_z = smearvtx(_vertex_z,_vertex_width_z,_vertex_func_z);
-    } 
+    }
 
   vtx_x += _vertex_offset_x;
   vtx_y += _vertex_offset_y;
@@ -274,39 +302,56 @@ int PHG4SimpleEventGenerator::process_event(PHCompositeNode *topNode) {
     string pdgname = _particle_names[i].first;
     int pdgcode = get_pdgcode(pdgname);
     unsigned int nparticles = _particle_names[i].second;
-    
+
     for (unsigned int j=0; j<nparticles; ++j) {
 
       if ((_vertex_size_width > 0.0)||(_vertex_size_mean != 0.0)) {
 
-	double r = smearvtx(_vertex_size_mean,_vertex_size_width,_vertex_size_func_r);
+  double r = smearvtx(_vertex_size_mean,_vertex_size_width,_vertex_size_func_r);
 
-	double x = 0.0;
-	double y = 0.0;
-	double z = 0.0;
-	gsl_ran_dir_3d(RandomGenerator,&x,&y,&z);
+  double x = 0.0;
+  double y = 0.0;
+  double z = 0.0;
+  gsl_ran_dir_3d(RandomGenerator,&x,&y,&z);
         x *= r;
         y *= r;
         z *= r;
 
-	vtxindex = _ineve->AddVtx(vtx_x+x,vtx_y+y,vtx_z+z,_t0);
+  vtxindex = _ineve->AddVtx(vtx_x+x,vtx_y+y,vtx_z+z,_t0);
       } else if ((i==0)&&(j==0)) {
-	vtxindex = _ineve->AddVtx(vtx_x,vtx_y,vtx_z,_t0);
+  vtxindex = _ineve->AddVtx(vtx_x,vtx_y,vtx_z,_t0);
       }
 
       ++trackid;
-   
+
       double eta = (_eta_max-_eta_min) * gsl_rng_uniform_pos(RandomGenerator) + _eta_min;
       double phi = (_phi_max-_phi_min) * gsl_rng_uniform_pos(RandomGenerator) + _phi_min;
 
-      double pt;
-      if (!std::isnan(_p_min) && !std::isnan(_p_max) && !std::isnan(_p_gaus_width)) {
-	pt =  ((_p_max-_p_min) * gsl_rng_uniform_pos(RandomGenerator) + _p_min + gsl_ran_gaussian(RandomGenerator, _p_gaus_width)) / cosh(eta);
+      double pt = 0;
+      if (!_pt_bins.empty() ) {
+
+        // get a random number between zero and the maximum of the distribution
+        const auto prob = _pt_dist.back()*gsl_rng_uniform(RandomGenerator);
+
+        // get the first bin with value larger than prob
+        for( size_t i = 0; i < _pt_dist.size(); ++i )
+        {
+          if( _pt_dist[i] > prob )
+          {
+            // get a flat random number in the corresponding interval
+            /* we use 1.0-gsl_rng_uniform, because we want to exclude 0, and keep 1, to make sure one cannot get a pT of zero */
+            pt = _pt_bins[i] + (_pt_bins[i+1]-_pt_bins[i])*(1.0-gsl_rng_uniform(RandomGenerator));
+            break;
+          }
+        }
+
+      } else if (!std::isnan(_p_min) && !std::isnan(_p_max) && !std::isnan(_p_gaus_width)) {
+  pt =  ((_p_max-_p_min) * gsl_rng_uniform_pos(RandomGenerator) + _p_min + gsl_ran_gaussian(RandomGenerator, _p_gaus_width)) / cosh(eta);
       } else if (!std::isnan(_pt_min) && !std::isnan(_pt_max) && !std::isnan(_pt_gaus_width)) {
-	pt = (_pt_max-_pt_min) * gsl_rng_uniform_pos(RandomGenerator) + _pt_min + gsl_ran_gaussian(RandomGenerator, _pt_gaus_width);
+  pt = (_pt_max-_pt_min) * gsl_rng_uniform_pos(RandomGenerator) + _pt_min + gsl_ran_gaussian(RandomGenerator, _pt_gaus_width);
       } else {
-	cout << PHWHERE << "Error: neither a p range or pt range was specified" << endl;
-	exit(-1);
+  cout << PHWHERE << "Error: neither a p range or pt range was specified" << endl;
+  exit(-1);
       }
 
       double px = pt*cos(phi);
@@ -334,7 +379,7 @@ int PHG4SimpleEventGenerator::process_event(PHCompositeNode *topNode) {
   if (Verbosity() > 0) {
     _ineve->identify();
     cout << "======================================================================================" << endl;
-  } 
+  }
 
   return Fun4AllReturnCodes::EVENT_OK;
 }

@@ -33,7 +33,7 @@ public:
 
   //! set the starting time for the event
   void set_t0(const double t) { _t0 = t;}
-  
+
   //! range of randomized eta values
   void set_eta_range(const double eta_min, const double eta_max);
 
@@ -43,6 +43,11 @@ public:
   //! range of randomized pt values
   //! \param[in] pt_gaus_width   if non-zero, further apply a Gauss smearing to the pt_min - pt_max flat distribution
   void set_pt_range(const double pt_min, const double pt_max, const double pt_gaus_width = 0);
+
+  //! range of randomized pt values
+  //! \param[in] pt_bins bin limits for the distribution, of size n+1
+  //! \param[in] pt_dist integrated yield in given bin (size n). In case of variable size bins, what is expected is the integrated bin content, and not the value at the center of the bin
+  void set_pt_range(const std::vector<double>& pt_bins, const std::vector<double>& pt_dist);
 
   //! range of randomized p values
   //! \param[in] p_gaus_width   if non-zero, further apply a Gauss smearing to the p_min - p_max flat distribution
@@ -59,7 +64,7 @@ public:
 
   //! set an offset vector from the existing vertex
   void set_existing_vertex_offset_vector(const double x, const double y, const double z);
-  
+
   //! set the distribution function of particles about the vertex
   void set_vertex_size_function(FUNCTION r);
 
@@ -72,7 +77,7 @@ private:
   // these need to be stored separately until run time when the names
   // can be translated using the GEANT4 lookup
   std::vector<std::pair<int, unsigned int> > _particle_codes; // <pdgcode, count>
-  std::vector<std::pair<std::string, unsigned int> > _particle_names; // <names, count>  
+  std::vector<std::pair<std::string, unsigned int> > _particle_names; // <names, count>
   FUNCTION _vertex_func_x;
   FUNCTION _vertex_func_y;
   FUNCTION _vertex_func_z;
@@ -97,8 +102,11 @@ private:
   double _pt_max;
   double _pt_gaus_width;
   double _p_min;
-  double _p_max; 
+  double _p_max;
   double _p_gaus_width;
+
+  std::vector<double> _pt_bins;
+  std::vector<double> _pt_dist;
 
   PHG4InEvent* _ineve;
 };
