@@ -26,7 +26,7 @@ class ClusterStruct: public TObject
 {
   public:
 
-  const char* GetName() const override
+  virtual const char* GetName() const
   { return "ClusterStruct"; }
 
   unsigned int _layer = 0;
@@ -90,7 +90,7 @@ class TrackStruct: public TObject
 {
   public:
 
-  const char* GetName() const override
+  virtual const char* GetName() const
   { return "TrackStruct"; }
 
   int _charge = 0;
@@ -127,7 +127,7 @@ class TrackPairStruct: public TObject
 {
   public:
 
-  const char* GetName() const override
+  virtual const char* GetName() const
   { return "TrackPairStruct"; }
 
   int _charge = 0;
@@ -168,10 +168,10 @@ class Container: public PHObject
   Container& operator = ( const Container& ) = delete;
 
   /// destructor
-  ~Container() override;
+  virtual ~Container();
 
   /// reset
-  void Reset() override;
+  virtual void Reset();
 
   ///@name accessors
   //@{
@@ -215,16 +215,16 @@ class TrackingEvaluator_hp : public SubsysReco
   TrackingEvaluator_hp( const std::string& = "TRACKINGEVALUATOR_HP" );
 
   /// global initialization
-  int Init(PHCompositeNode*) override;
+  virtual int Init(PHCompositeNode*);
 
   /// run initialization
-  int InitRun(PHCompositeNode*)  override;
+  virtual int InitRun(PHCompositeNode*);
 
   /// event processing
-  int process_event(PHCompositeNode*) override;
+  virtual int process_event(PHCompositeNode*);
 
   /// end of processing
-  int End(PHCompositeNode*) override;
+  virtual int End(PHCompositeNode*);
 
   private:
 
