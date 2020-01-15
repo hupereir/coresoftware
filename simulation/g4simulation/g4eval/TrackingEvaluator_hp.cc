@@ -584,8 +584,6 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
   for( auto iter = range.first; iter != range.second; ++iter )
   {
 
-    // double check that the map key is also the track id
-    std::cout << " TrackingEvaluator_hp::evaluate_mc_tracks - key: " << iter->first << " track: " << iter->second->get_track_id() << std::endl;
     const auto track = iter->second;
     auto trackStruct = create_mc_track( track );
     trackStruct._mask = get_mask( track );
