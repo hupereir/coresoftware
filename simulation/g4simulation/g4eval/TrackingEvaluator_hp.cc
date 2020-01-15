@@ -148,6 +148,7 @@ namespace
   TrackStruct create_mc_track( PHG4Particle* track )
   {
     TrackStruct trackStruct;
+    trackStruct._pid = track->get_pid();
     trackStruct._px = track->get_px();
     trackStruct._py = track->get_py();
     trackStruct._pz = track->get_pz();
@@ -345,8 +346,9 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   // print_tracks();
 
   // evaluate_clusters();
-  evaluate_tracks();
-  evaluate_track_pairs();
+  // evaluate_tracks();
+  // evaluate_track_pairs();
+  fill_mc_track_map();
   evaluate_mc_tracks();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -388,6 +390,24 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
 
   return Fun4AllReturnCodes::EVENT_OK;
+
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::fill_mc_track_map()
+{
+  _mc_track_map.clear();
+
+  for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
+  {
+
+    if( !container ) continue;
+
+    // loop over hits
+    const auto range = container->getHits();
+    for( auto iter = range.first; iter != range.second; ++iter )
+    { _mc_track_map[iter->second->get_trkid()].insert( iter->second ); }
+  }
 
 }
 
@@ -564,14 +584,26 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
   for( auto iter = range.first; iter != range.second; ++iter )
   {
 
+    // double check that the map key is also the track id
+    std::cout << " TrackingEvaluator_hp::evaluate_mc_tracks - key: " << iter->first << " track: " << iter->second->get_track_id() << std::endl;
     const auto track = iter->second;
-    const auto trackStruct = create_mc_track( track );
+    auto trackStruct = create_mc_track( track );
+    trackStruct._mask = get_mask( track );
 
     // add to array
     new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( trackStruct );
 
   }
 
+}
+
+//_____________________________________________________________________
+int64_t TrackingEvaluator_hp::get_mask( PHG4Particle* track ) const
+{
+  const auto g4hits_iter = _mc_track_map.find( track->get_track_id() );
+  return g4hits_iter == _mc_track_map.end() ? 0:
+    std::accumulate( g4hits_iter->second.cbegin(), g4hits_iter->second.cend(), int64_t(0),
+    []( int64_t value, PHG4Hit* hit ) { return value|(1LL<<hit->get_layer()); } );
 }
 
 //_____________________________________________________________________

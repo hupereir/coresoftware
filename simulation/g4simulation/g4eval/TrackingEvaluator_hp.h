@@ -8,11 +8,13 @@
 
 #include <TClonesArray.h>
 
+#include <map>
 #include <set>
 #include <string>
 
 class PHG4Hit;
 class PHG4HitContainer;
+class PHG4Particle;
 class PHG4TruthInfoContainer;
 class SvtxTrack;
 class SvtxTrackMap;
@@ -94,6 +96,7 @@ class TrackStruct: public TObject
   { return "TrackStruct"; }
 
   int _charge = 0;
+  int _pid = 0;
 
   ///@name position
   //@{
@@ -231,6 +234,9 @@ class TrackingEvaluator_hp : public SubsysReco
   // load nodes
   int load_nodes( PHCompositeNode* );
 
+  // fill MC track map
+  void fill_mc_track_map();
+
   // evaluate clusters
   void evaluate_clusters();
 
@@ -242,6 +248,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
   // evaluate mc tracks
   void evaluate_mc_tracks();
+
+  // get mask from mc track
+  int64_t get_mask( PHG4Particle* ) const;
 
   // print clusters
   void print_clusters() const;
@@ -278,6 +287,11 @@ class TrackingEvaluator_hp : public SubsysReco
   PHG4HitContainer* _g4hits_outertracker = nullptr;
 
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;
+
+  // map trk_id to list of g4 hits
+  // this is used to get the mask for mc tracks and is filled once
+  using G4TrackMap = std::map<int,G4HitSet>;
+  G4TrackMap _mc_track_map;
 
 };
 
