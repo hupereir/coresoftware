@@ -43,16 +43,20 @@ class ClusterStruct: public TObject
   float _phi = 0;
   //@}
 
-  ///@name track position
+  ///@name track position at cluster
   //@{
   float _trk_x = 0;
   float _trk_y = 0;
   float _trk_z = 0;
   float _trk_r = 0;
   float _trk_phi = 0;
+
+  // track inclination in r,phi plane
+  float _trk_alpha = 0;
+
   //@}
 
-  ///@name track momentum
+  ///@name track momentum at origin
   float _trk_px = 0;
   float _trk_py = 0;
   float _trk_pz = 0;
@@ -95,6 +99,9 @@ class TrackStruct: public TObject
   virtual const char* GetName() const
   { return "TrackStruct"; }
 
+  // layer mask
+  int64_t _mask = 0;
+
   int _charge = 0;
   int _pid = 0;
 
@@ -115,9 +122,6 @@ class TrackStruct: public TObject
   float _pt = 0;
   float _p = 0;
   float _eta = 0;
-
-  // layer mask
-  int64_t _mask = 0;
 
   //@}
 

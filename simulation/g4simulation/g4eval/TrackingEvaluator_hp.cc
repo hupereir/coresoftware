@@ -89,7 +89,7 @@ namespace
   /// get mask from track clusters
   int64_t get_mask( SvtxTrack* track )
   { return std::accumulate( track->begin_cluster_keys(), track->end_cluster_keys(), int64_t(0),
-      []( int64_t value, const TrkrDefs::cluskey& key ) { return value|(1LL<<TrkrDefs::getLayer(key)); } );
+      []( int64_t value, const TrkrDefs::cluskey& key ) { return TrkrDefs::getLayer(key)<64 ? value|(1LL<<TrkrDefs::getLayer(key)) : 0; } );
   }
 
   /// create track struct from struct from svx track
@@ -183,12 +183,19 @@ namespace
     const auto trk_dydr = state->get_py()/trk_drdt;
     const auto trk_dzdr = state->get_pz()/trk_drdt;
 
-    // store
+    // store state position
     cluster._trk_x = state->get_x() + dr*trk_dxdr;
     cluster._trk_y = state->get_y() + dr*trk_dydr;
     cluster._trk_z = state->get_z() + dr*trk_dzdr;
     cluster._trk_r = get_r( cluster._trk_x, cluster._trk_y );
     cluster._trk_phi = get_phi( cluster._trk_x, cluster._trk_y );
+
+    // store state angle in rphi,r plane
+    const auto cosphi( std::cos( cluster._trk_phi ) );
+    const auto sinphi( std::sin( cluster._trk_phi ) );
+    const auto trk_pphi = -state->get_px()*sinphi + state->get_py()*cosphi;
+    const auto trk_pr = state->get_px()*cosphi + state->get_py()*sinphi;
+    cluster._trk_alpha = std::atan2( trk_pphi, trk_pr );
 
   }
 
@@ -346,8 +353,8 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   // print_tracks();
 
   // evaluate_clusters();
-  // evaluate_tracks();
-  // evaluate_track_pairs();
+  evaluate_tracks();
+  evaluate_track_pairs();
   fill_mc_track_map();
   evaluate_mc_tracks();
 
@@ -570,6 +577,8 @@ void TrackingEvaluator_hp::evaluate_track_pairs()
 void TrackingEvaluator_hp::evaluate_mc_tracks()
 {
 
+  // std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks." << std::endl;
+
   // reset container
   _container->mc_tracks()->Clear();
   _mc_track_count = 0;
@@ -580,7 +589,9 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
     return;
   }
 
-  const auto range = _g4truthinfo->GetPrimaryParticleRange();
+  // const auto range = _g4truthinfo->GetPrimaryParticleRange();
+  const auto range = _g4truthinfo->GetParticleRange();
+  // std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks - count: " << std::distance(range.first, range.second) << std::endl;
   for( auto iter = range.first; iter != range.second; ++iter )
   {
 
@@ -599,9 +610,10 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
 int64_t TrackingEvaluator_hp::get_mask( PHG4Particle* track ) const
 {
   const auto g4hits_iter = _mc_track_map.find( track->get_track_id() );
-  return g4hits_iter == _mc_track_map.end() ? 0:
-    std::accumulate( g4hits_iter->second.cbegin(), g4hits_iter->second.cend(), int64_t(0),
-    []( int64_t value, PHG4Hit* hit ) { return value|(1LL<<hit->get_layer()); } );
+  if( g4hits_iter == _mc_track_map.end() ) return 0;
+
+  return std::accumulate( g4hits_iter->second.cbegin(), g4hits_iter->second.cend(), int64_t(0),
+    []( int64_t value, PHG4Hit* hit ) { return hit->get_layer() < 64 ? value|(1LL<<hit->get_layer()) : value; } );
 }
 
 //_____________________________________________________________________
