@@ -231,37 +231,37 @@ class TrackingEvaluator_hp : public SubsysReco
 
   private:
 
-  // load nodes
+  /// load nodes
   int load_nodes( PHCompositeNode* );
 
-  // fill MC track map
+  /// fill MC track map
   void fill_mc_track_map();
 
-  // evaluate clusters
+  /// evaluate clusters
   void evaluate_clusters();
 
-  // evaluate tracks
+  /// evaluate tracks
   void evaluate_tracks();
 
-  // evaluate track pairs
+  /// evaluate track pairs
   void evaluate_track_pairs();
 
-  // evaluate mc tracks
+  /// evaluate mc tracks
   void evaluate_mc_tracks();
 
-  // get mask from mc track
+  /// get mask from mc track
   int64_t get_mask( PHG4Particle* ) const;
 
-  // print clusters
+  /// print clusters
   void print_clusters() const;
 
-  // print tracks
+  /// print tracks
   void print_tracks() const;
 
-  // print cluster and association
+  /// print cluster and association
   void print_cluster( TrkrDefs::cluskey, TrkrCluster* ) const;
 
-  // print track content
+  /// print track content
   void print_track( SvtxTrack* ) const;
 
   // get geant hits associated to a cluster
