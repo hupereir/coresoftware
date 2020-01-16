@@ -16,6 +16,7 @@ class TH2D;
 #include "PHG4TpcDistortion.h"
 
 #include <string>
+#include <memory>
 
 /*!
  * \brief PHG4TpcAnalyticSpaceChargeDistortion
@@ -48,32 +49,21 @@ class PHG4TpcAnalyticSpaceChargeDistortion : public PHG4TpcDistortion
  public:
   PHG4TpcAnalyticSpaceChargeDistortion( int verbose = 0);
 
-  virtual ~PHG4TpcAnalyticSpaceChargeDistortion();
+  ~PHG4TpcAnalyticSpaceChargeDistortion() override;
 
   //! radial distortion for a given truth location of the primary ionization
-  double
-    get_r_distortion(double r, double phi, double z);
+  double get_r_distortion(double r, double phi, double z) override;
 
   //! r*phi distortion for a given truth location of the primary ionization
-  double
-    get_rphi_distortion(double r, double phi, double z);
+  double get_rphi_distortion(double r, double phi, double z) override;
 
   //! z distortion for a given truth location of the primary ionization
-  double
-    get_z_distortion(double r, double phi, double z);
+  double get_z_distortion(double r, double phi, double z) override;
 
-  
-  void setFormulaR(TFormula form);
-  void setFormulaPhi(TFormula form);
-  void setFormulaZ(TFormula form);
-  TFormula* getFormulaR();
-  TFormula* getFormulaPhi();
-  TFormula* getFormulaZ();
-
- protected:
-  TFormula *delr;
-  TFormula *delphi;
-  TFormula *delz;
+  protected:
+  std::unique_ptr<TFormula> delr;
+  std::unique_ptr<TFormula> delphi;
+  std::unique_ptr<TFormula> delz;
 
 };
 

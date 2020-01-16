@@ -14,6 +14,7 @@
 #include <gsl/gsl_rng.h>
 #endif
 
+#include <memory>
 #include <string>                              // for string
 
 class PHG4TpcPadPlane;
@@ -37,6 +38,10 @@ class PHG4TpcElectronDrift : public SubsysReco, public PHParameterInterface
 
   void SetDefaultParameters();
 
+  // include distortions
+  void set_use_distortions( bool value )
+  { m_use_distortions = value; }
+
   void Detector(const std::string &d) { detector = d; }
   std::string Detector() const { return detector; }
   void set_seed(const unsigned int iseed);
@@ -48,7 +53,7 @@ class PHG4TpcElectronDrift : public SubsysReco, public PHParameterInterface
   TrkrHitSetContainer *temp_hitsetcontainer;
   TrkrHitTruthAssoc *hittruthassoc;
   PHG4TpcPadPlane *padplane;
-  PHG4TpcDistortion *distortion;
+  std::unique_ptr<PHG4TpcDistortion> distortion;
   TH1 *dlong;
   TH1 *dtrans;
   TNtuple *nt;
@@ -69,6 +74,8 @@ class PHG4TpcElectronDrift : public SubsysReco, public PHParameterInterface
   double max_active_radius;
   double min_time;
   double max_time;
+
+  bool m_use_distortions = false;
 
 #if !defined(__CINT__) || defined(__CLING__)
   gsl_rng *RandomGenerator;

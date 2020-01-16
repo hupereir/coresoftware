@@ -31,23 +31,15 @@ PHG4TpcAnalyticSpaceChargeDistortion::PHG4TpcAnalyticSpaceChargeDistortion( int 
 
   float rmax=78.0;
   float rmin=20.0;
-  
-  delr=new TFormula("delr","[0]*cos([1]*(x+[2]))");
+
   //set the default secret numbers:
+  delr.reset( new TFormula("delr","[0]*cos([1]*(x+[2]))") );
   delr->SetParameters(1.5,M_PI*2/(rmax-rmin),-rmin);
-   delphi=new TFormula("delphi","0.0");
-   delz=new TFormula("delz","0.0");
+  delphi.reset( new TFormula("delphi","0.0") );
+  delz.reset( new TFormula("delz","0.0") );
 }
 
-PHG4TpcAnalyticSpaceChargeDistortion::~PHG4TpcAnalyticSpaceChargeDistortion()
-{
-  if (delr)
-    delete delr;
-  if (delphi)
-    delete delphi;
-  if (delz)
-    delete delz;
-}
+PHG4TpcAnalyticSpaceChargeDistortion::~PHG4TpcAnalyticSpaceChargeDistortion() = default;
 
 double
 PHG4TpcAnalyticSpaceChargeDistortion::get_r_distortion(double r, double phi, double z)

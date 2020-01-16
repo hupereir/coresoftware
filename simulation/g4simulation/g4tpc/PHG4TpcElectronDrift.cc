@@ -90,7 +90,6 @@ PHG4TpcElectronDrift::~PHG4TpcElectronDrift()
   gsl_rng_free(RandomGenerator);
   delete padplane;
   delete temp_hitsetcontainer;
-  delete distortion;
 }
 
 int PHG4TpcElectronDrift::Init(PHCompositeNode *topNode)
@@ -134,10 +133,10 @@ int PHG4TpcElectronDrift::InitRun(PHCompositeNode *topNode)
       PHCompositeNode *DetNode =
         dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
-	{
-	  DetNode = new PHCompositeNode("TRKR");
-	  dstNode->addNode(DetNode);
-	}
+  {
+    DetNode = new PHCompositeNode("TRKR");
+    dstNode->addNode(DetNode);
+  }
 
       hitsetcontainer = new TrkrHitSetContainer();
       PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(hitsetcontainer, "TRKR_HITSET", "PHObject");
@@ -151,11 +150,11 @@ int PHG4TpcElectronDrift::InitRun(PHCompositeNode *topNode)
       PHCompositeNode *DetNode =
         dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
-	{
-	  DetNode = new PHCompositeNode("TRKR");
-	  dstNode->addNode(DetNode);
-	}
-      
+  {
+    DetNode = new PHCompositeNode("TRKR");
+    dstNode->addNode(DetNode);
+  }
+
       hittruthassoc = new TrkrHitTruthAssoc();
       PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(hittruthassoc, "TRKR_HITTRUTHASSOC", "PHObject");
       DetNode->addNode(newNode);
@@ -280,15 +279,15 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
 
     if (n_electrons <= 0)
       {
-	if (n_electrons < 0)
-	  {
-	    cout << "really bad number of electrons: " << n_electrons
-		 << ", eion: " << eion
-		 << endl;
-	  }
-	continue;
+  if (n_electrons < 0)
+    {
+      cout << "really bad number of electrons: " << n_electrons
+     << ", eion: " << eion
+     << endl;
+    }
+  continue;
       }
-    
+
     if (Verbosity() > 100)
       {
         cout << endl
@@ -335,11 +334,24 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
         continue;
       }
       double ranphi = gsl_ran_flat(RandomGenerator, -M_PI, M_PI);
-      double distrphi= distortion->get_rphi_distortion(radstart,phistart,z_start);
-      double distr= distortion->get_r_distortion(radstart,phistart,z_start);
-      double x_final = x_start + rantrans * cos(ranphi)+distr*cos(phistart)+distrphi*sin(phistart);
-      double y_final = y_start + rantrans * sin(ranphi)+distr*sin(phistart)+distrphi*cos(phistart);
+
+      double x_final = x_start + rantrans * cos(ranphi);
+      double y_final = y_start + rantrans * sin(ranphi);
+      if( m_use_distortions && distortion )
+      {
+        const double distrphi= distortion->get_rphi_distortion(radstart,phistart,z_start);
+        const double distr= distortion->get_r_distortion(radstart,phistart,z_start);
+        x_final += distr*cos(phistart) + distrphi*sin(phistart);
+        y_final += distr*sin(phistart) + distrphi*cos(phistart);
+      }
+
+//       double distrphi= distortion->get_rphi_distortion(radstart,phistart,z_start);
+//       double distr= distortion->get_r_distortion(radstart,phistart,z_start);
+//       double x_final = x_start + rantrans * cos(ranphi)+distr*cos(phistart)+distrphi*sin(phistart);
+//       double y_final = y_start + rantrans * sin(ranphi)+distr*sin(phistart)+distrphi*cos(phistart);
+
       double rad_final = sqrt(x_final * x_final + y_final * y_final);
+
       // remove electrons outside of our acceptance. Careful though, electrons from just inside 30 cm can contribute in the 1st active layer readout, so leave a little margin
       if (rad_final < min_active_radius - 2.0 || rad_final > max_active_radius + 1.0)
       {
@@ -374,58 +386,58 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
     // transfer the hits from temp_hitsetcontainer to hitsetcontainer on the node tree
     TrkrHitSetContainer::ConstRange temp_hitset_range = temp_hitsetcontainer->getHitSets(TrkrDefs::TrkrId::tpcId);
     for (TrkrHitSetContainer::ConstIterator temp_hitset_iter = temp_hitset_range.first;
-	 temp_hitset_iter != temp_hitset_range.second;
-	 ++temp_hitset_iter)
+   temp_hitset_iter != temp_hitset_range.second;
+   ++temp_hitset_iter)
       {
-	// we have an itrator to one TrkrHitSet for the Tpc from the temp_hitsetcontainer
-	TrkrDefs::hitsetkey node_hitsetkey = temp_hitset_iter->first;
-	const unsigned int layer = TrkrDefs::getLayer(node_hitsetkey);
-	const int sector = TpcDefs::getSectorId(node_hitsetkey);
-	const int side = TpcDefs::getSide(node_hitsetkey);	
-	if(Verbosity()>100)   
-	  cout << "PHG4TpcElectronDrift: temp_hitset with key: " << node_hitsetkey << " in layer " << layer << " with sector " << sector << " side " << side << endl;
+  // we have an itrator to one TrkrHitSet for the Tpc from the temp_hitsetcontainer
+  TrkrDefs::hitsetkey node_hitsetkey = temp_hitset_iter->first;
+  const unsigned int layer = TrkrDefs::getLayer(node_hitsetkey);
+  const int sector = TpcDefs::getSectorId(node_hitsetkey);
+  const int side = TpcDefs::getSide(node_hitsetkey);
+  if(Verbosity()>100)
+    cout << "PHG4TpcElectronDrift: temp_hitset with key: " << node_hitsetkey << " in layer " << layer << " with sector " << sector << " side " << side << endl;
 
-	// find or add this hitset on the node tree
-	TrkrHitSetContainer::Iterator node_hitsetit = hitsetcontainer->findOrAddHitSet(node_hitsetkey);
-	
-	// get all of the hits from the temporary hitset      
-	TrkrHitSet::ConstRange temp_hit_range = temp_hitset_iter->second->getHits();
-	for(TrkrHitSet::ConstIterator temp_hit_iter = temp_hit_range.first;
-	    temp_hit_iter != temp_hit_range.second;
-	    ++temp_hit_iter)
-	  {
-	    TrkrDefs::hitkey temp_hitkey = temp_hit_iter->first;
-	    TrkrHit *temp_tpchit = temp_hit_iter->second;
+  // find or add this hitset on the node tree
+  TrkrHitSetContainer::Iterator node_hitsetit = hitsetcontainer->findOrAddHitSet(node_hitsetkey);
 
-	    if(Verbosity() > 100)
-	      cout << "      temp_hitkey " << temp_hitkey << " pad " << TpcDefs::getPad(temp_hitkey) << " z bin " << TpcDefs::getTBin(temp_hitkey) 
-		   << "  energy " << temp_tpchit->getEnergy() << endl;
-	    
-	    // find or add this hit to the node tree	    
-	    TrkrHit *node_hit = node_hitsetit->second->getHit(temp_hitkey);
-	    if(!node_hit)
-	      {
-		// Otherwise, create a new one
-		node_hit = new TpcHit();
-		node_hitsetit->second->addHitSpecificKey(temp_hitkey, node_hit);
-	      }
-	    
-	    // Either way, add the energy to it
-	    node_hit->addEnergy(temp_tpchit->getEnergy());
-	    
-	    // Add the hit-g4hit association	    
-	    hittruthassoc->findOrAddAssoc(node_hitsetkey, temp_hitkey, hiter->first);
-	    
-	  }  // end loop over temp hits
+  // get all of the hits from the temporary hitset
+  TrkrHitSet::ConstRange temp_hit_range = temp_hitset_iter->second->getHits();
+  for(TrkrHitSet::ConstIterator temp_hit_iter = temp_hit_range.first;
+      temp_hit_iter != temp_hit_range.second;
+      ++temp_hit_iter)
+    {
+      TrkrDefs::hitkey temp_hitkey = temp_hit_iter->first;
+      TrkrHit *temp_tpchit = temp_hit_iter->second;
+
+      if(Verbosity() > 100)
+        cout << "      temp_hitkey " << temp_hitkey << " pad " << TpcDefs::getPad(temp_hitkey) << " z bin " << TpcDefs::getTBin(temp_hitkey)
+       << "  energy " << temp_tpchit->getEnergy() << endl;
+
+      // find or add this hit to the node tree
+      TrkrHit *node_hit = node_hitsetit->second->getHit(temp_hitkey);
+      if(!node_hit)
+        {
+    // Otherwise, create a new one
+    node_hit = new TpcHit();
+    node_hitsetit->second->addHitSpecificKey(temp_hitkey, node_hit);
+        }
+
+      // Either way, add the energy to it
+      node_hit->addEnergy(temp_tpchit->getEnergy());
+
+      // Add the hit-g4hit association
+      hittruthassoc->findOrAddAssoc(node_hitsetkey, temp_hitkey, hiter->first);
+
+    }  // end loop over temp hits
       } // end loop over temp hitsets
 
     // erase all entries in the temp hitsetcontainer
     temp_hitsetcontainer->Reset();
-    
-  } // end loop over g4hits
-  
 
-  unsigned int print_layer = 47;  
+  } // end loop over g4hits
+
+
+  unsigned int print_layer = 47;
 
   if(Verbosity() > 2)
     {
@@ -433,32 +445,32 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
       // We want all hitsets for the Tpc
       TrkrHitSetContainer::ConstRange hitset_range = hitsetcontainer->getHitSets(TrkrDefs::TrkrId::tpcId);
       for (TrkrHitSetContainer::ConstIterator hitset_iter = hitset_range.first;
-	   hitset_iter != hitset_range.second;
-	   ++hitset_iter)
-	{
-	  // we have an itrator to one TrkrHitSet for the Tpc from the trkrHitSetContainer
-	  TrkrDefs::hitsetkey hitsetkey = hitset_iter->first;
-	  const unsigned int layer = TrkrDefs::getLayer(hitsetkey);
-	  if(layer != print_layer)  continue;
-	  const int sector = TpcDefs::getSectorId(hitsetkey);
-	  const int side = TpcDefs::getSide(hitsetkey);
-	  
-	  cout << "PHG4TpcElectronDrift: hitset with key: " << hitsetkey << " in layer " << layer << " with sector " << sector << " side " << side << endl;
-	  
-	  // get all of the hits from this hitset      
-	  TrkrHitSet *hitset = hitset_iter->second;
-	  TrkrHitSet::ConstRange hit_range = hitset->getHits();
-	  for(TrkrHitSet::ConstIterator hit_iter = hit_range.first;
-	      hit_iter != hit_range.second;
-	      ++hit_iter)
-	    {
-	      TrkrDefs::hitkey hitkey = hit_iter->first;
-	      TrkrHit *tpchit = hit_iter->second;
+     hitset_iter != hitset_range.second;
+     ++hitset_iter)
+  {
+    // we have an itrator to one TrkrHitSet for the Tpc from the trkrHitSetContainer
+    TrkrDefs::hitsetkey hitsetkey = hitset_iter->first;
+    const unsigned int layer = TrkrDefs::getLayer(hitsetkey);
+    if(layer != print_layer)  continue;
+    const int sector = TpcDefs::getSectorId(hitsetkey);
+    const int side = TpcDefs::getSide(hitsetkey);
 
-	      cout << "      hitkey " << hitkey << " pad " << TpcDefs::getPad(hitkey) << " z bin " << TpcDefs::getTBin(hitkey) 
-		   << "  energy " << tpchit->getEnergy() << " adc " << tpchit->getAdc() << endl;
-	    }
-	}
+    cout << "PHG4TpcElectronDrift: hitset with key: " << hitsetkey << " in layer " << layer << " with sector " << sector << " side " << side << endl;
+
+    // get all of the hits from this hitset
+    TrkrHitSet *hitset = hitset_iter->second;
+    TrkrHitSet::ConstRange hit_range = hitset->getHits();
+    for(TrkrHitSet::ConstIterator hit_iter = hit_range.first;
+        hit_iter != hit_range.second;
+        ++hit_iter)
+      {
+        TrkrDefs::hitkey hitkey = hit_iter->first;
+        TrkrHit *tpchit = hit_iter->second;
+
+        cout << "      hitkey " << hitkey << " pad " << TpcDefs::getPad(hitkey) << " z bin " << TpcDefs::getTBin(hitkey)
+       << "  energy " << tpchit->getEnergy() << " adc " << tpchit->getAdc() << endl;
+      }
+  }
     }
 
   if(Verbosity() > 2)
