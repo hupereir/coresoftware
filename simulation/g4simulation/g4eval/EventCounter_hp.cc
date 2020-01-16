@@ -4,8 +4,9 @@
 #include <phool/PHTimer.h>
 
 //_____________________________________________________________________
-EventCounter_hp::EventCounter_hp( const std::string& name ):
-  SubsysReco( name)
+EventCounter_hp::EventCounter_hp( const std::string& name, unsigned int granularity ):
+  SubsysReco( name),
+  _granularity( granularity )
 { std::cout << "EventCounter_hp::EventCounter_hp." << std::endl; }
 
 //_____________________________________________________________________
@@ -32,7 +33,7 @@ int EventCounter_hp::InitRun(PHCompositeNode* )
 int EventCounter_hp::process_event(PHCompositeNode* topNode)
 {
   // print event number
-  if( _ievent % 10 == 0 )
+  if( _granularity > 0 && (_ievent % _granularity) == 0 )
   { std::cout << "EventCounter_hp::process_event - Event = " << _ievent << std::endl; }
   ++_ievent;
 

@@ -11,7 +11,7 @@ class EventCounter_hp : public SubsysReco
   public:
 
   /// constructor
-  EventCounter_hp( const std::string& = "EVENTCOUNTER_HP" );
+  EventCounter_hp( const std::string& = "EVENTCOUNTER_HP", unsigned int granularity = 100 );
 
   /// global initialization
   int Init(PHCompositeNode*) override;
@@ -29,6 +29,7 @@ class EventCounter_hp : public SubsysReco
 
   // event counter
   unsigned int _ievent = 0;
+  unsigned int _granularity = 100;
   std::unique_ptr<PHTimer> _timer;
 
 };
