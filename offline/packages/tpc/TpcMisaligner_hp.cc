@@ -92,14 +92,16 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
   const float newphi = phi;
   const float cosnewphi = std::cos( newphi );
   const float sinnewphi = std::sin( newphi );
-  const float newx = newr*cosnewphi + newr*sinnewphi;
-  const float newy = -newr*sinnewphi + newr*cosnewphi;
+  const float newx = newr*cosnewphi;
+  const float newy = newr*sinnewphi;
 
-  // print
-  std::cout << "TpcMisaligner_hp::transform_cluster -"
-    << " old: (" << cluster->getX() << "," << cluster->getY() << ")"
-    << " new: (" << newx << "," << newy << ")"
-    << std::endl;
+//   // print
+//   std::cout << "TpcMisaligner_hp::transform_cluster -"
+//     << " old: (" << cluster->getX() << "," << cluster->getY() << ")"
+//     << " r: " << r
+//     << " new: (" << newx << "," << newy << ")"
+//     << " r: " << newr
+//     << std::endl;
 
   cluster->setX( newx );
   cluster->setY( newy );
