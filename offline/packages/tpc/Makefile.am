@@ -20,7 +20,8 @@ AM_LDFLAGS = \
 pkginclude_HEADERS = \
 	TpcDefs.h \
 	TpcHit.h \
-	TpcClusterizer.h
+	TpcClusterizer.h \
+	TpcMisaligner_hp.h
 
 ROOTDICTS = \
 	TpcHit_Dict.cc
