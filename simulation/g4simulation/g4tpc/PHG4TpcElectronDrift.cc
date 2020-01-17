@@ -94,6 +94,8 @@ PHG4TpcElectronDrift::~PHG4TpcElectronDrift()
 
 int PHG4TpcElectronDrift::Init(PHCompositeNode *topNode)
 {
+
+  std::cout << "PHG4TpcElectronDrift::Init - m_use_distortions: " << m_use_distortions << std::endl;
   padplane->Init(topNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
