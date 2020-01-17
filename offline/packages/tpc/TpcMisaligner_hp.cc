@@ -74,22 +74,30 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
 {
 
   // define the r transformation (cm)
-  static constexpr float rmin_tpc = 30;
-  static constexpr float rmax_tpc = 80;
+  static constexpr float rmin_tpc = 20;
+  static constexpr float rmax_tpc = 78;
   static constexpr float rlength_tpc = rmax_tpc - rmin_tpc;
-
-  // 3 mm maximum deviation
-  static constexpr float deltar_max = 0.3;
 
   const float r = std::sqrt( square( cluster->getX() ) + square( cluster->getY() ) );
   const float phi = std::atan2( cluster->getY(), cluster->getX() );
 
+  #if true
   // use a sine function with half period rlength, which gets null on the edges
+  // r distortion
+  static constexpr float deltar_max = 1.5;
   const float deltar = deltar_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc);
+  const float deltaphi = 0;
+  #else
+  // use a sine function with half period rlength, which gets null on the edges
+  // rphi distortion
+  const float deltar = 0;
+  static constexpr float deltarphi_max = 0.3;
+  const float deltaphi = (deltarphi_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc))/r;
+  #endif
 
   // modify cluster x,y positions
   const float newr = r+deltar;
-  const float newphi = phi;
+  const float newphi = phi + deltaphi;
   const float cosnewphi = std::cos( newphi );
   const float sinnewphi = std::sin( newphi );
   const float newx = newr*cosnewphi;
