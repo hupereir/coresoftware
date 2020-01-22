@@ -190,12 +190,17 @@ namespace
     cluster._trk_r = get_r( cluster._trk_x, cluster._trk_y );
     cluster._trk_phi = get_phi( cluster._trk_x, cluster._trk_y );
 
-    // store state angle in rphi,r plane
+    /*
+    store state angles in (r,phi) and (r,z) plans
+    they are needed to study space charge distortions
+    */
     const auto cosphi( std::cos( cluster._trk_phi ) );
     const auto sinphi( std::sin( cluster._trk_phi ) );
     const auto trk_pphi = -state->get_px()*sinphi + state->get_py()*cosphi;
     const auto trk_pr = state->get_px()*cosphi + state->get_py()*sinphi;
+    const auto trk_pz = state->get_pz();
     cluster._trk_alpha = std::atan2( trk_pphi, trk_pr );
+    cluster._trk_beta = std::atan2( trk_pz, trk_pr );
 
   }
 

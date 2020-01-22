@@ -51,8 +51,11 @@ class ClusterStruct: public TObject
   float _trk_r = 0;
   float _trk_phi = 0;
 
-  // track inclination in r,phi plane
+  /// track inclination at cluster in r,phi plane
   float _trk_alpha = 0;
+
+  /// track inclination at cluster in r,z plane
+  float _trk_beta = 0;
 
   //@}
 
