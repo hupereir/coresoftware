@@ -42,19 +42,16 @@ class CylinderGeomOuterTracker : public PHG4CylinderGeom
   }
 
   double get_inner_radius() const
-  {
-    return m_InnerRadius;
-  }
+  {  return m_InnerRadius; }
 
   double get_outer_radius() const
-  {
-    return m_OuterRadius;
-  }
+  { return m_OuterRadius; }
 
   double get_average_radius() const
-  {
-    return (m_OuterRadius + m_InnerRadius) / 2.0;
-  }
+  { return (m_OuterRadius + m_InnerRadius)/2; }
+
+  double get_radius() const override
+  { return (m_OuterRadius + m_InnerRadius)/2; }
 
   bool load_geometry();
   void find_pixel_center(const int pixel_z_bin, const int pixel_phi_bin, double &phi, double &z);
