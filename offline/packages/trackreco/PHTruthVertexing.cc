@@ -28,7 +28,20 @@ PHTruthVertexing::PHTruthVertexing(const std::string& name)
   : PHInitVertexing(name)
   , _g4truth_container(nullptr)
   , _vertex_error({0.01, 0.01, 0.01})
-{}
+{
+
+  m_RandomGenerator = gsl_rng_alloc(gsl_rng_mt19937);
+
+  unsigned int seed = PHRandomSeed();  // fixed seed is handled in this funtcion
+  //  cout << Name() << " random seed: " << seed << endl;
+  gsl_rng_set(m_RandomGenerator, seed);
+}
+
+
+
+PHTruthVertexing::~PHTruthVertexing() {
+  gsl_rng_free(m_RandomGenerator);
+}
 
 //__________________________________________
 int PHTruthVertexing::Setup(PHCompositeNode* topNode)
@@ -68,16 +81,9 @@ int PHTruthVertexing::Process(PHCompositeNode* topNode)
 
       gembed_set.insert(gembed);
 
-      auto RandomGenerator = gsl_rng_alloc(gsl_rng_mt19937);
-      auto seed = PHRandomSeed();  // fixed seed is handled in this funtcion
-      //  std::cout << Name() << " random seed: " << seed << std::endl;
-      gsl_rng_set(RandomGenerator, seed);
-
-      pos[0] += _vertex_error[0] * gsl_ran_ugaussian(RandomGenerator);
-      pos[1] += _vertex_error[1] * gsl_ran_ugaussian(RandomGenerator);
-      pos[2] += _vertex_error[2] * gsl_ran_ugaussian(RandomGenerator);
-
-      gsl_rng_free(RandomGenerator);
+      pos[0] += _vertex_error[0] * gsl_ran_ugaussian(m_RandomGenerator);
+      pos[1] += _vertex_error[1] * gsl_ran_ugaussian(m_RandomGenerator);
+      pos[2] += _vertex_error[2] * gsl_ran_ugaussian(m_RandomGenerator);
 
       if (Verbosity() > 0)
       {

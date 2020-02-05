@@ -10,8 +10,9 @@
 
 #include <fun4all/SubsysReco.h>
 
-#include <TMatrixFfwd.h>
-#include <TVector3.h>
+#include <phgenfit/Track.h>
+#include <TMatrixFfwd.h>         // for TMatrixF
+#include <TVector3.h>            // for TVector3
 
 #include <cstddef>
 #include <memory>
@@ -21,11 +22,6 @@
 #include <map>
 
 class TClonesArray;
-
-namespace PHGenFit
-{
-  class Track;
-} /* namespace PHGenFit */
 
 namespace genfit
 {
@@ -171,6 +167,8 @@ class PHGenFitTrkFitter : public SubsysReco
   void set_vertex_min_ndf(double vertexMinPT)
   { _vertex_min_ndf = vertexMinPT; }
 
+  void set_track_map_name(const std::string &map_name) { _track_map_name = map_name; }
+
   //!@name disabled layers interface
   //@{
 
@@ -283,6 +281,7 @@ class PHGenFitTrkFitter : public SubsysReco
   PHG4TruthInfoContainer* _truth_container = nullptr;
   TrkrClusterContainer* _clustermap = nullptr;
   SvtxTrackMap* _trackmap = nullptr;
+  std::string _track_map_name;
   SvtxVertexMap* _vertexmap = nullptr;
 
   //! Output Node pointers

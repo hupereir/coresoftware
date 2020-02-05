@@ -14,9 +14,9 @@
 
 #include <trackbase/TrkrDefs.h>
 
-#if !defined(__CINT__) || defined(__CLING__)
 #include <Eigen/Core>
-#endif
+#include <phgenfit/Track.h>
+#include <gsl/gsl_rng.h>
 
 // standard includes
 #include <array>

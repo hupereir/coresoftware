@@ -373,8 +373,12 @@ int PHGenFitTrkProp::KalmanTrkProp()
 
   // A map is needed for each vertex location. This is a vector of maps
   _layer_thetaID_phiID_clusterID.clear();
-  for(unsigned int ivert=0; ivert<_vertex.size(); ++ivert)
-  { BuildLayerZPhiHitMap(ivert); }
+  /*  for(unsigned int ivert=0; ivert<_vertex.size(); ++ivert)
+    {
+      BuildLayerZPhiHitMap(ivert);
+    }
+  */
+  BuildLayerZPhiHitMap(0);
 
   std::vector<genfit::Track*> evt_disp_copy;
 
