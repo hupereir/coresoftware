@@ -222,6 +222,18 @@ class PHGenFitTrkProp : public PHTrackPropagating
   void set_max_search_win_theta_tpc(float maxSearchWinZ)
   { _max_search_win_theta_tpc = maxSearchWinZ; }
 
+  float get_max_search_win_phi_outer() const
+  { return _max_search_win_phi_outer; }
+
+  void set_max_search_win_phi_outer(float maxSearchWinPhi)
+  { _max_search_win_phi_outer = maxSearchWinPhi; }
+
+  float get_max_search_win_theta_outer() const
+  { return _max_search_win_theta_outer; }
+
+  void set_max_search_win_theta_outer(float maxSearchWinZ)
+  { _max_search_win_theta_outer = maxSearchWinZ; }
+
   float get_blowup_factor() const
   { return _blowup_factor; }
 
@@ -272,6 +284,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
   void set_min_search_win_phi_tpc(float minSearchWinPhiTpc)
   { _min_search_win_phi_tpc = minSearchWinPhiTpc; }
 
+  float get_min_search_win_phi_outer() const
+  { return _min_search_win_phi_outer; }
+
+  void set_min_search_win_phi_outer(float minSearchWinPhiOuter)
+  { _min_search_win_phi_outer = minSearchWinPhiOuter; }
+
   float get_min_search_win_theta_intt(int inttlayer) const
   { return _min_search_win_theta_intt[inttlayer]; }
 
@@ -289,6 +307,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
 
   void set_min_search_win_theta_tpc(float minSearchWinThetaTpc)
   { _min_search_win_theta_tpc = minSearchWinThetaTpc; }
+
+  float get_min_search_win_theta_outer() const
+  { return _min_search_win_theta_outer; }
+
+  void set_min_search_win_theta_outer(float minSearchWinThetaOuter)
+  { _min_search_win_theta_outer = minSearchWinThetaOuter; }
 
   int get_primary_pid_guess() const
   { return _primary_pid_guess; }
@@ -446,10 +470,10 @@ class PHGenFitTrkProp : public PHTrackPropagating
 
   // these are large windows
   // todo: optimize
-  float _min_search_win_phi_outer = 1.0;
-  float _max_search_win_phi_outer = 1.0;
-  float _min_search_win_theta_outer = 1.0;
-  float _max_search_win_theta_outer = 1.0;
+  float _min_search_win_phi_outer = 0;
+  float _max_search_win_phi_outer = 0.004;
+  float _min_search_win_theta_outer = 0;
+  float _max_search_win_theta_outer = 0.004;
 
   //*@name default search windows in number of sigmas
   /** actual search window is multiplied by total uncertainty on the track */
