@@ -926,7 +926,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     } catch (...) {
 
       // if (Verbosity() > 1)
-      LogWarning("Can not extrapolate to Cylinder!") << " layer: " << layer << std::endl;
+      LogWarning("Can not extrapolate to Cylinder") << " from " << extrapolate_base_TP_id << " to layer: " << layer << " (r= " << layer_r << ")" << std::endl;
       continue;
 
     }
@@ -934,7 +934,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     if (!state)
     {
       // if (Verbosity() > 1)
-      LogWarning("Can not extrapolate to Cylinder!") << " layer: " << layer << std::endl;
+      LogWarning("Can not extrapolate to Cylinder") << " from " << extrapolate_base_TP_id << " to layer: " << layer << " (r= " << layer_r << ")" << std::endl;
       continue;
     }
 
@@ -1396,7 +1396,7 @@ unsigned int PHGenFitTrkProp::encode_cluster_index(const unsigned int layer, con
 //_______________________________________________________________________________
 int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
 {
-  auto outergeos = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_OuterTracker");
+  auto outergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_OuterTracker");
   auto cellgeos = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
   auto laddergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_INTT");
   auto mapsladdergeos = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_MVTX");
@@ -1411,7 +1411,13 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   {
     const auto range = outergeos->get_begin_end();
     for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
-    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
+    {
+      std::cout
+        << "PHGenFitTrkProp::InitializeGeometry -"
+        << " outer-tracker adding layer: " << layeriter->second->get_layer()
+        << " radius: " << layeriter->second->get_radius() << std::endl;
+      radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer()));
+    }
   }
 
   // tpc
@@ -1435,7 +1441,14 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   {
     const auto range = mapsladdergeos->get_begin_end();
     for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
-    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
+    {
+      std::cout
+        << "PHGenFitTrkProp::InitializeGeometry -"
+        << " mvtx adding layer: " << layeriter->second->get_layer()
+        << " radius: " << layeriter->second->get_radius() << std::endl;
+      radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer()));
+
+    }
   }
 
   // map layer id to index
