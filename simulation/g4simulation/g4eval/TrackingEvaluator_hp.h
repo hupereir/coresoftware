@@ -78,6 +78,12 @@ class ClusterStruct: public TObject
   float _truth_z = 0;
   float _truth_r = 0;
   float _truth_phi = 0;
+
+  /// track inclination at cluster in r,phi plane
+  float _truth_alpha = 0;
+
+  /// track inclination at cluster in r,z plane
+  float _truth_beta = 0;
   //@}
 
   ///@name truth momentum
