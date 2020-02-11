@@ -178,6 +178,10 @@ bool PHG4OuterTrackerSteppingAction::UserSteppingAction(const G4Step* aStep, boo
     m_Hit->set_y(0, prePoint->GetPosition().y() / cm);
     m_Hit->set_z(0, prePoint->GetPosition().z() / cm);
 
+    m_Hit->set_px(0, prePoint->GetMomentum().x() / GeV);
+    m_Hit->set_py(0, prePoint->GetMomentum().y() / GeV);
+    m_Hit->set_pz(0, prePoint->GetMomentum().z() / GeV);
+
     StoreLocalCoordinate(m_Hit, aStep, true, false);
 
     // time in ns
@@ -187,7 +191,7 @@ bool PHG4OuterTrackerSteppingAction::UserSteppingAction(const G4Step* aStep, boo
     savetrackid = aTrack->GetTrackID();
     //set the initial energy deposit
     m_Hit->set_edep(0);
-    if (whichactive > 0)  
+    if (whichactive > 0)
     {
       m_Hit->set_eion(0);
       // Now save the container we want to add this m_Hit to
@@ -246,14 +250,18 @@ bool PHG4OuterTrackerSteppingAction::UserSteppingAction(const G4Step* aStep, boo
     m_Hit->set_y(1, postPoint->GetPosition().y() / cm);
     m_Hit->set_z(1, postPoint->GetPosition().z() / cm);
 
+    m_Hit->set_px(1, postPoint->GetMomentum().x() / GeV);
+    m_Hit->set_py(1, postPoint->GetMomentum().y() / GeV);
+    m_Hit->set_pz(1, postPoint->GetMomentum().z() / GeV);
+
     StoreLocalCoordinate(m_Hit, aStep, false, true);
-    
+
     if (whichactive > 0)
       {
-	m_Hit->set_px(1, postPoint->GetMomentum().x() / GeV);
-	m_Hit->set_py(1, postPoint->GetMomentum().y() / GeV);
-	m_Hit->set_pz(1, postPoint->GetMomentum().z() / GeV);
-	m_Hit->set_eion(m_Hit->get_eion() + eion);
+  m_Hit->set_px(1, postPoint->GetMomentum().x() / GeV);
+  m_Hit->set_py(1, postPoint->GetMomentum().y() / GeV);
+  m_Hit->set_pz(1, postPoint->GetMomentum().z() / GeV);
+  m_Hit->set_eion(m_Hit->get_eion() + eion);
       }
 
     m_Hit->set_t(1, postPoint->GetGlobalTime() / nanosecond);
