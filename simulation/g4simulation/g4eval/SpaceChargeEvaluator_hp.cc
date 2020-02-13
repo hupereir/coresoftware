@@ -101,6 +101,9 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
   // define z max as the center of the last bin
   const double zmax = xmax[0] - (xmax[0]-xmin[0])/(2*_z_bins);
 
+  // check number of hits
+  std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - hits: " << _g4hits_tpc->size() << std::endl;
+
   // loop over g4 hits
   const auto range = _g4hits_tpc->getHits();
   for( auto iter = range.first; iter != range.second; ++iter )
@@ -126,7 +129,7 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
     { std::array<double,3> x = {{zmax, r, phi}}; h.Fill( &x[0], nsecondary ); }
   }
 
-  const TString filename = Form( "%s_%02i.root", _basefilename.c_str(), _ievent );
+  const TString filename = Form( "%s_%02i.root", _basefilename.c_str(), _ievent+_offset );
   std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - writing map to " << filename << std::endl;
   TFile f( filename, "RECREATE" );
   f.cd();

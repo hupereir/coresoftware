@@ -43,6 +43,14 @@ class SpaceChargeEvaluator_hp : public SubsysReco
   /// end of processing
   virtual int End(PHCompositeNode*);
 
+  ///@name modifiers
+  //@{
+
+  void set_offest( int value )
+  { _offset = value; }
+
+  //@}
+
   private:
 
   /// load nodes
