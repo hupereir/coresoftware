@@ -46,8 +46,11 @@ class SpaceChargeEvaluator_hp : public SubsysReco
   ///@name modifiers
   //@{
 
-  void set_offest( int value )
+  void set_offset( int value )
   { _offset = value; }
+
+  void set_basefilename( const std::string& value )
+  { _basefilename = value; }
 
   //@}
 
@@ -63,7 +66,7 @@ class SpaceChargeEvaluator_hp : public SubsysReco
   PHG4HitContainer* _g4hits_tpc = nullptr;
 
   // base file name
-  std::string _basefilename = "spacechargemap";
+  std::string _basefilename = "spacechargemap_%05i.root";
 
   // map size
   unsigned int _ievent = 0;

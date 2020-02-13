@@ -112,14 +112,17 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
     const auto hit = iter->second;
 
     // get r, phi and z
-    const double x = square(average<&PHG4Hit::get_x>(hit));
-    const double y = square(average<&PHG4Hit::get_y>(hit));
-    const double z = square(average<&PHG4Hit::get_z>(hit));
+    const double x = average<&PHG4Hit::get_x>(hit);
+    const double y = average<&PHG4Hit::get_y>(hit);
+    const double z = average<&PHG4Hit::get_z>(hit);
     const double r = std::sqrt( square(x) + square(y) );
-    const double phi = std::atan2( y, x );
+    const double phi = M_PI + std::atan2( y, x );
+
+    // std::cout << "position: (" << r << "," << phi << "," << z << ")" << std::endl;
 
     // get number of primary electrons/ions
     const double nprimary =  hit->get_eion()*1e9/_eion;
+    // std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - nprimary: " << nprimary << std::endl;
 
     // get number of secondary ions
     const double nsecondary = nprimary*_gain*_ibf;
@@ -129,7 +132,7 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
     { std::array<double,3> x = {{zmax, r, phi}}; h.Fill( &x[0], nsecondary ); }
   }
 
-  const TString filename = Form( "%s_%02i.root", _basefilename.c_str(), _ievent+_offset );
+  const TString filename = Form( _basefilename.c_str(), _ievent+_offset );
   std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - writing map to " << filename << std::endl;
   TFile f( filename, "RECREATE" );
   f.cd();
