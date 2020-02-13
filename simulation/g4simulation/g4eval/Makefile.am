@@ -40,15 +40,16 @@ pkginclude_HEADERS = \
 	MomentumEvaluator.h \
 	PHG4DstCompressReco.h \
 	PHG4DSTReader.h \
+ SpaceChargeEvaluator_hp.h \
 	SvtxEvalStack.h \
 	SvtxEvaluator.h \
-	TrkrEvaluator.h \
 	SvtxHitEval.h \
 	SvtxClusterEval.h \
 	SvtxTrackEval.h \
 	SvtxTruthEval.h \
 	SvtxVertexEval.h \
-	TrackingEvaluator_hp.h
+	TrackingEvaluator_hp.h \
+	TrkrEvaluator.h
 
 if ! MAKEROOT6
 	ROOT5DICTS = \
@@ -62,6 +63,7 @@ if ! MAKEROOT6
 	JetRecoEval_Dict.cc \
 	JetEvaluator_Dict.cc \
 	PHG4DSTReader_Dict.cc \
+ SpaceChargeEvaluator_hp_Dict.cc \
 	SvtxEvalStack_Dict.cc \
 	SvtxTruthEval_Dict.cc \
 	SvtxHitEval_Dict.cc \
@@ -89,6 +91,7 @@ libg4eval_la_SOURCES = \
 	JetRecoEval.cc \
 	JetEvaluator.cc \
 	PHG4DSTReader.cc \
+ SpaceChargeEvaluator_hp.cc \
 	SvtxEvalStack.cc \
 	SvtxTruthEval.cc \
 	SvtxHitEval.cc \
