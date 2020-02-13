@@ -7,6 +7,7 @@
 #include <phool/PHCompositeNode.h>
 #include <phool/PHNodeIterator.h>
 
+#include <TAxis.h>
 #include <TFile.h>
 #include <THnSparse.h>
 #include <TString.h>
@@ -98,9 +99,9 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
   std::array<double,3> xmax = {{ 105, 78, 2*M_PI }};
   THnSparseF h( "h_sc", "h_sc", 3, &bins[0], &xmin[0], &xmax[0] );
 
-  h->GetAxis(0)->SetTitle( "z (cm)" );
-  h->GetAxis(1)->SetTitle( "r (cm)" );
-  h->GetAxis(2)->SetTitle( "#phi (rad)" );
+  h.GetAxis(0)->SetTitle( "z (cm)" );
+  h.GetAxis(1)->SetTitle( "r (cm)" );
+  h.GetAxis(2)->SetTitle( "#phi (rad)" );
 
   // check number of hits
   std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - hits: " << _g4hits_tpc->size() << std::endl;
