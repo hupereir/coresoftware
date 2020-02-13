@@ -63,14 +63,19 @@ namespace
     double swx = 0;
     double swrx = 0;
 
+    bool valid( false );
     for( const auto& hit:hits )
     {
-      const double w = hit->get_edep();
-      const double r0 = get_r( hit, 0 );
-      const double r1 = get_r( hit, 1 );
 
       const double x0 = (hit->*accessor)(0);
       const double x1 = (hit->*accessor)(1);
+
+      if( std::isnan( x0 ) || std::isnan( x1 ) ) continue;
+
+      valid = true;
+      const double w = hit->get_edep();
+      const double r0 = get_r( hit, 0 );
+      const double r1 = get_r( hit, 1 );
 
       sw += w*2;
       swr += w*(r0 + r1);
@@ -78,6 +83,8 @@ namespace
       swx += w*(x0 + x1);
       swrx += w*(r0*x0 + r1*x1);
     }
+
+    if( !valid ) return NAN;
 
     const auto alpha = (sw*swrx - swr*swx);
     const auto beta = (swr2*swx - swr*swrx);
@@ -774,6 +781,8 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
 
   // check maps
   if( !( _cluster_hit_map && _hit_truth_map ) ) return G4HitSet();
+
+  const int layer = TrkrDefs::getLayer(cluster_key);
 
   // find hitset associated to cluster
   G4HitSet out;
