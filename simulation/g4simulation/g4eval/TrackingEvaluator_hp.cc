@@ -69,11 +69,12 @@ namespace
 
       const double x0 = (hit->*accessor)(0);
       const double x1 = (hit->*accessor)(1);
-
       if( std::isnan( x0 ) || std::isnan( x1 ) ) continue;
 
-      valid = true;
       const double w = hit->get_edep();
+      if( w < 0 ) continue;
+
+      valid = true;
       const double r0 = get_r( hit, 0 );
       const double r1 = get_r( hit, 1 );
 
