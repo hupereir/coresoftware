@@ -98,8 +98,9 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
   std::array<double,3> xmax = {{ 105, 78, 2*M_PI }};
   THnSparseF h( "h_sc", "h_sc", 3, &bins[0], &xmin[0], &xmax[0] );
 
-  // define z max as the center of the last bin
-  const double zmax = xmax[0] - (xmax[0]-xmin[0])/(2*_z_bins);
+  h->GetAxis(0)->SetTitle( "z (cm)" );
+  h->GetAxis(1)->SetTitle( "r (cm)" );
+  h->GetAxis(2)->SetTitle( "#phi (rad)" );
 
   // check number of hits
   std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - hits: " << _g4hits_tpc->size() << std::endl;
@@ -111,6 +112,9 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
     // get g4 hit
     const auto hit = iter->second;
 
+    // check energy
+    if( hit->get_edep() < 0 ) continue;
+
     // get r, phi and z
     const double x = average<&PHG4Hit::get_x>(hit);
     const double y = average<&PHG4Hit::get_y>(hit);
@@ -118,18 +122,11 @@ void SpaceChargeEvaluator_hp::fill_space_charge_map()
     const double r = std::sqrt( square(x) + square(y) );
     const double phi = M_PI + std::atan2( y, x );
 
-    // std::cout << "position: (" << r << "," << phi << "," << z << ")" << std::endl;
-
     // get number of primary electrons/ions
     const double nprimary =  hit->get_eion()*1e9/_eion;
-    // std::cout << "SpaceChargeEvaluator_hp::fill_space_charge_map - nprimary: " << nprimary << std::endl;
-
-    // get number of secondary ions
-    const double nsecondary = nprimary*_gain*_ibf;
 
     // fill histogram
     { std::array<double,3> x = {{z, r, phi}}; h.Fill( &x[0], nprimary ); }
-    { std::array<double,3> x = {{zmax, r, phi}}; h.Fill( &x[0], nsecondary ); }
   }
 
   const TString filename = Form( _basefilename.c_str(), _ievent+_offset );

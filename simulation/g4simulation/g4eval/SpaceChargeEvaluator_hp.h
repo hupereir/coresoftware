@@ -74,8 +74,6 @@ class SpaceChargeEvaluator_hp : public SubsysReco
   int _phi_bins = 72;
   int _r_bins = 48;
   int _z_bins = 50;
-  float _gain = 2000;
-  float _ibf = 0.3/100;
   float _eion = 38; // ev
 
 };
