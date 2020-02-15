@@ -168,61 +168,6 @@ class TrackPairStruct: public TObject
 
 };
 
-/// track container
-class Container: public PHObject
-{
-
-  public:
-
-  /// constructor
-  Container();
-
-  /// copy constructor
-  explicit Container(const Container &) = delete;
-
-  /// assignment operator
-  Container& operator = ( const Container& ) = delete;
-
-  /// destructor
-  virtual ~Container();
-
-  /// reset
-  virtual void Reset();
-
-  ///@name accessors
-  //@{
-  TClonesArray* clusters() const
-  { return _clusters; }
-
-  TClonesArray* tracks() const
-  { return _tracks; }
-
-  TClonesArray* track_pairs() const
-  { return _track_pairs; }
-
-  TClonesArray* mc_tracks() const
-  { return _mc_tracks; }
-
-  //@}
-
-  private:
-
-  /// clusters array
-  TClonesArray* _clusters = nullptr;
-
-  /// tracks array
-  TClonesArray* _tracks = nullptr;
-
-  /// track pairs array
-  TClonesArray* _track_pairs = nullptr;
-
-  /// tracks array
-  TClonesArray* _mc_tracks = nullptr;
-
-  ClassDef(Container,1)
-
-};
-
 class TrackingEvaluator_hp : public SubsysReco
 {
   public:
@@ -241,6 +186,61 @@ class TrackingEvaluator_hp : public SubsysReco
 
   /// end of processing
   virtual int End(PHCompositeNode*);
+
+  /// track container
+  class Container: public PHObject
+  {
+
+    public:
+
+    /// constructor
+    Container();
+
+    /// copy constructor
+    explicit Container(const Container &) = delete;
+
+    /// assignment operator
+    Container& operator = ( const Container& ) = delete;
+
+    /// destructor
+    virtual ~Container();
+
+    /// reset
+    virtual void Reset();
+
+    ///@name accessors
+    //@{
+    TClonesArray* clusters() const
+    { return _clusters; }
+
+    TClonesArray* tracks() const
+    { return _tracks; }
+
+    TClonesArray* track_pairs() const
+    { return _track_pairs; }
+
+    TClonesArray* mc_tracks() const
+    { return _mc_tracks; }
+
+    //@}
+
+    private:
+
+    /// clusters array
+    TClonesArray* _clusters = nullptr;
+
+    /// tracks array
+    TClonesArray* _tracks = nullptr;
+
+    /// track pairs array
+    TClonesArray* _track_pairs = nullptr;
+
+    /// tracks array
+    TClonesArray* _mc_tracks = nullptr;
+
+    ClassDef(Container,1)
+
+  };
 
   private:
 

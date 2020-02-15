@@ -285,7 +285,7 @@ namespace
 }
 
 //_____________________________________________________________________
-Container::Container()
+TrackingEvaluator_hp::Container::Container()
 {
   _clusters = new TClonesArray( "ClusterStruct" );
   _clusters->SetName( "ClusterArray" );
@@ -305,7 +305,7 @@ Container::Container()
 }
 
 //_____________________________________________________________________
-Container::~Container()
+TrackingEvaluator_hp::Container::~Container()
 {
   delete _clusters;
   delete _tracks;
@@ -314,7 +314,7 @@ Container::~Container()
 }
 
 //_____________________________________________________________________
-void Container::Reset()
+void TrackingEvaluator_hp::Container::Reset()
 {
   _clusters->Clear();
   _tracks->Clear();
@@ -356,7 +356,7 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
   }
 
   _container = new Container;
-  auto newNode = new PHIODataNode<PHObject>( _container, "Container","PHObject");
+  auto newNode = new PHIODataNode<PHObject>( _container, "TrackingEvaluator_hp::Container","PHObject");
   evalNode->addNode(newNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -412,7 +412,7 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   _hit_truth_map = findNode::getClass<TrkrHitTruthAssoc>(topNode,"TRKR_HITTRUTHASSOC");
 
   // local container
-  _container = findNode::getClass<Container>(topNode, "Container");
+  _container = findNode::getClass<Container>(topNode, "TrackingEvaluator_hp::Container");
 
   // g4hits
   _g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
