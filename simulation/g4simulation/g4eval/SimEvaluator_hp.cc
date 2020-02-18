@@ -89,7 +89,7 @@ int SimEvaluator_hp::Init(PHCompositeNode* topNode )
   }
 
   _container = new Container;
-  auto newNode = new PHIODataNode<PHObject>( _container, "Container", "PHObject" );
+  auto newNode = new PHIODataNode<PHObject>( _container, "SimEvaluator_hp::Container", "PHObject" );
   evalNode->addNode(newNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -127,7 +127,7 @@ int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 {
 
   // local container
-  _container = findNode::getClass<Container>(topNode, "Container");
+  _container = findNode::getClass<Container>(topNode, "SimEvaluator_hp::Container");
 
   // g4 truth info
   _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
