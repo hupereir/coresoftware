@@ -8,7 +8,6 @@
 #include <phool/getClass.h>
 #include <phool/PHCompositeNode.h>
 #include <phool/PHNodeIterator.h>
-#include <phool/PHTimer.h>
 #include <trackbase/TrkrDefs.h>
 #include <trackbase/TrkrCluster.h>
 #include <trackbase/TrkrClusterContainer.h>

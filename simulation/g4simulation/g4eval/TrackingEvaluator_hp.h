@@ -3,7 +3,6 @@
 
 #include <fun4all/SubsysReco.h>
 #include <phool/PHObject.h>
-#include <phool/PHTimer.h>
 #include <trackbase/TrkrDefs.h>
 
 #include <TClonesArray.h>
