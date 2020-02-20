@@ -55,6 +55,10 @@
 #include <iostream>
 #include <map>                                          // for _Rb_tree_cons...
 #include <utility>                                      // for pair
+
+
+#include <valgrind/callgrind.h>
+
 #
 using namespace std;
 
@@ -249,6 +253,9 @@ int PHG4TpcElectronDrift::InitRun(PHCompositeNode *topNode)
 
 int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
 {
+
+   CALLGRIND_START_INSTRUMENTATION;
+
   PHG4HitContainer *g4hit = findNode::getClass<PHG4HitContainer>(topNode, hitnodename.c_str());
   if (!g4hit)
   {
@@ -481,7 +488,8 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
       hittruthassoc->identify();
     }
 
-  return Fun4AllReturnCodes::EVENT_OK;
+    CALLGRIND_STOP_INSTRUMENTATION;
+    return Fun4AllReturnCodes::EVENT_OK;
 }
 
 void PHG4TpcElectronDrift::MapToPadPlane(const double x_gem, const double y_gem, const double t_gem, PHG4HitContainer::ConstIterator hiter, TNtuple *ntpad, TNtuple *nthit)
