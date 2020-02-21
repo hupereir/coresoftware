@@ -1,5 +1,7 @@
 #include "PHG4TpcPadPlaneReadout.h"
 
+#include <phool/phool.h>
+
 #include <g4detectors/PHG4Cell.h>                       // for PHG4Cell
 #include <g4detectors/PHG4CellDefs.h>                   // for genkey, keytype
 #include <g4detectors/PHG4CellContainer.h>
@@ -626,6 +628,7 @@ void PHG4TpcPadPlaneReadout::populate_zigzag_phibins(const unsigned int layernum
   {
     pad_phibin.push_back(pad_keep[ipad]);
     pad_phibin_share.push_back(overlap[ipad]);
+    std::cout << "PHG4TpcPadPlaneReadout::populate_zigzag_phibins - overlap for pad " << ipad << " is " << overlap[ipad] << std::endl;
     if (rad_gem < output_radius) cout << "         zigzags: for pad " << ipad << " integral is " << overlap[ipad] << endl;
   }
 
