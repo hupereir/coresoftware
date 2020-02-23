@@ -628,7 +628,6 @@ void PHG4TpcPadPlaneReadout::populate_zigzag_phibins(const unsigned int layernum
   {
     pad_phibin.push_back(pad_keep[ipad]);
     pad_phibin_share.push_back(overlap[ipad]);
-    std::cout << "PHG4TpcPadPlaneReadout::populate_zigzag_phibins - overlap for pad " << ipad << " is " << overlap[ipad] << std::endl;
     if (rad_gem < output_radius) cout << "         zigzags: for pad " << ipad << " integral is " << overlap[ipad] << endl;
   }
 
