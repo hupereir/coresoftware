@@ -10,30 +10,39 @@
 
 #include <fun4all/SubsysReco.h>
 
+#if !defined(__CINT__) || defined(__CLING__)
+// needed, it crashes on Ubuntu using singularity with local cvmfs install
+// shared pointer later on uses this, forward declaration does not cut it
 #include <phgenfit/Track.h>
+#else
+namespace PHGenFit
+{
+  class Track;
+} /* namespace PHGenFit */
+#endif
+
 #include <TMatrixFfwd.h>         // for TMatrixF
 #include <TVector3.h>            // for TVector3
 
-#include <cstddef>
-#include <memory>
+#include <map>
+#include <memory>                // for shared_ptr
 #include <set>
 #include <string>
 #include <vector>
-#include <map>
 
 class TClonesArray;
 
 namespace genfit
 {
-  class GFRaveVertex;
-  class GFRaveVertexFactory;
-  class Track;
+class GFRaveVertex;
+class GFRaveVertexFactory;
+class Track;
 } /* namespace genfit */
 
 class SvtxTrack;
 namespace PHGenFit
 {
-  class Fitter;
+class Fitter;
 } /* namespace PHGenFit */
 
 class SvtxTrackMap;
@@ -75,98 +84,146 @@ class PHGenFitTrkFitter : public SubsysReco
   PHGenFitTrkFitter(const std::string& name = "PHGenFitTrkFitter");
 
   //!Initialization, called for initialization
-  int Init(PHCompositeNode*) override;
+  virtual int Init(PHCompositeNode*);
 
   //!Initialization Run, called for initialization of a run
-  int InitRun(PHCompositeNode*) override;
+  virtual int InitRun(PHCompositeNode*);
 
   //!Process Event, called for each event
-  int process_event(PHCompositeNode*) override;
+  virtual int process_event(PHCompositeNode*);
 
   //!End, write and close files
-  int End(PHCompositeNode*) override;
+  virtual int End(PHCompositeNode*);
 
   //! For evalution
   //! Change eval output filename
   void set_eval_filename(const char* file)
-  { if (file) _eval_outname = file; }
-
+  {
+    if (file)
+      _eval_outname = file;
+  }
   std::string get_eval_filename() const
-  { return _eval_outname; }
+  {
+    return _eval_outname;
+  }
 
   void fill_eval_tree(PHCompositeNode*);
   void init_eval_tree();
   void reset_eval_variables();
 
   bool is_do_eval() const
-  { return _do_eval; }
+  {
+    return _do_eval;
+  }
 
   void set_do_eval(bool doEval)
-  { _do_eval = doEval; }
+  {
+    _do_eval = doEval;
+  }
 
   bool is_do_evt_display() const
-  { return _do_evt_display; }
+  {
+    return _do_evt_display;
+  }
 
   void set_do_evt_display(bool doEvtDisplay)
-  { _do_evt_display = doEvtDisplay; }
+  {
+    _do_evt_display = doEvtDisplay;
+  }
 
   const std::string& get_vertexing_method() const
-  { return _vertexing_method; }
+  {
+    return _vertexing_method;
+  }
 
   void set_vertexing_method(const std::string& vertexingMethod)
-  { _vertexing_method = vertexingMethod; }
+  {
+    _vertexing_method = vertexingMethod;
+  }
 
   bool is_fit_primary_tracks() const
-  { return _fit_primary_tracks; }
+  {
+    return _fit_primary_tracks;
+  }
 
   void set_fit_primary_tracks(bool fitPrimaryTracks)
-  { _fit_primary_tracks = fitPrimaryTracks; }
+  {
+    _fit_primary_tracks = fitPrimaryTracks;
+  }
 
   OutPutMode get_output_mode() const
-  { return _output_mode; }
+  {
+    return _output_mode;
+  }
 
   /*!
    * set output mode, default is OverwriteOriginalNode
    */
   void set_output_mode(OutPutMode outputMode)
-  { _output_mode = outputMode; }
+  {
+    _output_mode = outputMode;
+  }
 
   const std::string& get_track_fitting_alg_name() const
-  { return _track_fitting_alg_name; }
+  {
+    return _track_fitting_alg_name;
+  }
 
   void set_track_fitting_alg_name(const std::string& trackFittingAlgName)
-  { _track_fitting_alg_name = trackFittingAlgName; }
+  {
+    _track_fitting_alg_name = trackFittingAlgName;
+  }
 
   int get_primary_pid_guess() const
-  { return _primary_pid_guess; }
+  {
+    return _primary_pid_guess;
+  }
 
   void set_primary_pid_guess(int primaryPidGuess)
-  { _primary_pid_guess = primaryPidGuess; }
+  {
+    _primary_pid_guess = primaryPidGuess;
+  }
 
   double get_fit_min_pT() const
-  { return _fit_min_pT; }
+  {
+    return _fit_min_pT;
+  }
 
   void set_fit_min_pT(double cutMinPT)
-  { _fit_min_pT = cutMinPT; }
+  {
+    _fit_min_pT = cutMinPT;
+  }
+
 
   bool is_over_write_svtxtrackmap() const
-  { return _over_write_svtxtrackmap; }
+  {
+    return _over_write_svtxtrackmap;
+  }
 
   void set_over_write_svtxtrackmap(bool overWriteSvtxtrackmap)
-  { _over_write_svtxtrackmap = overWriteSvtxtrackmap; }
+  {
+    _over_write_svtxtrackmap = overWriteSvtxtrackmap;
+  }
 
   bool is_use_truth_vertex() const
-  { return _use_truth_vertex; }
+  {
+    return _use_truth_vertex;
+  }
 
   void set_use_truth_vertex(bool useTruthVertex)
-  { _use_truth_vertex = useTruthVertex; }
+  {
+    _use_truth_vertex = useTruthVertex;
+  }
 
   double get_vertex_min_ndf() const
-  { return _vertex_min_ndf; }
+  {
+    return _vertex_min_ndf;
+  }
 
   void set_vertex_min_ndf(double vertexMinPT)
-  { _vertex_min_ndf = vertexMinPT; }
-
+  {
+    _vertex_min_ndf = vertexMinPT;
+  }
   void set_track_map_name(const std::string &map_name) { _track_map_name = map_name; }
 
   //!@name disabled layers interface
@@ -187,7 +244,6 @@ class PHGenFitTrkFitter : public SubsysReco
   //@}
 
   private:
-
   //! Event counter
   int _event = 0;
 
@@ -209,45 +265,43 @@ class PHGenFitTrkFitter : public SubsysReco
 
   //! Fill SvtxVertexMap from GFRaveVertexes and Tracks
   bool FillSvtxVertexMap(
-    const std::vector<genfit::GFRaveVertex*>& rave_vertices,
-    const std::vector<genfit::Track*>& gf_tracks);
+      const std::vector<genfit::GFRaveVertex*>& rave_vertices,
+      const std::vector<genfit::Track*>& gf_tracks);
 
-  // TODO: these should only be defined as regular methods in the cc file
-  // since they do not use any class member
   bool pos_cov_uvn_to_rz(
-    const TVector3& u,
-    const TVector3& v,
-    const TVector3& n,
-    const TMatrixF& pos_in,
-    const TMatrixF& cov_in,
-    TMatrixF& pos_out,
-    TMatrixF& cov_out) const;
+      const TVector3& u,
+      const TVector3& v,
+      const TVector3& n,
+      const TMatrixF& pos_in,
+      const TMatrixF& cov_in,
+      TMatrixF& pos_out,
+      TMatrixF& cov_out) const;
 
   bool get_vertex_error_uvn(
-    const TVector3& u,
-    const TVector3& v,
-    const TVector3& n,
-    const TMatrixF& cov_in,
-    TMatrixF& cov_out) const;
+      const TVector3& u,
+      const TVector3& v,
+      const TVector3& n,
+      const TMatrixF& cov_in,
+      TMatrixF& cov_out) const;
 
   bool pos_cov_XYZ_to_RZ(
-    const TVector3& n,
-    const TMatrixF& pos_in,
-    const TMatrixF& cov_in,
-    TMatrixF& pos_out,
-    TMatrixF& cov_out) const;
+      const TVector3& n,
+      const TMatrixF& pos_in,
+      const TMatrixF& cov_in,
+      TMatrixF& pos_out,
+      TMatrixF& cov_out) const;
 
   /*!
    * Get 3D Rotation Matrix that rotates frame (x,y,z) to (x',y',z')
    * Default rotate local to global, or rotate vector in global to local representation
    */
   TMatrixF get_rotation_matrix(
-    const TVector3 x,
-    const TVector3 y,
-    const TVector3 z,
-    const TVector3 xp = TVector3(1., 0., 0.),
-    const TVector3 yp = TVector3(0., 1., 0.),
-    const TVector3 zp = TVector3(0., 0., 1.)) const;
+      const TVector3 x,
+      const TVector3 y,
+      const TVector3 z,
+      const TVector3 xp = TVector3(1., 0., 0.),
+      const TVector3 yp = TVector3(0., 1., 0.),
+      const TVector3 zp = TVector3(0., 0., 1.)) const;
 
   //bool _make_separate_nodes;
   OutPutMode _output_mode = PHGenFitTrkFitter::MakeNewNode;
@@ -263,8 +317,6 @@ class PHGenFitTrkFitter : public SubsysReco
   /** clusters belonging to disabled layers are not included in track fit */
   std::set<int> _disabled_layers;
 
-  std::unique_ptr<PHGenFit::Fitter> _fitter;
-
   //! KalmanFitterRefTrack, KalmanFitter, DafSimple, DafRef
   std::string _track_fitting_alg_name = "DafRef";
 
@@ -272,10 +324,19 @@ class PHGenFitTrkFitter : public SubsysReco
   double _fit_min_pT = 0.1;
   double _vertex_min_ndf = 20;
 
-  std::unique_ptr<genfit::GFRaveVertexFactory> _vertex_finder;
+  #if !defined(__CINT__) || defined(__CLING__)
+  /*
+  need to use shared_ptr and not unique_ptr because root5 cint
+  requires the existence of a copy constructor, which the unique_ptr forbids
+  */
+  std::shared_ptr<PHGenFit::Fitter> _fitter;
+  std::shared_ptr<genfit::GFRaveVertexFactory> _vertex_finder;
+  #endif
 
   //! https://rave.hepforge.org/trac/wiki/RaveMethods
   std::string _vertexing_method = "avr-smoothing:1-minweight:0.5-primcut:9-seccut:9";
+
+  //PHRaveVertexFactory* _vertex_finder;
 
   //! Input Node pointers
   PHG4TruthInfoContainer* _truth_container = nullptr;
