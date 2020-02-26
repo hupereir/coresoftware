@@ -16,15 +16,6 @@ class VertexStruct: public TObject
   virtual const char* GetName() const
   { return "VertexStruct"; }
 
-  void Clear()
-  {
-    _x = 0;
-    _y = 0;
-    _z = 0;
-    _t = 0;
-    _is_main_vertex = false;
-  }
-
   float _x = 0;
   float _y = 0;
   float _z = 0;
@@ -35,6 +26,27 @@ class VertexStruct: public TObject
   ClassDef(VertexStruct,1)
 
 };
+
+// vertex information
+class ParticleStruct: public TObject
+{
+  public:
+
+  virtual const char* GetName() const
+  { return "ParticleStruct"; }
+
+  float _px = 0;
+  float _py = 0;
+  float _pz = 0;
+  float _pt = 0;
+  float _p = 0;
+  float _eta = 0;
+  int _charge = 0;
+
+  ClassDef(ParticleStruct,1)
+
+};
+
 
 class SimEvaluator_hp : public SubsysReco
 {
@@ -77,12 +89,19 @@ class SimEvaluator_hp : public SubsysReco
 
     TClonesArray* primary_vertex_list()
     { return _vertex_list; }
+
+    TClonesArray* particle_list()
+    { return _particle_list; }
+
     //@}
 
     private:
 
-    //* background vertex list
+    //* vertex list
     TClonesArray* _vertex_list = nullptr;
+
+    //* particles
+    TClonesArray* _particle_list = nullptr;
 
     ClassDef(Container,1)
 
@@ -96,12 +115,16 @@ class SimEvaluator_hp : public SubsysReco
   /// fill vertices
   void fill_vertices();
 
+  /// fill particles
+  void fill_particles();
+
   /// print vertices
   void print_vertices();
 
   //* data container
   Container* _container = nullptr;
   int _vertex_count = 0;
+  int _particle_count = 0;
 
   //* truth information
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;
