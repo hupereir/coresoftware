@@ -56,10 +56,6 @@
 #include <map>                                          // for _Rb_tree_cons...
 #include <utility>                                      // for pair
 
-
-#include <valgrind/callgrind.h>
-
-#
 using namespace std;
 
 PHG4TpcElectronDrift::PHG4TpcElectronDrift(const std::string &name)
@@ -429,13 +425,18 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
     // Otherwise, create a new one
     node_hit = new TpcHit();
     node_hitsetit->second->addHitSpecificKey(temp_hitkey, node_hit);
+
+    // Add the hit-g4hit association
+    // no need to check for duplicates, since the hit is new
+    hittruthassoc->addAssoc(node_hitsetkey, temp_hitkey, hiter->first);
+        } else {
+    // Add the hit-g4hit association
+    // TODO: check if duplication can happen
+    hittruthassoc->findOrAddAssoc(node_hitsetkey, temp_hitkey, hiter->first);
         }
 
       // Either way, add the energy to it
       node_hit->addEnergy(temp_tpchit->getEnergy());
-
-      // Add the hit-g4hit association
-      hittruthassoc->findOrAddAssoc(node_hitsetkey, temp_hitkey, hiter->first);
 
     }  // end loop over temp hits
       } // end loop over temp hitsets
