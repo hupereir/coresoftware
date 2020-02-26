@@ -250,8 +250,6 @@ int PHG4TpcElectronDrift::InitRun(PHCompositeNode *topNode)
 int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
 {
 
-   CALLGRIND_START_INSTRUMENTATION;
-
   PHG4HitContainer *g4hit = findNode::getClass<PHG4HitContainer>(topNode, hitnodename.c_str());
   if (!g4hit)
   {
@@ -489,7 +487,6 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
       hittruthassoc->identify();
     }
 
-    CALLGRIND_STOP_INSTRUMENTATION;
     return Fun4AllReturnCodes::EVENT_OK;
 }
 
