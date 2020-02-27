@@ -615,9 +615,7 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
     return;
   }
 
-  // const auto range = _g4truthinfo->GetPrimaryParticleRange();
-  const auto range = _g4truthinfo->GetParticleRange();
-  // std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks - count: " << std::distance(range.first, range.second) << std::endl;
+  const auto range = _g4truthinfo->GetPrimaryParticleRange();
   for( auto iter = range.first; iter != range.second; ++iter )
   {
 
