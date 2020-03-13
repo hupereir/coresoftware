@@ -82,17 +82,21 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
   const float phi = std::atan2( cluster->getY(), cluster->getX() );
 
   #if true
-  // use a sine function with half period rlength, which gets null on the edges
   // r distortion
   static constexpr float deltar_max = 1.5;
-  const float deltar = deltar_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc);
+
+  // use a cosine function
+  const float deltar = deltar_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
+//   // use a sine function with half period rlength, which gets null on the edges
+//   const float deltar = deltar_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc);
   const float deltaphi = 0;
   #else
-  // use a sine function with half period rlength, which gets null on the edges
   // rphi distortion
   const float deltar = 0;
-  static constexpr float deltarphi_max = 0.3;
-  const float deltaphi = (deltarphi_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc))/r;
+  static constexpr float deltarphi_max = 1.5;
+  const float deltarphi = deltarphi_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
+//   // use a sine function with half period rlength, which gets null on the edges
+//   const float deltaphi = (deltarphi_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc))/r;
   #endif
 
   // modify cluster x,y positions
