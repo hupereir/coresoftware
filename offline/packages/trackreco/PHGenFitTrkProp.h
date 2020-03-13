@@ -469,7 +469,12 @@ class PHGenFitTrkProp : public PHTrackPropagating
   float _max_search_win_theta_tpc = 0.004;
 
   // these are large windows
-  // todo: optimize
+//   // todo: optimize
+//   float _min_search_win_phi_outer = 0.1;
+//   float _max_search_win_phi_outer = 0.1;
+//   float _min_search_win_theta_outer = 0.1;
+//   float _max_search_win_theta_outer = 0.1;
+
   float _min_search_win_phi_outer = 0;
   float _max_search_win_phi_outer = 0.004;
   float _min_search_win_theta_outer = 0;
