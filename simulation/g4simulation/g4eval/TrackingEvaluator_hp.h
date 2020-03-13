@@ -42,6 +42,12 @@ class ClusterStruct: public TObject
   float _phi = 0;
   //@}
 
+  //@name cluster error
+  //@{
+  float _phi_error = 0;
+  float _z_error = 0;
+  //@}
+
   ///@name track position at cluster
   //@{
   float _trk_x = 0;
@@ -49,6 +55,10 @@ class ClusterStruct: public TObject
   float _trk_z = 0;
   float _trk_r = 0;
   float _trk_phi = 0;
+
+  /// track errors
+  float _trk_phi_error = 0;
+  float _trk_z_error = 0;
 
   /// track inclination at cluster in r,phi plane
   float _trk_alpha = 0;

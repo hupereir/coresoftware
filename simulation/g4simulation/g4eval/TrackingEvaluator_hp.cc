@@ -16,6 +16,8 @@
 #include <trackbase_historic/SvtxTrack.h>
 #include <trackbase_historic/SvtxTrackMap.h>
 
+#include <TMatrixF.h>
+
 #include <iostream>
 #include <algorithm>
 #include <numeric>
@@ -175,6 +177,10 @@ namespace
     clusterStruct._z = cluster->getZ();
     clusterStruct._r = get_r( clusterStruct._x, clusterStruct._y );
     clusterStruct._phi = get_phi( clusterStruct._x, clusterStruct._y );
+
+    clusterStruct._phi_error = cluster->getPhiError();
+    clusterStruct._z_error = cluster->getZError();
+
     return clusterStruct;
   }
 
@@ -208,6 +214,36 @@ namespace
     const auto trk_pz = state->get_pz();
     cluster._trk_alpha = std::atan2( trk_pphi, trk_pr );
     cluster._trk_beta = std::atan2( trk_pz, trk_pr );
+
+    // store errors
+    // copied from TrkrClusterV1
+    {
+      // todo: use gsl matrices instead
+      TMatrixF covar(3, 3);
+      for (unsigned int i = 0; i < 3; ++i)
+        for (unsigned int j = 0; j < 3; ++j)
+      { covar[i][j] = state->get_error(i, j); }
+
+      const float phi = - cluster._trk_phi;
+      TMatrixF rot(3, 3);
+      rot[0][0] = std::cos(phi);
+      rot[0][1] = -std::sin(phi);
+      rot[0][2] = 0.0;
+      rot[1][0] = std::sin(phi);
+      rot[1][1] = std::cos(phi);
+      rot[1][2] = 0.0;
+      rot[2][0] = 0.0;
+      rot[2][1] = 0.0;
+      rot[2][2] = 1.0;
+
+      const TMatrixF rotT( TMatrixF::kTransposed, rot );
+      TMatrixF trans( rot, TMatrixF::kMult, covar );
+      trans = TMatrixF( trans, TMatrixF::kMult, rotT );
+
+      cluster._trk_phi_error = std::sqrt( trans[1][1] )/cluster._trk_r;
+    }
+
+    cluster._trk_z_error = std::sqrt( state->get_error(2,2) );
 
   }
 
