@@ -500,7 +500,7 @@ void TrackingEvaluator_hp::evaluate_clusters()
     // create cluster structure and add in array
     auto clusterStruct = create_cluster( key, cluster );
     clusterStruct._size = cluster_size( key, _cluster_hit_map );
-    new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
+    new((*_container->clusters())[_cluster_count++]) ClusterStruct( std::move( clusterStruct ) );
 
   }
 
@@ -525,7 +525,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
     const auto trackStruct = create_track( track );
 
     // add to array
-    new((*_container->tracks())[_track_count++]) TrackStruct( trackStruct );
+    new((*_container->tracks())[_track_count++]) TrackStruct( std::move( trackStruct ) );
 
     // loop over clusters
     auto state_iter = track->begin_states();
@@ -599,7 +599,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
       }
 
       // add to array
-      new((*_container->clusters())[_cluster_count++]) ClusterStruct( clusterStruct );
+      new((*_container->clusters())[_cluster_count++]) ClusterStruct( std::move( clusterStruct ) );
 
     }
 
@@ -627,7 +627,7 @@ void TrackingEvaluator_hp::evaluate_track_pairs()
       auto trackPairStruct = create_track_pair( first, second );
 
       // add to array
-      new((*_container->track_pairs())[_track_pair_count++]) TrackPairStruct( trackPairStruct );
+      new((*_container->track_pairs())[_track_pair_count++]) TrackPairStruct( std::move( trackPairStruct ) );
 
     }
 
@@ -660,7 +660,7 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
     trackStruct._mask = get_mask( track );
 
     // add to array
-    new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( trackStruct );
+    new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( std::move( trackStruct ) );
 
   }
 
