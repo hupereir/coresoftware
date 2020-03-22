@@ -4,7 +4,7 @@ AM_CPPFLAGS = \
 	-I$(includedir) \
 	-I$(OFFLINE_MAIN)/include/eigen3 \
 	-I$(OFFLINE_MAIN)/include \
-  -I${G4_MAIN}/include \
+	-I${G4_MAIN}/include \
 	-I`root-config --incdir`
 
 lib_LTLIBRARIES = \
@@ -33,7 +33,6 @@ pkginclude_HEADERS = \
 	CaloRawClusterEval.h \
 	CaloRawTowerEval.h \
 	CaloTruthEval.h \
-	EventCounter_hp.h \
 	JetEvalStack.h \
 	JetEvaluator.h \
 	JetRecoEval.h \
@@ -41,8 +40,8 @@ pkginclude_HEADERS = \
 	MomentumEvaluator.h \
 	PHG4DstCompressReco.h \
 	PHG4DSTReader.h \
- SimEvaluator_hp.h \
- SpaceChargeEvaluator_hp.h \
+	SimEvaluator_hp.h \
+	SpaceChargeEvaluator_hp.h \
 	SvtxEvalStack.h \
 	SvtxEvaluator.h \
 	SvtxHitEval.h \
@@ -50,8 +49,7 @@ pkginclude_HEADERS = \
 	SvtxTrackEval.h \
 	SvtxTruthEval.h \
 	SvtxVertexEval.h \
-	TrackingEvaluator_hp.h \
-	TrkrEvaluator.h
+	TrackingEvaluator_hp.h
 
 if ! MAKEROOT6
 	ROOT5DICTS = \
@@ -65,7 +63,6 @@ if ! MAKEROOT6
 	JetRecoEval_Dict.cc \
 	JetEvaluator_Dict.cc \
 	PHG4DSTReader_Dict.cc \
- SpaceChargeEvaluator_hp_Dict.cc \
 	SvtxEvalStack_Dict.cc \
 	SvtxTruthEval_Dict.cc \
 	SvtxHitEval_Dict.cc \
@@ -73,7 +70,6 @@ if ! MAKEROOT6
 	SvtxTrackEval_Dict.cc \
 	SvtxVertexEval_Dict.cc \
 	SvtxEvaluator_Dict.cc \
-	TrkrEvaluator_Dict.cc \
 	MomentumEvaluator_Dict.cc \
 	PHG4DstCompressReco_Dict.cc
 endif
@@ -86,15 +82,14 @@ libg4eval_la_SOURCES = \
 	CaloRawTowerEval.cc \
 	CaloRawClusterEval.cc \
 	CaloEvaluator.cc \
- EventCounter_hp.cc \
 	JetEvalStack.cc \
 	JetTruthEval.cc \
 	JetRecoEval.cc \
 	JetEvaluator.cc \
 	PHG4DSTReader.cc \
- SimEvaluator_hp.cc \
- SimEvaluator_hp_Dict.cc \
- SpaceChargeEvaluator_hp.cc \
+	SimEvaluator_hp.cc \
+	SimEvaluator_hp_Dict.cc \
+	SpaceChargeEvaluator_hp.cc \
 	SvtxEvalStack.cc \
 	SvtxTruthEval.cc \
 	SvtxHitEval.cc \
@@ -102,7 +97,6 @@ libg4eval_la_SOURCES = \
 	SvtxTrackEval.cc \
 	SvtxVertexEval.cc \
 	SvtxEvaluator.cc \
-	TrkrEvaluator.cc \
 	TrackingEvaluator_hp.cc \
 	TrackingEvaluator_hp_Dict.cc \
 	MomentumEvaluator.cc \

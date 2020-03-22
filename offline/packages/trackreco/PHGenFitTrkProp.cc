@@ -598,7 +598,15 @@ int PHGenFitTrkProp::OutputPHGenFitTrack( MapPHGenFitTrack::iterator gftrk_iter,
   auto state = gftrk_iter->second->getGenFitTrack()->getStateSeed();
   TVector3 pos(state(0), state(1), state(2));
   TVector3 mom(state(3), state(4), state(5));
+  auto cov = gftrk_iter->second->getGenFitTrack()->getCovSeed();
   #endif
+
+  for(int i=0; i<6; i++){
+    for(int j=0; j<6; j++){
+      track->set_error(i, j, cov[i][j]);
+    }
+  }
+
   track->set_px(mom.Px());
   track->set_py(mom.Py());
   track->set_pz(mom.Pz());
@@ -704,7 +712,6 @@ int PHGenFitTrkProp::SvtxTrackToPHGenFitTracks(const SvtxTrack* svtxtrack)
       svtxtrack->get_pz());
 
   const float blowup_factor = 1.;
-
   TMatrixDSym seed_cov(6);
   for (int i = 0; i < 6; i++)
   {

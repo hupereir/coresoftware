@@ -6,7 +6,7 @@
  */
 
 #include "PHActsTrkFitter.h"
-
+#include "ActsFittingAlgorithm.h"
 #include <trackbase/TrkrCluster.h>                  // for TrkrCluster
 #include <trackbase/TrkrClusterContainer.h>
 #include <trackbase/TrkrDefs.h>
@@ -29,49 +29,38 @@
 
 #include <phgeom/PHGeomUtility.h>
 
-
 #include <fun4all/Fun4AllReturnCodes.h>
 
 #include <phool/getClass.h>
 #include <phool/phool.h>
 
-// Acts classes
+#include <Acts/Geometry/GeometryContext.hpp>
 #include <Acts/Geometry/GeometryContext.hpp>
 #include <Acts/Geometry/TrackingGeometry.hpp>
 #include <Acts/Geometry/TrackingVolume.hpp>
-
-#include <Acts/Plugins/Digitization/DigitizationCell.hpp>
-#include <Acts/Plugins/Digitization/PlanarModuleCluster.hpp>
-
 #include <Acts/Surfaces/Surface.hpp>
 #include <Acts/Surfaces/PlaneSurface.hpp>
-
-#include <Acts/Utilities/Definitions.hpp>
-#include <Acts/Utilities/BinnedArray.hpp>                       // for Binne...
-#include <Acts/Utilities/Logger.hpp>                            // for getDe...
-
+#include <Acts/Surfaces/PerigeeSurface.hpp>
+#include <Acts/EventData/TrackParameters.hpp>
 #include <ACTFW/Detector/IBaseDetector.hpp>
-
+#include <ACTFW/EventData/Track.hpp>
 #include <ACTFW/Framework/AlgorithmContext.hpp>
 #include <ACTFW/Framework/IContextDecorator.hpp>
 #include <ACTFW/Framework/WhiteBoard.hpp>
-
+#include <ACTFW/Plugins/BField/BFieldOptions.hpp>
 #include <ACTFW/Geometry/CommonGeometry.hpp>
-
 #include <ACTFW/Options/CommonOptions.hpp>
-
 #include <ACTFW/Plugins/Obj/ObjWriterOptions.hpp>
 
-#include <ACTFW/TGeoDetector/TGeoDetector.hpp>
-
 #include <ACTFW/Utilities/Options.hpp>
+
 
 #include <TVector3.h>
 #include <TMatrixT.h>                               // for TMatrixT, operator*
 #include <TObject.h>
 #include <TGeoManager.h>
 #include <TSystem.h>
-
+#include <TMatrixDSym.h>
 #include <cmath>                              // for sqrt, NAN
 #include <cstddef>                                              // for size_t
 #include <cstdlib>                                              // for atoi
@@ -82,6 +71,9 @@
 #include <vector>
 
 using namespace std;
+
+FittingAlgorithm::Config fitCfg;
+
 
 /*
  * Constructor
@@ -95,12 +87,12 @@ PHActsTrkFitter::PHActsTrkFitter(const string& name)
   , _clustermap(nullptr)
   , _geomanager(nullptr)
   , MinSurfZ(0.0)
-  , MaxSurfZ(100.0)
-  , NSurfZ(10)
+  , MaxSurfZ(110.0)
+  , NSurfZ(11)
   , NSurfPhi(10)
 {
   Verbosity(0);
-  
+
   // These are arbitrary subdivisions, and may change
   SurfStepZ = (MaxSurfZ - MinSurfZ) / (double) NSurfZ;
   ModuleStepPhi = 2.0 * M_PI / 12.0;
@@ -165,7 +157,7 @@ void PHActsTrkFitter::BuildTpcSurfaceMap()
 		      // There is a surface constructor that is a Vector3D for the center and a Vector3D for the normal. 
 		      Acts::Vector3D center_vec(x_center, y_center, z_center);
 		      
-		      // The normsal vector is a unit vector pointing to the center of the beam line at z = z_center
+		      // The normal vector is a unit vector pointing to the center of the beam line at z = z_center
 		      double x_norm = - x_center / sqrt(x_center*x_center + y_center*y_center);
 		      double y_norm = -y_center / sqrt(x_center*x_center + y_center*y_center);
 		      double z_norm = 0;
@@ -201,13 +193,13 @@ void PHActsTrkFitter::BuildSiliconLayers()
     char *arg[27];
     std::string argstr[27]{"-n1", "-l0", "--geo-tgeo-filename=none", "--geo-tgeo-worldvolume=\"World\"", "--geo-subdetectors", "MVTX", "Silicon", "--geo-tgeo-nlayers=0", "0", "--geo-tgeo-clayers=1",  "1", "--geo-tgeo-players=0", "0", "--geo-tgeo-clayernames", "MVTX", "siactive", "--geo-tgeo-cmodulenames", "MVTXSensor",  "siactive",  "--geo-tgeo-cmoduleaxes", "xzy", "yzx", "--geo-tgeo-clayersplits", "5.",  "10.",  "--output-obj", "true"};
   */
+ 
+    // Can hard code geometry options since the TGeo options are fixed by our detector design
+  const int argc = 28;
+  char *arg[argc];
+  const std::string argstr[argc]{"-n1", "-l0", "--geo-tgeo-filename=none", "--geo-tgeo-worldvolume=\"World\"", "--geo-subdetectors", "MVTX", "Silicon", "--geo-tgeo-nlayers=0", "0", "--geo-tgeo-clayers=1",  "1", "--geo-tgeo-players=0", "0", "--geo-tgeo-clayernames", "MVTX", "siactive", "--geo-tgeo-cmodulenames", "MVTXSensor",  "siactive",  "--geo-tgeo-cmoduleaxes", "xzy", "yzx",  "--output-obj", "true","--bf-values",  "0", "0", "1.4"};
 
-  // Can hard code geometry options since the TGeo options are fixed by our detector design
-  int argc = 24;
-  char *arg[24];
-  std::string argstr[24]{"-n1", "-l0", "--geo-tgeo-filename=none", "--geo-tgeo-worldvolume=\"World\"", "--geo-subdetectors", "MVTX", "Silicon", "--geo-tgeo-nlayers=0", "0", "--geo-tgeo-clayers=1",  "1", "--geo-tgeo-players=0", "0", "--geo-tgeo-clayernames", "MVTX", "siactive", "--geo-tgeo-cmodulenames", "MVTXSensor",  "siactive",  "--geo-tgeo-cmoduleaxes", "xzy", "yzx",  "--output-obj", "true"};
-
-
+  // Set vector of chars to arguments needed
   for(int i = 0;i < argc; ++i)
     {
       // need a copy, since .c_str() returns a const char * and process geometry will not take a const
@@ -236,7 +228,7 @@ void PHActsTrkFitter::BuildSiliconLayers()
 
   // We replicate the relevant functionality of  acts-framework/Examples/Common/src/GeometryExampleBase::ProcessGeometry() in MakeActsGeometry()
   // so we get access to the results. The layer builder magically gets the TGeoManager
-  TGeoDetector detector;
+  
   MakeActsGeometry(argc, arg, detector);
 
 }
@@ -251,6 +243,7 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   FW::Options::addObjWriterOptions(desc);
   //  FW::Options::addCsvWriterOptions(desc);
   FW::Options::addOutputOptions(desc);
+  FW::Options::addBFieldOptions(desc);
 
   // Add specific options for this geometry
   detector.addOptions(desc);
@@ -258,7 +251,7 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   if (vm.empty()) { return EXIT_FAILURE; }
 
   // Now read the standard options
-  auto logLevel = FW::Options::readLogLevel(vm);
+  logLevel = FW::Options::readLogLevel(vm);
   //auto nEvents  = FW::Options::readSequencerConfig(vm).events;
 
   // The geometry, material and decoration
@@ -268,6 +261,8 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   //std::vector<std::shared_ptr<FW::IContextDecorator> > contextDecorators = geometry.second; 
   contextDecorators = geometry.second; 
 
+  auto magneticField = FW::Options::readBField(vm);
+
   // The detectors
   // "MVTX" and "Silicon"
   read_strings subDetectors = vm["geo-subdetectors"].as<read_strings>();
@@ -276,11 +271,17 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   size_t ialg = 0;
 
   // Setup the event and algorithm context
-  FW::WhiteBoard eventStore(
-			    Acts::getDefaultLogger("EventStore#" + std::to_string(ievt), logLevel));
+  FW::WhiteBoard eventStore(Acts::getDefaultLogger("EventStore#" + std::to_string(ievt), 
+						   logLevel));
   
   // The geometry context
   FW::AlgorithmContext context(ialg, ievt, eventStore);
+
+  // Make a fit configuration
+  fitCfg.fit = FittingAlgorithm::makeFitterFunction(tGeometry, 
+						    magneticField,
+   						    logLevel);
+
 
   // this is not executed because contextDecorators has size 0
   /// Decorate the context
@@ -321,7 +322,7 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   // Now get the LayerArrays corresponding to each volume
   auto mvtxBarrelLayerArray = mvtxBarrel->confinedLayers();  // the barrel is all we care about
 
-  // Thiis is a BinnedArray<LayerPtr>, but we care only about the sensitive surfaces
+  // This is a BinnedArray<LayerPtr>, but we care only about the sensitive surfaces
   auto mvtxLayerVector1 = mvtxBarrelLayerArray->arrayObjects();  // the barrel is all we care about
 
   // mvtxLayerVector has size 3, but only index 1 has any surfaces since the clayersplits option was removed
@@ -329,18 +330,20 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
   for(unsigned int i=0;i<mvtxLayerVector1.size(); ++i)
     {
 
-      // Get the ACTS::SurfaceArray from each MVTX LayerPtr being iterated over
+      // Get the Acts::SurfaceArray from each MVTX LayerPtr being iterated over
       auto surfaceArray = mvtxLayerVector1.at(i)->surfaceArray();
       if(surfaceArray == NULL)
 	continue;
 
       double ref_rad[3] = {2.556, 3.359, 4.134};
       
-      // surfaceVector is an ACTS::SurfaceVector, vector of surfaces
+      // surfaceVector is an Acts::SurfaceVector, vector of surfaces
+      //std::vector<const Surface*>
       auto surfaceVector = surfaceArray->surfaces();
       for(unsigned int j=0; j<surfaceVector.size(); j++){
 
 	auto surf = surfaceVector.at(j)->getSharedPtr();
+
 	auto vec3d =  surf->center(context.geoContext);
 	std::vector<double> world_center = { vec3d(0)/10.0, vec3d(1)/10.0, vec3d(2)/10.0 };  // convert from mm to cm
 	double layer_rad = sqrt(pow(world_center[0],2) + pow(world_center[1],2));
@@ -357,6 +360,7 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
 	std::pair<TrkrDefs::hitsetkey, std::shared_ptr<const Acts::Surface>> tmp = make_pair(hitsetkey, surf);
 
 	_cluster_surface_map.insert(tmp);
+
 
 	if(Verbosity() > 0)
 	  {
@@ -405,11 +409,12 @@ int PHActsTrkFitter::MakeActsGeometry(int argc, char* argv[], FW::IBaseDetector&
     if(surfaceArray == NULL)
       continue;
     
-    // surfaceVector is an ACTS::SurfaceVector, vector of surfaces
+    // surfaceVector is an Acts::SurfaceVector, vector of surfaces
     auto surfaceVector = surfaceArray->surfaces();
     for(unsigned int j=0; j<surfaceVector.size(); j++){
       
-      auto surf =  surfaceVector.at(j)->getSharedPtr();
+      auto surf = surfaceVector.at(j)->getSharedPtr();
+   
       auto vec3d =  surf->center(context.geoContext);
 
       double ref_rad[4] = {8.987, 9.545, 10.835, 11.361};
@@ -756,13 +761,21 @@ int PHActsTrkFitter::Process()
             cout << "Start PHActsTrkfitter::process_event" << endl;
     }
 
+  std::map<TrkrDefs::cluskey, unsigned int> cluskey_hitid; 
+  unsigned int  hitid = 0;
+  
+  TrkrClusterSourceLinkContainer sourceLinks;
   TrkrDefs::hitsetkey hsetkey;
-
   TrkrClusterContainer::ConstRange clusrange = _clustermap->getClusters();
   for(TrkrClusterContainer::ConstIterator clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
     {
       TrkrCluster *cluster = clusiter->second;
       TrkrDefs::cluskey cluskey = clusiter->first;
+
+      unsigned int trkrid = TrkrDefs::getTrkrId(cluskey);  
+
+      // map to an arbitrary hitid for later use by Acts 
+      cluskey_hitid.insert(std::pair<TrkrDefs::cluskey, unsigned int>(cluskey, hitid));
 
       // get the cluster parameters in global coordinates
       float x = cluster->getPosition(0);
@@ -789,7 +802,6 @@ int PHActsTrkFitter::Process()
 
       double local_2D[2] = {0};
 
-      unsigned int trkrid = TrkrDefs::getTrkrId(cluskey);  // 0 for MVTX, 1 for INTT, 2 for TPC
       TGeoNode *sensor_node;
       std::shared_ptr<const Acts::Surface> surf;
 
@@ -825,9 +837,10 @@ int PHActsTrkFitter::Process()
 	  if(surf_iter != _cluster_surface_map.end())
 	    {	      
 	      //TrkrDefs::hitsetkey found_key = surf_iter->first;
-	      surf = surf_iter->second->getSharedPtr();
-	      //cout<< "Got surface pair " << surf->name() << " surface type " << surf->type() << std::endl;
-	      //surf->toStream(geo_ctxt, std::cout);  // this causes a segfault for mvtx and intt
+	      surf = surf_iter->second;
+	      if(Verbosity() > 0)
+		cout<< "Got surface pair " << surf->name() << " surface type " << surf->type() << std::endl;
+	  
 	    }
 	  else
 	    {
@@ -886,11 +899,8 @@ int PHActsTrkFitter::Process()
 	      return Fun4AllReturnCodes::ABORTEVENT;
 	    }
 
-	  //TrkrDefs::hitsetkey found_key = surf_iter->first;
-	  surf = surf_iter->second->getSharedPtr();
-	  // cout<< "Got surface pair " << surf->name() << " surface type " << surf->type() << std::endl;
-	  // surf->toStream(geo_ctxt, std::cout);
-	  
+	  surf = surf_iter->second;
+
 	  // transform position back to local coords on sensor
 	  CylinderGeomIntt *layergeom = dynamic_cast<CylinderGeomIntt *>(_geom_container_intt->GetLayerGeom(layer));
 	  local = layergeom->get_local_from_world_coords(ladderzid, ladderphiid, world);
@@ -911,6 +921,7 @@ int PHActsTrkFitter::Process()
 	}
       else        // TPC
 	{
+
 	  double clusphi = atan2(world[1], world[0]);
 	  double r_clusphi = radius*clusphi;
 	  double ztpc = world[2];
@@ -949,11 +960,11 @@ int PHActsTrkFitter::Process()
 	      return Fun4AllReturnCodes::ABORTEVENT;
 	    }
 
-	  //TrkrDefs::cluskey found_key = surf_iter->first;
 	  surf = surf_iter->second->getSharedPtr();
 
 	  // transformation of cluster to local surface coords
 	  // Coords are r*phi relative to surface r-phi center, and z relative to surface z center
+
 	  Acts::Vector3D center = surf->center(geo_ctxt);
 	  double surf_rphi_center = atan2(center[1], center[0]) * radius;
 	  double surf_z_center = center[2];
@@ -984,12 +995,13 @@ int PHActsTrkFitter::Process()
       // We have the data needed to construct an Acts  measurement for this cluster
       //====================================================
 
-      // is local_err the correct covariance?
-      Acts::ActsSymMatrixD<3> cov;   	  // ActsSymMatrix = Eigen::Matrix<double, rows, rows> 
-      cov << local_err[0][0],  local_err[0][1],  local_err[0][2],
-	local_err[1][0], local_err[1][1], local_err[1][2],
-	local_err[2][0], local_err[2][1], local_err[2][2];
-      
+      // Get the 2D location covariance uncertainty for the cluster
+      Acts::BoundMatrix cov = Acts::BoundMatrix::Zero();
+      cov(Acts::eLOC_0, Acts::eLOC_0) = local_err[0][0];
+      cov(Acts::eLOC_1, Acts::eLOC_0) = local_err[1][0];
+      cov(Acts::eLOC_0, Acts::eLOC_1) = local_err[0][1];
+      cov(Acts::eLOC_1, Acts::eLOC_1) = local_err[1][1];
+
       // local and local_err contain the position and covariance matrix in local coords
       if(Verbosity() > 0)
 	{
@@ -1002,37 +1014,42 @@ int PHActsTrkFitter::Process()
 	  std::cout << "    local covariance matrix:" << std::endl;
 	  std::cout << cov << std::endl;
 	}
-
-      const Acts::MinimalSourceLink  id;    	   // Acts identifier 
-      std::vector<Acts::DigitizationCell> hits;    // define hits - empty vector OK?
-
-      // cluster positions on surface
-      double xlocal = local_2D[0];
-      double ylocal = local_2D[1];
-      double time = 0;
+ 
+      // Cluster positions on GeoObject/Surface
+      Acts::BoundVector loc = Acts::BoundVector::Zero();     
+      loc[Acts::eLOC_0]     = local_2D[0];  
+      loc[Acts::eLOC_1]     = local_2D[1];
 
       if(Verbosity() > 0)
 	{      
 	  std::cout << "    Layer " << layer << " create measurement for trkrid " << trkrid 
 		    << " surface " << surf->name() << " surface type " << surf->type() 
-		    << " local x " << xlocal << " local y " << ylocal
-		    << endl;
+		    << " local x " << loc[Acts::eLOC_0] << " local y " << loc[Acts::eLOC_1]  << endl;
 	}
-
-      if(trkrid == TrkrDefs::mvtxId || trkrid == TrkrDefs::inttId || trkrid == TrkrDefs::tpcId)
-	{
-	  Acts::PlanarModuleCluster acts_meas(surf, id, cov, xlocal, ylocal, time, hits);
-
-	  // Have to store this in a container 
-	  // DigitizationAlgorithm.cpp makes a map
-	  // what does tracking need?
-	  // Does TGeoNode come into it?
-	  
-	}
+   
+      /// TrkrClusterSourceLink creates an Acts::FittableMeasurement
+      TrkrClusterSourceLink sourceLink(hitid, surf, loc, cov);
+      sourceLinks.emplace_hint(sourceLinks.end(), sourceLink);
+      /// Store in map which maps arbitrary hitID to sourceLink. 
+      /// hitId can access Clusterkey via cluskey_hitid map
+      hitidSourceLink.insert(std::pair<unsigned int, TrkrClusterSourceLink>(hitid, sourceLink));
+            
+      hitid++;
     }
+
+  /// Construct a perigee surface as the target surface (?)
+  auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(
+      Acts::Vector3D{0.,0.,0.});
+
+  /// Make a vector of source links to fill for each SvtxTrack
+  std::vector<TrkrClusterSourceLink> trackSourceLinks;
+
+  /// Setup a context for this event
+  FW::WhiteBoard eventStore(Acts::getDefaultLogger("EventStore#" + std::to_string(_event), logLevel));                  
+  FW::AlgorithmContext context(0, _event, eventStore);
   
-  // _trackmap is SvtxTrackMap from the node tree
-  // We need to convert to Acts tracks
+  /// _trackmap is SvtxTrackMap from the node tree
+  /// We need to convert to Acts tracks
   for (SvtxTrackMap::Iter iter = _trackmap->begin(); iter != _trackmap->end();
        ++iter)
     {
@@ -1044,10 +1061,164 @@ int PHActsTrkFitter::Process()
 	}
       if (!svtx_track)
 	continue;
+
+  
+      /// Get the necessary parameters and values for the TrackParametersContainer
+      Acts::BoundSymMatrix seedCov =  getActsCovMatrix(svtx_track);
+      Acts::Vector3D seedPos( svtx_track->get_x() , 
+			      svtx_track->get_y() , 
+			      svtx_track->get_z() );
+      Acts::Vector3D seedMom( svtx_track->get_px() ,
+			      svtx_track->get_py() ,
+			      svtx_track->get_pz() );
+      // Just set to 0?
+      double trackTime = 0;
+      int trackQ = svtx_track->get_charge();
+
+      FW::TrackParameters trackSeed(seedCov, seedPos, seedMom, trackQ, trackTime);
+
+      /// Loop over clusters for this track and make a list of sourceLinks 
+      /// that correspond to this track
+      trackSourceLinks.clear();
+      for (SvtxTrack::ConstClusterKeyIter iter = svtx_track->begin_cluster_keys();
+	   iter != svtx_track->end_cluster_keys();
+	   ++iter)
+	{
+	  TrkrDefs::cluskey cluster_key = *iter;
+	  
+	  /// Find the corresponding hit index
+	  unsigned int hitid = cluskey_hitid.find(cluster_key)->second;
+
+	  if(Verbosity() > 0){
+	    cout << "    cluskey " << cluster_key << " has hitid " << hitid << endl;
+	  }
+
+	  /// add to the Acts ProtoTrack
+	  trackSourceLinks.push_back(hitidSourceLink.find(hitid)->second);
+	}
+
+      if(Verbosity() > 0)
+	for(unsigned int i=0;i<trackSourceLinks.size(); ++i)
+	  {
+	    cout << "   proto_track readback:  hitid " << trackSourceLinks.at(i).hitID()<< endl;
+	  }
+    
       
+      /// Call KF now. Have a vector of sourceLinks corresponding to clusters
+      /// associated to this track and the corresponding track seed which corresponds
+      /// to the PHGenFitTrkProp track seeds
+      Acts::KalmanFitterOptions kfOptions(context.geoContext, 
+					  context.magFieldContext,
+					  context.calibContext,
+					  &(*pSurface));
+      
+
+      /// Run the fitter
+      auto result = fitCfg.fit(trackSourceLinks, trackSeed, kfOptions);
+      
+      /// Check that the result is okay
+      if(result.ok()) {
+	const auto& fitOutput = result.value();
+	if(fitOutput.fittedParameters){
+	  const auto& params = fitOutput.fittedParameters.value();
+	  /// Get position, momentum from params
+	  if(Verbosity() > 10){
+	    std::cout<<"Fitted parameters for track"<<std::endl;
+	    std::cout<<" position : " << params.position().transpose()<<std::endl;
+	    std::cout<<" momentum : " << params.momentum().transpose()<<std::endl;
+	  }
+	}
+	
+      }
+      
+      /// Add a new track to a container to put on the node tree
+
+
     }
+
   return 0;
 }
+
+/**
+ * Helper function that puts together the acts covariance matrix from the
+ * SvtxTrack covariance matrix
+ */
+Acts::BoundSymMatrix PHActsTrkFitter::getActsCovMatrix(SvtxTrack *track)
+{
+  Acts::BoundSymMatrix matrix = Acts::BoundSymMatrix::Zero();
+  const double px = track->get_px();
+  const double py = track->get_py();
+  const double pz = track->get_pz();
+  const double p = sqrt(px * px + py * py + pz * pz);
+
+  // Get the track seed covariance matrix
+  // These are the variances, so the std devs are sqrt(seed_cov[i][j])
+  TMatrixDSym seed_cov(6);
+  for(int i = 0; i < 6; i++){
+    for(int j= 0; j <6; j++){
+      seed_cov[i][j] = track->get_error(i,j);
+    }       
+  }
+
+  const double sigmap = sqrt(  px * px * seed_cov[3][3]
+			     + py * py * seed_cov[4][4] 
+			     + pz * pz * seed_cov[5][5] ) / p ;
+
+  // Need to convert seed_cov from x,y,z,px,py,pz basis to Acts basis of
+  // x,y,phi/theta of p, qoverp, time
+  double phi                  = atan(py / px);
+  if(phi < -1 * M_PI)
+    phi += 2. * M_PI;
+  else if(phi > M_PI)
+    phi -= 2. * M_PI;
+  const double pxfracerr      = seed_cov[3][3] / (px * px);
+  const double pyfracerr      = seed_cov[4][4] / (py * py);
+  const double phiPrefactor   = fabs(py)/(fabs(px) * (1 + (py/px)*(py/px) ) );
+  const double sigmaPhi       = phi * phiPrefactor * sqrt(pxfracerr + pyfracerr);
+  const double theta          = acos(pz / p);
+  const double thetaPrefactor = ((fabs(pz)) / ( p * sqrt(1-(pz/p)*(pz/p))));
+  const double sigmaTheta     = thetaPrefactor 
+    * sqrt(sigmap*sigmap/(p*p) + seed_cov[5][5]/(pz*pz));
+  const double sigmaQOverP    = sigmap / (p * p);
+
+  // Just set to 0 for now?
+  const double sigmaTime      = 0;
+
+  if(Verbosity() > 10){
+    cout << "Track (px,py,pz,p) = (" << px << "," << py 
+	 << "," << pz << "," << p << ")" << endl;
+    cout << "Track covariance matrix: " << endl;
+    for(int i = 0; i < 6; i++){
+      for(int j = 0; j < 6; j++){
+	cout << seed_cov[i][j] << ", ";
+      }
+      cout << endl;
+    }
+    cout << "Corresponding uncertainty calculations: " << endl;
+    cout << "perr: " << sigmap << endl;
+    cout << "phi: " << phi<< endl;
+    cout << "pxfracerr: " << pxfracerr << endl;
+    cout << "pyfracerr: " << pyfracerr << endl;
+    cout << "phiPrefactor: " << phiPrefactor << endl;
+    cout << "sigmaPhi: " << sigmaPhi << endl;
+    cout << "theta: " << theta << endl;
+    cout << "thetaPrefactor: " << thetaPrefactor << endl;
+    cout << "sigmaTheta: " << sigmaTheta << endl;
+    cout << "sigmaQOverP: " << sigmaQOverP << endl;
+
+  }
+
+  // seed covariances are already variances, so don't need to square them
+  matrix(Acts::eLOC_0, Acts::eLOC_0)  = seed_cov[0][0];
+  matrix(Acts::eLOC_1, Acts::eLOC_1)  = seed_cov[1][1];
+  matrix(Acts::ePHI, Acts::ePHI )     = sigmaPhi * sigmaPhi;
+  matrix(Acts::eTHETA, Acts::eTHETA ) = sigmaTheta * sigmaTheta;
+  matrix(Acts::eQOP, Acts::eQOP )     = sigmaQOverP * sigmaQOverP;
+  matrix(Acts::eT, Acts::eT )         = sigmaTime;
+  
+  return matrix;
+}
+  
 
 // methods for converting TrkrCluster data to what Acts needs
 
@@ -1077,6 +1248,8 @@ TMatrixD PHActsTrkFitter::GetMvtxCovarLocal(const unsigned int layer, const unsi
     
   return local_err;
 }
+
+
 
 TMatrixD PHActsTrkFitter::GetInttCovarLocal(const unsigned int layer, const unsigned int ladderzid, const unsigned int ladderphiid, TMatrixD world_err)
 {
@@ -1133,7 +1306,10 @@ TMatrixD PHActsTrkFitter::TransformCovarToLocal(const double ladderphi, TMatrixD
  
 int PHActsTrkFitter::End(PHCompositeNode* topNode)
 {
-
+  if(Verbosity() > 10)
+    {
+      std::cout<<"Finished PHActsTrkFitter"<<std::endl;
+    }
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -1145,7 +1321,7 @@ PHActsTrkFitter::~PHActsTrkFitter()
 
 int PHActsTrkFitter::CreateNodes(PHCompositeNode* topNode)
 {
-
+  
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -1208,6 +1384,7 @@ int PHActsTrkFitter::GetNodes(PHCompositeNode* topNode)
          << endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
+
 
   /*
   // Input Svtx Vertices
