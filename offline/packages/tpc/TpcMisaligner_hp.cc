@@ -80,23 +80,31 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
 
   const float r = std::sqrt( square( cluster->getX() ) + square( cluster->getY() ) );
   const float phi = std::atan2( cluster->getY(), cluster->getX() );
+  const float z = cluster->getZ();
+
+  #if false
+  // rphi distortion
+  static constexpr float deltarphi_max = 1.5;
+  const float deltarphi = deltarphi_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
+  const float deltaphi = deltarphi/r;
+  #else
+  const float deltaphi = 0;
+  #endif
+
+  #if false
+  // z distortion
+  static constexpr float deltaz_max = 1.5;
+  const float deltaz = deltaz_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
+  #else
+  const float deltaz = 0;
+  #endif
 
   #if true
   // r distortion
   static constexpr float deltar_max = 1.5;
-
-  // use a cosine function
   const float deltar = deltar_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
-//   // use a sine function with half period rlength, which gets null on the edges
-//   const float deltar = deltar_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc);
-  const float deltaphi = 0;
   #else
-  // rphi distortion
   const float deltar = 0;
-  static constexpr float deltarphi_max = 1.5;
-  const float deltarphi = deltarphi_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
-//   // use a sine function with half period rlength, which gets null on the edges
-//   const float deltaphi = (deltarphi_max*std::sin(M_PI*(r-rmin_tpc)/rlength_tpc))/r;
   #endif
 
   // modify cluster x,y positions
@@ -106,16 +114,10 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
   const float sinnewphi = std::sin( newphi );
   const float newx = newr*cosnewphi;
   const float newy = newr*sinnewphi;
-
-//   // print
-//   std::cout << "TpcMisaligner_hp::transform_cluster -"
-//     << " old: (" << cluster->getX() << "," << cluster->getY() << ")"
-//     << " r: " << r
-//     << " new: (" << newx << "," << newy << ")"
-//     << " r: " << newr
-//     << std::endl;
+  const float newz = z + deltaz;
 
   cluster->setX( newx );
   cluster->setY( newy );
+  cluster->setZ( newz );
 
 }
