@@ -218,7 +218,7 @@ namespace
     // store errors
     // copied from TrkrClusterV1
     {
-      // todo: use gsl matrices instead
+      // todo: use eigen matrices instead
       TMatrixF covar(3, 3);
       for (unsigned int i = 0; i < 3; ++i)
         for (unsigned int j = 0; j < 3; ++j)
