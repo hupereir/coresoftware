@@ -16,7 +16,8 @@
 #include <trackbase_historic/SvtxTrack.h>
 #include <trackbase_historic/SvtxTrackMap.h>
 
-#include <TMatrixF.h>
+#include <Eigen/Core>
+#include <Eigen/Dense>
 
 #include <iostream>
 #include <algorithm>
@@ -218,29 +219,29 @@ namespace
     // store errors
     // copied from TrkrClusterV1
     {
-      // todo: use eigen matrices instead
-      TMatrixF covar(3, 3);
+      using matrix_t = Eigen::Matrix<float, 3, 3>;
+      matrix_t covar;
       for (unsigned int i = 0; i < 3; ++i)
         for (unsigned int j = 0; j < 3; ++j)
-      { covar[i][j] = state->get_error(i, j); }
+      { covar(i,j) = state->get_error(i, j); }
 
       const float phi = - cluster._trk_phi;
-      TMatrixF rot(3, 3);
-      rot[0][0] = std::cos(phi);
-      rot[0][1] = -std::sin(phi);
-      rot[0][2] = 0.0;
-      rot[1][0] = std::sin(phi);
-      rot[1][1] = std::cos(phi);
-      rot[1][2] = 0.0;
-      rot[2][0] = 0.0;
-      rot[2][1] = 0.0;
-      rot[2][2] = 1.0;
+      const auto cosphi = std::cos( phi );
+      const auto sinphi = std::sin( phi );
+      matrix_t rotation;
+      rotation(0,0) = cosphi;
+      rotation(0,1) = -sinphi;
+      rotation(0,2) = 0;
+      rotation(1,0) = sinphi;
+      rotation(1,1) = cosphi;
+      rotation(1,2) = 0;
+      rotation(2,0) = 0;
+      rotation(2,1) = 0;
+      rotation(2,2) = 1;
 
-      const TMatrixF rotT( TMatrixF::kTransposed, rot );
-      TMatrixF trans( rot, TMatrixF::kMult, covar );
-      trans = TMatrixF( trans, TMatrixF::kMult, rotT );
+      const auto transformed = rotation*covar*rotation.transpose();
 
-      cluster._trk_phi_error = std::sqrt( trans[1][1] )/cluster._trk_r;
+      cluster._trk_phi_error = std::sqrt( transformed(1,1) )/cluster._trk_r;
     }
 
     cluster._trk_z_error = std::sqrt( state->get_error(2,2) );
