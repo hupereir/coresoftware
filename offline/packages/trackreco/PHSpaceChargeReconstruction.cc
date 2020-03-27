@@ -191,8 +191,7 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
       } else break;
     }
 
-    // track rphi and z positions
-    // extrapolated to the right r
+    // get relevant track state
     const auto state = state_iter->second;
 
     // track errors
@@ -204,6 +203,7 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
     if( track_rphi_error < 0.015 ) continue;
     if( track_z_error < 0.1 ) continue;
 
+    // extrapolate track parameters to the cluster r
     const auto track_r = get_r( state->get_x(), state->get_y() );
     const auto dr = cluster_r - track_r;
     const auto track_drdt = get_r( state->get_px(), state->get_py() );
