@@ -68,14 +68,35 @@ PHSpaceChargeReconstruction::PHSpaceChargeReconstruction( const std::string& nam
 {}
 
 //_____________________________________________________________________
+void PHSpaceChargeReconstruction::set_tpc_layers( unsigned int first_layer, unsigned int n_layers )
+{
+  m_firstlayer_tpc = first_layer;
+  m_nlayers_tpc = n_layers;
+}
+
+//_____________________________________________________________________
+void PHSpaceChargeReconstruction::set_grid_dimensions( int zbins, int rbins, int phibins )
+{
+  m_zbins = zbins;
+  m_rbins = rbins;
+  m_phibins = phibins;
+  m_totalbins = zbins*rbins*phibins;
+}
+
+//_____________________________________________________________________
+void PHSpaceChargeReconstruction::set_outputfile( const std::string& filename )
+{ m_outputfile = filename; }
+
+//_____________________________________________________________________
 int PHSpaceChargeReconstruction::Init(PHCompositeNode* topNode )
 {
-  // initialize all arrays
-  for( auto&& matrix:m_lhs ) { matrix = matrix_t::Zero(); }
-  for( auto&& column:m_rhs ) { column = column_t::Zero(); }
-  for( auto&& count:m_cluster_count ) { count = 0; }
 
+  // resize vectors
+  m_lhs = std::vector<matrix_t>( m_totalbins, matrix_t::Zero() );
+  m_rhs = std::vector<column_t>( m_totalbins, column_t::Zero() );
+  m_cluster_count = std::vector<int>( m_totalbins, 0 );
   return Fun4AllReturnCodes::EVENT_OK;
+
 }
 
 //_____________________________________________________________________
@@ -86,7 +107,7 @@ int PHSpaceChargeReconstruction::InitRun(PHCompositeNode* )
 int PHSpaceChargeReconstruction::process_event(PHCompositeNode* topNode)
 {
   // load nodes
-  const auto res =  load_nodes(topNode);
+  const auto res = load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   process_tracks();
@@ -114,7 +135,6 @@ int PHSpaceChargeReconstruction::load_nodes( PHCompositeNode* topNode )
 void PHSpaceChargeReconstruction::process_tracks()
 {
   if( !( m_track_map && m_cluster_map ) ) return;
-  std::cout << PHWHERE << " tracks: " << m_track_map->size() << " clusters: " << m_cluster_map->size() << std::endl;
 
   for( auto iter = m_track_map->begin(); iter != m_track_map->end(); ++iter )
   { process_track( iter->second ); }
@@ -150,6 +170,14 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
     const auto cluster_rphi_error = cluster->getRPhiError();
     const auto cluster_z_error = cluster->getZError();
 
+    /*
+    remove clusters with too small errors since they are likely pathological
+    and have a large contribution to the chisquare
+    TODO: make these cuts configurable
+    */
+    if( cluster_rphi_error < 0.015 ) continue;
+    if( cluster_z_error < 0.05 ) continue;
+
     // find track state that is the closest to cluster
     /* this assumes that both clusters and states are sorted along r */
     float dr_min = -1;
@@ -163,38 +191,35 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
       } else break;
     }
 
-    // track r, phi and z
-    auto state = state_iter->second;
-    const auto track_phi = get_phi(  state->get_x(), state->get_y() );
-    const auto track_z = state->get_z();
+    // track rphi and z positions
+    // extrapolated to the right r
+    const auto state = state_iter->second;
 
     // track errors
     const auto track_rphi_error = get_rphi_error( state );
     const auto track_z_error = std::sqrt( state->get_error(2,2) );
-
-    //       std::cout << PHWHERE << " cluster errors: " << cluster_rphi_error << ", " << cluster_z_error << std::endl;
-    //       std::cout << PHWHERE << " track errors: " << track_rphi_error << ", " << track_z_error << std::endl;
-
-    /*
-    remove clusters with too small errors since they are likely pathological
-    and have a large contribution to the chisquare
-    TODO: make these cuts configurable
-    */
-    if( cluster_rphi_error < 0.015 ) continue;
-    if( cluster_z_error < 0.05 ) continue;
 
     // also cut on track errors
     // warning: smaller errors are probably needed when including outer tracker
     if( track_rphi_error < 0.015 ) continue;
     if( track_z_error < 0.1 ) continue;
 
-    //       // get residual errors squared
-    //       const auto erp = square(track_rphi_error) + square(cluster_rphi_error);
-    //       const auto ez = square(track_z_error) + square(cluster_z_error);
+    const auto track_r = get_r( state->get_x(), state->get_y() );
+    const auto dr = cluster_r - track_r;
+    const auto track_drdt = get_r( state->get_px(), state->get_py() );
+    const auto track_dxdr = state->get_px()/track_drdt;
+    const auto track_dydr = state->get_py()/track_drdt;
+    const auto track_dzdr = state->get_pz()/track_drdt;
+
+    // store state position
+    const auto track_x = state->get_x() + dr*track_dxdr;
+    const auto track_y = state->get_y() + dr*track_dydr;
+    const auto track_z = state->get_z() + dr*track_dzdr;
+    const auto track_phi = get_phi( track_x, track_y );
 
     // get residual errors squared
-    const auto erp = 1;
-    const auto ez = 1;
+    const auto erp = square(track_rphi_error) + square(cluster_rphi_error);
+    const auto ez = square(track_z_error) + square(cluster_z_error);
 
     // sanity check
     if( std::isnan( erp ) ) continue;
@@ -223,7 +248,7 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
     // get cell
     const auto i = get_cell( cluster );
 
-    if( i < 0 || i >= m_total_size ) continue;
+    if( i < 0 || i >= m_totalbins ) continue;
 
     m_lhs[i](0,0) += 1./erp;
     m_lhs[i](0,1) += 0;
@@ -251,14 +276,15 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
 void  PHSpaceChargeReconstruction::calculate_distortions()
 {
   // calculate distortions in each volume elements
-  std::array<column_t, m_total_size> delta;
-  std::array<matrix_t, m_total_size> cov;
-  for( int i = 0; i < m_total_size; ++i )
-  {
+  std::vector<column_t> delta(m_totalbins);
+  std::vector<matrix_t> cov(m_totalbins);
 
+  for( int i = 0; i < m_totalbins; ++i )
+  {
     std::cout
-      << PHWHERE << " lhs " << i << std::endl
-      << m_lhs[i] << std::endl;
+      << PHWHERE << " lhs[" << i << "]" << std::endl
+      << m_lhs[i]
+      << std::endl;
 
     cov[i] = m_lhs[i].inverse();
     delta[i] = m_lhs[i].partialPivLu().solve( m_rhs[i] );
@@ -266,27 +292,27 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
 
   // create tgraphs
   using TGraphPointer = std::unique_ptr<TGraphErrors>;
-  std::array<TGraphPointer, m_ncoord> tg;
-  for( int i = 0; i < m_ncoord; ++i )
+  std::vector<TGraphPointer> tg( m_zbins*m_phibins*m_ncoord );
+
+  for( int iz = 0; iz < m_zbins; ++iz )
+    for( int iphi = 0; iphi < m_phibins; ++iphi )
+    for( int icoord = 0; icoord < m_ncoord; ++icoord )
   {
-    tg[i].reset( new TGraphErrors() );
 
-    constexpr int iz = 0;
-    constexpr int iphi = 0;
-    tg[i]->SetName( Form( "tg_%i_%i_%i", iz, iphi, i ) );
+    const int tgindex = iz + m_zbins*( iphi + m_phibins*icoord );
+    tg[tgindex].reset( new TGraphErrors() );
+    tg[tgindex]->SetName( Form( "tg_%i_%i_%i", iz, iphi, icoord ) );
 
-    for( int ir = 0; ir < m_r_size; ++ir )
+    for( int ir = 0; ir < m_rbins; ++ir )
     {
       // get radius from index (see ::get_cell)
       static constexpr float r_min = 30;
       static constexpr float r_max = 80;
-      const float r = r_min + (0.5+ir) *(r_max-r_min)/m_r_size;
+      const float r = r_min + (0.5+ir) *(r_max-r_min)/m_rbins;
 
       int index = get_cell( iz, ir, iphi );
-
-
-      tg[i]->SetPoint( ir, r, delta[index](i,0) );
-      tg[i]->SetPointError( ir, 0, std::sqrt(cov[index](i,i)) );
+      tg[tgindex]->SetPoint( ir, r, delta[index](icoord,0) );
+      tg[tgindex]->SetPointError( ir, 0, std::sqrt(cov[index](icoord,icoord)) );
     }
   }
 
@@ -294,8 +320,7 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
   {
     std::unique_ptr<TFile> outputfile( TFile::Open( m_outputfile.c_str(), "RECREATE" ) );
     outputfile->cd();
-    for( int i = 0; i < m_ncoord; ++i )
-    { tg[i]->Write(); }
+    for( auto&& value:tg ) { value->Write(); }
     outputfile->Close();
   }
 }
@@ -303,10 +328,10 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
 //_____________________________________________________________________
 int PHSpaceChargeReconstruction::get_cell( int iz, int ir, int iphi ) const
 {
-  if( ir < 0 || ir >= m_r_size ) return -1;
-  if( iphi < 0 || iphi >= m_phi_size ) return -1;
-  if( iz < 0 || iz >= m_z_size ) return -1;
-  return iz + m_z_size*( ir + m_r_size*iphi );
+  if( ir < 0 || ir >= m_rbins ) return -1;
+  if( iphi < 0 || iphi >= m_phibins ) return -1;
+  if( iz < 0 || iz >= m_zbins ) return -1;
+  return iz + m_zbins*( ir + m_rbins*iphi );
 }
 
 //_____________________________________________________________________
@@ -317,18 +342,18 @@ int PHSpaceChargeReconstruction::get_cell( TrkrCluster* cluster ) const
   const auto cluster_r = get_r( cluster->getX(), cluster->getY() );
   static constexpr float r_min = 30;
   static constexpr float r_max = 80;
-  const int ir = m_r_size*(cluster_r-r_min)/(r_max-r_min);
+  const int ir = m_rbins*(cluster_r-r_min)/(r_max-r_min);
 
   // azimuth
   auto cluster_phi = get_phi( cluster->getX(), cluster->getY() );
   if( cluster_phi >= M_PI ) cluster_phi -= 2*M_PI;
-  const int iphi = m_phi_size*(cluster_phi + M_PI)/(2.*M_PI);
+  const int iphi = m_phibins*(cluster_phi + M_PI)/(2.*M_PI);
 
   // z
   const auto cluster_z = cluster->getZ();
   static constexpr float z_min = -212/2;
   static constexpr float z_max = 212/2;
-  const int iz = m_z_size*(cluster_z-z_min)/(z_max-z_min);
+  const int iz = m_zbins*(cluster_z-z_min)/(z_max-z_min);
 
   return get_cell( iz, ir, iphi );
 }

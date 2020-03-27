@@ -6,7 +6,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-#include <array>
+#include <vector>
 
 // forward declaration
 class SvtxTrack;
@@ -20,6 +20,29 @@ class PHSpaceChargeReconstruction: public SubsysReco
 
   /// constructor
   PHSpaceChargeReconstruction( const std::string& = "PHSPACECHARGERECONSTRUCTION" );
+
+  ///@name configuration
+  //@{
+
+  /// set tpc layers
+  void set_tpc_layers( unsigned int first_layer, unsigned int n_layers );
+
+  /// set grid dimensions
+  /**
+  \param zbins the number of bins along z
+  \param rbins the number of bins in the radial direction. It must be a divider of the number of tpc layers (by default 48), e.g. 1, 12, 24, 48
+  \param phibins the number of bins in the azimuth direction
+  */
+  void set_grid_dimensions( int zbins, int rbins, int phibins );
+
+  /// output file
+  /**
+  for now only TGraphs of space charge corrections vs r are stored
+  ultimately one wants to save the data in a format that is suitable for use in the reconstruction
+  */
+  void set_outputfile( const std::string& filename );
+
+  //@}
 
   /// global initialization
   virtual int Init(PHCompositeNode*);
@@ -56,15 +79,16 @@ class PHSpaceChargeReconstruction: public SubsysReco
   /// output file
   std::string m_outputfile = "PHSpaceChargeReconstruction.root";
 
+  // tpc layers
+  unsigned int m_firstlayer_tpc = 7;
+  unsigned int m_nlayers_tpc = 48;
+
   ///@name grid size
   //@{
-  static constexpr int m_z_size = 1;
-  static constexpr int m_phi_size = 1;
-  static constexpr int m_r_size = 12;
-//   static constexpr int m_z_size = 50;
-//   static constexpr int m_phi_size = 72;
-//   static constexpr int m_r_size = 48;
-  static constexpr int m_total_size = m_z_size*m_phi_size*m_r_size;
+  int m_zbins = 50;
+  int m_phibins = 72;
+  int m_rbins = 48;
+  int m_totalbins = m_zbins*m_phibins*m_rbins;
   //@}
 
   // shortcut for relevant eigen matrices
@@ -73,13 +97,13 @@ class PHSpaceChargeReconstruction: public SubsysReco
   using column_t = Eigen::Matrix<float, m_ncoord, 1 >;
 
   /// left hand side matrices for distortion inversions
-  std::array<matrix_t, m_total_size> m_lhs;
+  std::vector<matrix_t> m_lhs;
 
   /// right hand side matrices for distortion inversions
-  std::array<column_t, m_total_size> m_rhs;
+  std::vector<column_t> m_rhs;
 
   /// keep track of how many clusters are used per cell
-  std::array<int, m_total_size> m_cluster_count;
+  std::vector<int> m_cluster_count;
 
   ///@name nodes
   //@{
