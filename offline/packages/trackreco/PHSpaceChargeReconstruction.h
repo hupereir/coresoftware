@@ -74,7 +74,7 @@ class PHSpaceChargeReconstruction: public SubsysReco
   int get_cell( int iz, int ir, int iphi ) const;
 
   /// get relevant cell for a given cluster
-  int get_cell( TrkrCluster* ) const;
+  int get_cell( TrkrDefs::cluskey, TrkrCluster* ) const;
 
   /// output file
   std::string m_outputfile = "PHSpaceChargeReconstruction.root";

@@ -160,6 +160,8 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
     }
 
     // should make sure that cluster belongs to TPC
+    const auto layer = TrkrDefs::getLayer(cluster_key);
+    if( layer < m_firstlayer_tpc || layer >= m_firstlayer_tpc + m_nlayers_tpc ) continue;
 
     // cluster r, phi and z
     const auto cluster_r = get_r( cluster->getX(), cluster->getY() );
@@ -246,7 +248,7 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
     if( std::abs( drp ) > max_residual ) continue;
 
     // get cell
-    const auto i = get_cell( cluster );
+    const auto i = get_cell( cluster_key, cluster );
 
     if( i < 0 || i >= m_totalbins ) continue;
 
@@ -290,6 +292,13 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
     delta[i] = m_lhs[i].partialPivLu().solve( m_rhs[i] );
   }
 
+  // for now layers radius are hard coded
+  constexpr std::array<float,48> radius = {{
+    30.32, 30.93, 31.57, 32.19, 32.81, 33.44, 34.06, 34.69, 35.31, 35.94, 36.56, 37.19, 37.81, 38.44, 39.06, 39.69,
+    40.62, 41.88, 43.12, 44.38, 45.62, 46.88, 48.12, 49.38, 50.62, 51.88, 53.12, 54.38, 55.62, 56.88, 58.12, 59.38,
+    60.53, 61.60, 62.65, 63.72, 64.79, 65.85, 66.90, 67.96, 69.04, 70.10, 71.15, 72.21, 73.29, 74.35, 75.40, 76.46
+  }};
+
   // create tgraphs
   using TGraphPointer = std::unique_ptr<TGraphErrors>;
   std::vector<TGraphPointer> tg( m_zbins*m_phibins*m_ncoord );
@@ -305,10 +314,11 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
 
     for( int ir = 0; ir < m_rbins; ++ir )
     {
-      // get radius from index (see ::get_cell)
-      static constexpr float r_min = 30;
-      static constexpr float r_max = 80;
-      const float r = r_min + (0.5+ir) *(r_max-r_min)/m_rbins;
+
+      // get layers corresponding to bins
+      const int first_layer = m_nlayer_tpc*ir/m_rbins;
+      const int last_layer = m_nlayer_tpc*(ir+1)/m_rbins-1;
+      const float r = (radius[first_layer]+radius[last_layer])/2;
 
       int index = get_cell( iz, ir, iphi );
       tg[tgindex]->SetPoint( ir, r, delta[index](icoord,0) );
@@ -335,14 +345,11 @@ int PHSpaceChargeReconstruction::get_cell( int iz, int ir, int iphi ) const
 }
 
 //_____________________________________________________________________
-int PHSpaceChargeReconstruction::get_cell( TrkrCluster* cluster ) const
+int PHSpaceChargeReconstruction::get_cell( TrkrDefs::cluskey key, TrkrCluster* cluster ) const
 {
   // radius
-  // todo: define rbin as a function of layer index rather than position
-  const auto cluster_r = get_r( cluster->getX(), cluster->getY() );
-  static constexpr float r_min = 30;
-  static constexpr float r_max = 80;
-  const int ir = m_rbins*(cluster_r-r_min)/(r_max-r_min);
+  const auto layer = TrkrDefs::getLayer(cluster_key);
+  const int ir = m_rbins*(layer - m_firstlayer_tpc)/m_nlayers_tpc;
 
   // azimuth
   auto cluster_phi = get_phi( cluster->getX(), cluster->getY() );
