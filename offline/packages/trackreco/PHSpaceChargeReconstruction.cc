@@ -1,10 +1,11 @@
 #include "PHSpaceChargeReconstruction.h"
 
 #include <fun4all/Fun4AllReturnCodes.h>
+#include <g4detectors/PHG4CylinderCellGeom.h>
+#include <g4detectors/PHG4CylinderCellGeomContainer.h>
 #include <phool/getClass.h>
 #include <phool/PHCompositeNode.h>
 #include <phool/PHNodeIterator.h>
-#include <trackbase/TrkrDefs.h>
 #include <trackbase/TrkrCluster.h>
 #include <trackbase/TrkrClusterContainer.h>
 #include <trackbase_historic/SvtxTrack.h>
@@ -116,9 +117,9 @@ int PHSpaceChargeReconstruction::process_event(PHCompositeNode* topNode)
 }
 
 //_____________________________________________________________________
-int PHSpaceChargeReconstruction::End(PHCompositeNode* )
+int PHSpaceChargeReconstruction::End(PHCompositeNode* topNode )
 {
-  calculate_distortions();
+  calculate_distortions( topNode );
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -275,8 +276,17 @@ void PHSpaceChargeReconstruction::process_track( SvtxTrack* track )
 }
 
 //_____________________________________________________________________
-void  PHSpaceChargeReconstruction::calculate_distortions()
+void  PHSpaceChargeReconstruction::calculate_distortions( PHCompositeNode* topNode )
 {
+
+  // get tpc geometry
+  auto *geom_container = findNode::getClass<PHG4CylinderCellGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
+  if (!geom_container)
+  {
+    std::cout << PHWHERE << " can't find node CYLINDERCELLGEOM_SVTX" << std::endl;
+    return;
+  }
+
   // calculate distortions in each volume elements
   std::vector<column_t> delta(m_totalbins);
   std::vector<matrix_t> cov(m_totalbins);
@@ -291,13 +301,6 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
     cov[i] = m_lhs[i].inverse();
     delta[i] = m_lhs[i].partialPivLu().solve( m_rhs[i] );
   }
-
-  // for now layers radius are hard coded
-  constexpr std::array<float,48> radius = {{
-    30.32, 30.93, 31.57, 32.19, 32.81, 33.44, 34.06, 34.69, 35.31, 35.94, 36.56, 37.19, 37.81, 38.44, 39.06, 39.69,
-    40.62, 41.88, 43.12, 44.38, 45.62, 46.88, 48.12, 49.38, 50.62, 51.88, 53.12, 54.38, 55.62, 56.88, 58.12, 59.38,
-    60.53, 61.60, 62.65, 63.72, 64.79, 65.85, 66.90, 67.96, 69.04, 70.10, 71.15, 72.21, 73.29, 74.35, 75.40, 76.46
-  }};
 
   // create tgraphs
   using TGraphPointer = std::unique_ptr<TGraphErrors>;
@@ -316,9 +319,12 @@ void  PHSpaceChargeReconstruction::calculate_distortions()
     {
 
       // get layers corresponding to bins
-      const int first_layer = m_nlayer_tpc*ir/m_rbins;
-      const int last_layer = m_nlayer_tpc*(ir+1)/m_rbins-1;
-      const float r = (radius[first_layer]+radius[last_layer])/2;
+      const int inner_layer = m_nlayers_tpc*ir/m_rbins;
+      const int outer_layer = m_nlayers_tpc*(ir+1)/m_rbins-1;
+
+      const auto inner_radius = geom_container->GetLayerCellGeom(inner_layer)->get_radius();
+      const auto outer_radius = geom_container->GetLayerCellGeom(outer_layer)->get_radius();
+      const float r = (inner_radius+outer_radius)/2;
 
       int index = get_cell( iz, ir, iphi );
       tg[tgindex]->SetPoint( ir, r, delta[index](icoord,0) );
@@ -345,7 +351,7 @@ int PHSpaceChargeReconstruction::get_cell( int iz, int ir, int iphi ) const
 }
 
 //_____________________________________________________________________
-int PHSpaceChargeReconstruction::get_cell( TrkrDefs::cluskey key, TrkrCluster* cluster ) const
+int PHSpaceChargeReconstruction::get_cell( TrkrDefs::cluskey cluster_key, TrkrCluster* cluster ) const
 {
   // radius
   const auto layer = TrkrDefs::getLayer(cluster_key);
