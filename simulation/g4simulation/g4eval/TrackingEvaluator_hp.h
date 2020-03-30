@@ -283,6 +283,9 @@ class TrackingEvaluator_hp : public SubsysReco
   using G4HitSet = std::set<PHG4Hit*>;
   G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
 
+  // get embedded id for given g4track
+  int get_embed(PHG4Particle*) const;
+
   // cluster array
   Container* _container = nullptr;
   int _cluster_count = 0;
@@ -302,6 +305,10 @@ class TrackingEvaluator_hp : public SubsysReco
   PHG4HitContainer* _g4hits_outertracker = nullptr;
 
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;
+
+  // map cluster keys to g4hits
+  using G4HitMap = std::map<TrkrDefs::cluskey,G4HitSet>;
+  mutable G4HitMap _g4hit_map;
 
 //   // map trk_id to list of g4 hits
 //   using G4TrackMap = std::map<int,G4HitSet>;

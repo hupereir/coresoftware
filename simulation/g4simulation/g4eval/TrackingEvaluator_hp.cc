@@ -96,6 +96,10 @@ namespace
     return ( alpha*rextrap + beta )/denom;
   }
 
+  /// true if a track is a primary
+  inline int is_primary( PHG4Particle* particle )
+  { return particle->get_parent_id() == 0; }
+
   /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
   {
@@ -370,6 +374,9 @@ int TrackingEvaluator_hp::InitRun(PHCompositeNode* )
 //_____________________________________________________________________
 int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 {
+  // clear maps
+  _g4hit_map.clear();
+
   // load nodes
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
@@ -380,8 +387,9 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   // evaluate_clusters();
   evaluate_tracks();
   evaluate_track_pairs();
-  // fill_mc_track_map();
   evaluate_mc_tracks();
+
+  // fill_mc_track_map();
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -460,9 +468,46 @@ void TrackingEvaluator_hp::evaluate_clusters()
     const auto& key = clusterIter->first;
     const auto& cluster = clusterIter->second;
 
-    // create cluster structure and add in array
+    // create cluster structure
     auto clusterStruct = create_cluster( key, cluster );
     clusterStruct._size = cluster_size( key, _cluster_hit_map );
+
+    // truth information
+    const auto g4hits = find_g4hits( key );
+    add_truth_information( clusterStruct, g4hits );
+
+    // truth momentum information
+    if( _g4truthinfo && !g4hits.empty() )
+    {
+      auto trkid = (*g4hits.cbegin())->get_trkid();
+      auto track = _g4truthinfo->GetParticle(trkid);
+
+      // find associated primary particle
+      /* will that work on hijing ? */
+      for( const auto& hit:g4hits )
+      {
+        const auto local_trkid = hit->get_trkid();
+        if( local_trkid != trkid )
+        {
+
+          // get particle, check if primary
+          const auto local_track = _g4truthinfo->GetParticle(local_trkid);
+          if( is_primary( local_track ) )
+          {
+            // if primary, store and stop here
+            trkid = local_trkid;
+            track = local_track;
+            break;
+          }
+
+        }
+
+      }
+
+      add_truth_momentum_information( clusterStruct, track );
+    }
+
+    // add in array
     new((*_container->clusters())[_cluster_count++]) ClusterStruct( std::move( clusterStruct ) );
 
   }
@@ -485,10 +530,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
   {
 
     const auto track = trackIter->second;
-    const auto trackStruct = create_track( track );
-
-    // add to array
-    new((*_container->tracks())[_track_count++]) TrackStruct( std::move( trackStruct ) );
+    new((*_container->tracks())[_track_count++]) TrackStruct( create_track( track ) );
 
     // loop over clusters
     auto state_iter = track->begin_states();
@@ -538,6 +580,8 @@ void TrackingEvaluator_hp::evaluate_tracks()
         auto trkid = (*g4hits.cbegin())->get_trkid();
         auto track = _g4truthinfo->GetParticle(trkid);
 
+        // find associated primary particle
+        /* will that work on hijing ? */
         for( const auto& hit:g4hits )
         {
           const auto local_trkid = hit->get_trkid();
@@ -546,7 +590,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
             // get particle, check if primary
             const auto local_track = _g4truthinfo->GetParticle(local_trkid);
-            if( local_trkid == local_track->get_primary_id() )
+            if( is_primary( local_track ) )
             {
               // if primary, store and stop here
               trkid = local_trkid;
@@ -768,7 +812,9 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
   // check maps
   if( !( _cluster_hit_map && _hit_truth_map ) ) return G4HitSet();
 
-  const int layer = TrkrDefs::getLayer(cluster_key);
+  // check if in map
+  auto map_iter = _g4hit_map.lower_bound( cluster_key );
+  if( map_iter != _g4hit_map.end() && cluster_key == map_iter->first ) return map_iter->second;
 
   // find hitset associated to cluster
   G4HitSet out;
@@ -820,6 +866,11 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
     }
   }
 
-  return out;
+  // insert in map and return
+  return _g4hit_map.insert( map_iter, std::make_pair( cluster_key, std::move( out ) ) )->second;
 
 }
+
+//_____________________________________________________________________
+int TrackingEvaluator_hp::get_embed( PHG4Particle* particle ) const
+{ return _g4truthinfo ? _g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }
