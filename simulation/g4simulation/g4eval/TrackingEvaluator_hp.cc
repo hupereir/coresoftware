@@ -96,12 +96,6 @@ namespace
     return ( alpha*rextrap + beta )/denom;
   }
 
-  /// get mask from track clusters
-  int64_t get_mask( SvtxTrack* track )
-  { return std::accumulate( track->begin_cluster_keys(), track->end_cluster_keys(), int64_t(0),
-      []( int64_t value, const TrkrDefs::cluskey& key ) { return TrkrDefs::getLayer(key)<64 ? value|(1LL<<TrkrDefs::getLayer(key)) : 0; } );
-  }
-
   /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
   {
@@ -120,7 +114,6 @@ namespace
     trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
     trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
     trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
-    trackStruct._mask = get_mask( track );
 
     return trackStruct;
   }
@@ -146,10 +139,7 @@ namespace
     trackPairStruct._m = std::sqrt( square( trackPairStruct._e ) - square( trackPairStruct._p ) );
 
     trackPairStruct._trk_pt[0] = get_pt( first->get_px(), first->get_py()  );
-    trackPairStruct._trk_mask[0] = get_mask( first );
-
     trackPairStruct._trk_pt[1] = get_pt( second->get_px(), second->get_py()  );
-    trackPairStruct._trk_mask[1] = get_mask( second );
 
     return trackPairStruct;
   }
@@ -390,7 +380,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   // evaluate_clusters();
   evaluate_tracks();
   evaluate_track_pairs();
-  fill_mc_track_map();
+  // fill_mc_track_map();
   evaluate_mc_tracks();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -435,23 +425,23 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 
 }
 
-//_____________________________________________________________________
-void TrackingEvaluator_hp::fill_mc_track_map()
-{
-  _mc_track_map.clear();
-
-  for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
-  {
-
-    if( !container ) continue;
-
-    // loop over hits
-    const auto range = container->getHits();
-    for( auto iter = range.first; iter != range.second; ++iter )
-    { _mc_track_map[iter->second->get_trkid()].insert( iter->second ); }
-  }
-
-}
+// //_____________________________________________________________________
+// void TrackingEvaluator_hp::fill_mc_track_map()
+// {
+//   _mc_track_map.clear();
+//
+//   for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
+//   {
+//
+//     if( !container ) continue;
+//
+//     // loop over hits
+//     const auto range = container->getHits();
+//     for( auto iter = range.first; iter != range.second; ++iter )
+//     { _mc_track_map[iter->second->get_trkid()].insert( iter->second ); }
+//   }
+//
+// }
 
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_clusters()
@@ -630,23 +620,12 @@ void TrackingEvaluator_hp::evaluate_mc_tracks()
 
     const auto track = iter->second;
     auto trackStruct = create_mc_track( track );
-    trackStruct._mask = get_mask( track );
 
     // add to array
     new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( std::move( trackStruct ) );
 
   }
 
-}
-
-//_____________________________________________________________________
-int64_t TrackingEvaluator_hp::get_mask( PHG4Particle* track ) const
-{
-  const auto g4hits_iter = _mc_track_map.find( track->get_track_id() );
-  if( g4hits_iter == _mc_track_map.end() ) return 0;
-
-  return std::accumulate( g4hits_iter->second.cbegin(), g4hits_iter->second.cend(), int64_t(0),
-    []( int64_t value, PHG4Hit* hit ) { return hit->get_layer() < 64 ? value|(1LL<<hit->get_layer()) : value; } );
 }
 
 //_____________________________________________________________________

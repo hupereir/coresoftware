@@ -117,9 +117,6 @@ class TrackStruct: public TObject
   virtual const char* GetName() const
   { return "TrackStruct"; }
 
-  // layer mask
-  int64_t _mask = 0;
-
   int _charge = 0;
   int _pid = 0;
 
@@ -169,7 +166,6 @@ class TrackPairStruct: public TObject
   float _eta = 0;
 
   std::array<float,2> _trk_pt = {{0,0}};
-  std::array<int64_t,2> _trk_mask = {{0,0}};
 
   //@}
 
@@ -256,8 +252,8 @@ class TrackingEvaluator_hp : public SubsysReco
   /// load nodes
   int load_nodes( PHCompositeNode* );
 
-  /// fill MC track map
-  void fill_mc_track_map();
+//   /// fill MC track map
+//   void fill_mc_track_map();
 
   /// evaluate clusters
   void evaluate_clusters();
@@ -270,9 +266,6 @@ class TrackingEvaluator_hp : public SubsysReco
 
   /// evaluate mc tracks
   void evaluate_mc_tracks();
-
-  /// get mask from mc track
-  int64_t get_mask( PHG4Particle* ) const;
 
   /// print clusters
   void print_clusters() const;
@@ -310,10 +303,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;
 
-  // map trk_id to list of g4 hits
-  // this is used to get the mask for mc tracks and is filled once
-  using G4TrackMap = std::map<int,G4HitSet>;
-  G4TrackMap _mc_track_map;
+//   // map trk_id to list of g4 hits
+//   using G4TrackMap = std::map<int,G4HitSet>;
+//   G4TrackMap _mc_track_map;
 
 };
 
