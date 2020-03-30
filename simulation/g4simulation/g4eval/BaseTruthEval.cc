@@ -152,13 +152,7 @@ bool BaseTruthEval::is_primary(PHG4Particle* particle)
     return false;
   }
 
-  bool is_primary = false;
-  if (particle->get_parent_id() == 0)
-  {
-    is_primary = true;
-  }
-
-  return is_primary;
+  return particle->get_parent_id() == 0;
 }
 
 PHG4Shower* BaseTruthEval::get_primary_shower(PHG4Shower* shower)
