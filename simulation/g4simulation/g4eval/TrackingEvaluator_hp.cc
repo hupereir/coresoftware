@@ -215,36 +215,8 @@ namespace
     const auto trk_pz = state->get_pz();
     cluster._trk_alpha = std::atan2( trk_pphi, trk_pr );
     cluster._trk_beta = std::atan2( trk_pz, trk_pr );
-
-    // store errors
-    // copied from TrkrClusterV1
-    {
-      using matrix_t = Eigen::Matrix<float, 3, 3>;
-      matrix_t covar;
-      for (unsigned int i = 0; i < 3; ++i)
-        for (unsigned int j = 0; j < 3; ++j)
-      { covar(i,j) = state->get_error(i, j); }
-
-      const float phi = - cluster._trk_phi;
-      const auto cosphi = std::cos( phi );
-      const auto sinphi = std::sin( phi );
-      matrix_t rotation;
-      rotation(0,0) = cosphi;
-      rotation(0,1) = -sinphi;
-      rotation(0,2) = 0;
-      rotation(1,0) = sinphi;
-      rotation(1,1) = cosphi;
-      rotation(1,2) = 0;
-      rotation(2,0) = 0;
-      rotation(2,1) = 0;
-      rotation(2,2) = 1;
-
-      const auto transformed = rotation*covar*rotation.transpose();
-
-      cluster._trk_phi_error = std::sqrt( transformed(1,1) )/cluster._trk_r;
-    }
-
-    cluster._trk_z_error = std::sqrt( state->get_error(2,2) );
+    cluster._trk_phi_error = state->get_phi_error();
+    cluster._trk_z_error = state->get_z_error();
 
   }
 
