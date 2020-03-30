@@ -21,6 +21,7 @@ class PHG4TpcPadPlane;
 class PHCompositeNode;
 class TH1;
 class TNtuple;
+class TFile;
 class TrkrHitSetContainer;
 class TrkrHitTruthAssoc;
 class PHG4TpcDistortion;
@@ -56,6 +57,7 @@ class PHG4TpcElectronDrift : public SubsysReco, public PHParameterInterface
   std::unique_ptr<PHG4TpcDistortion> distortion;
   TH1 *dlong;
   TH1 *dtrans;
+  TFile *m_outf;
   TNtuple *nt;
   TNtuple *nthit;
   TNtuple *ntfinalhit;

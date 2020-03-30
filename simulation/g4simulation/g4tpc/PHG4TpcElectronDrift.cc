@@ -68,6 +68,11 @@ PHG4TpcElectronDrift::PHG4TpcElectronDrift(const std::string &name)
   , distortion(new PHG4TpcAnalyticSpaceChargeDistortion())
   , dlong(nullptr)
   , dtrans(nullptr)
+  , m_outf(nullptr)
+  , nt(nullptr)
+  , nthit(nullptr)
+  , ntfinalhit(nullptr)
+  , ntpad(nullptr)
   , diffusion_trans(NAN)
   , diffusion_long(NAN)
   , drift_velocity(NAN)
@@ -235,13 +240,19 @@ int PHG4TpcElectronDrift::InitRun(PHCompositeNode *topNode)
   se->registerHisto(dlong);
   dtrans = new TH1F("difftrans", "transversal diffusion", 100, diffusion_trans - diffusion_trans / 2., diffusion_trans + diffusion_trans / 2.);
   se->registerHisto(dtrans);
-  nt = new TNtuple("nt", "electron drift stuff", "hit:ts:tb:tsig:rad:zstart:zfinal");
-  nthit = new TNtuple("nthit", "TrkrHit collecting", "layer:phipad:zbin:neffelectrons");
-  ntfinalhit = new TNtuple("ntfinalhit", "TrkrHit collecting", "layer:phipad:zbin:neffelectrons");
-  ntpad = new TNtuple("ntpad", "electron by electron pad centroid", "layer:phigem:phiclus:zgem:zclus");
-  se->registerHisto(nt);
-  se->registerHisto(nthit);
-  se->registerHisto(ntpad);
+
+  if (Verbosity())
+  {
+    // eval tree only when verbosity is on
+    m_outf = new TFile("nt_out.root", "recreate");
+    nt = new TNtuple("nt", "electron drift stuff", "hit:ts:tb:tsig:rad:zstart:zfinal");
+    nthit = new TNtuple("nthit", "TrkrHit collecting", "layer:phipad:zbin:neffelectrons");
+    ntfinalhit = new TNtuple("ntfinalhit", "TrkrHit collecting", "layer:phipad:zbin:neffelectrons");
+    ntpad = new TNtuple("ntpad", "electron by electron pad centroid", "layer:phigem:phiclus:zgem:zclus");
+    se->registerHisto(nt);
+    se->registerHisto(nthit);
+    se->registerHisto(ntpad);
+  }
   padplane->InitRun(topNode);
   padplane->CreateReadoutGeometry(topNode, seggeo);
 
@@ -307,80 +318,82 @@ int PHG4TpcElectronDrift::process_event(PHCompositeNode *topNode)
   }
 
       for (unsigned int i = 0; i < n_electrons; i++)
-  {
-    // We choose the electron starting position at random from a flat distribution along the path length
-    // the parameter t is the fraction of the distance along the path betwen entry and exit points, it has values between 0 and 1
-    double f = gsl_ran_flat(RandomGenerator, 0.0, 1.0);
+	{
+	  // We choose the electron starting position at random from a flat distribution along the path length
+	  // the parameter t is the fraction of the distance along the path betwen entry and exit points, it has values between 0 and 1
+	  double f = gsl_ran_flat(RandomGenerator, 0.0, 1.0);
 
-    double x_start = hiter->second->get_x(0) + f * (hiter->second->get_x(1) - hiter->second->get_x(0));
-    double y_start = hiter->second->get_y(0) + f * (hiter->second->get_y(1) - hiter->second->get_y(0));
-    double z_start = hiter->second->get_z(0) + f * (hiter->second->get_z(1) - hiter->second->get_z(0));
-    double t_start = hiter->second->get_t(0) + f * (hiter->second->get_t(1) - hiter->second->get_t(0));
+	  double x_start = hiter->second->get_x(0) + f * (hiter->second->get_x(1) - hiter->second->get_x(0));
+	  double y_start = hiter->second->get_y(0) + f * (hiter->second->get_y(1) - hiter->second->get_y(0));
+	  double z_start = hiter->second->get_z(0) + f * (hiter->second->get_z(1) - hiter->second->get_z(0));
+	  double t_start = hiter->second->get_t(0) + f * (hiter->second->get_t(1) - hiter->second->get_t(0));
 
-    double radstart = sqrt(x_start * x_start + y_start * y_start);
-    double phistart = atan2(y_start,x_start);
-    double r_sigma = diffusion_trans * sqrt(tpc_length / 2. - fabs(z_start));
-    double rantrans = gsl_ran_gaussian(RandomGenerator, r_sigma);
-    rantrans += gsl_ran_gaussian(RandomGenerator, added_smear_sigma_trans);
+	  double radstart = sqrt(x_start * x_start + y_start * y_start);
+	  double r_sigma = diffusion_trans * sqrt(tpc_length / 2. - fabs(z_start));
+	  double rantrans = gsl_ran_gaussian(RandomGenerator, r_sigma);
+	  rantrans += gsl_ran_gaussian(RandomGenerator, added_smear_sigma_trans);
 
-    double t_path = (tpc_length / 2. - fabs(z_start)) / drift_velocity;
-    double t_sigma = diffusion_long * sqrt(tpc_length / 2. - fabs(z_start)) / drift_velocity;
-    double rantime = gsl_ran_gaussian(RandomGenerator, t_sigma);
-    rantime += gsl_ran_gaussian(RandomGenerator, added_smear_sigma_long) / drift_velocity;
-    double t_final = t_start + t_path + rantime;
+	  double t_path = (tpc_length / 2. - fabs(z_start)) / drift_velocity;
+	  double t_sigma = diffusion_long * sqrt(tpc_length / 2. - fabs(z_start)) / drift_velocity;
+	  double rantime = gsl_ran_gaussian(RandomGenerator, t_sigma);
+	  rantime += gsl_ran_gaussian(RandomGenerator, added_smear_sigma_long) / drift_velocity;
+	  double t_final = t_start + t_path + rantime;
 
-    double z_final;
-    if (z_start < 0)
-      z_final = -tpc_length / 2. + t_final * drift_velocity;
-    else
-      z_final = tpc_length / 2. - t_final * drift_velocity;
+	  double z_final;
+	  if (z_start < 0)
+	    z_final = -tpc_length / 2. + t_final * drift_velocity;
+	  else
+	    z_final = tpc_length / 2. - t_final * drift_velocity;
 
-    if (t_final < min_time || t_final > max_time)
-      {
-        //cout << "skip this, t_final = " << t_final << " is out of range " << min_time <<  " to " << max_time << endl;
-        continue;
-      }
-    double ranphi = gsl_ran_flat(RandomGenerator, -M_PI, M_PI);
-    double x_final = x_start + rantrans * cos(ranphi);
-    double y_final = y_start + rantrans * sin(ranphi);
+	  if (t_final < min_time || t_final > max_time)
+	    {
+	      //cout << "skip this, t_final = " << t_final << " is out of range " << min_time <<  " to " << max_time << endl;
+	      continue;
+	    }
+	  double ranphi = gsl_ran_flat(RandomGenerator, -M_PI, M_PI);
+	  double x_final = x_start + rantrans * cos(ranphi);
+	  double y_final = y_start + rantrans * sin(ranphi);
     if( m_use_distortions && distortion )
     {
+      const double phistart = atan2(y_start,x_start);
       const double distrphi= distortion->get_rphi_distortion(radstart,phistart,z_start);
       const double distr= distortion->get_r_distortion(radstart,phistart,z_start);
       x_final += distr*cos(phistart) + distrphi*sin(phistart);
       y_final += distr*sin(phistart) + distrphi*cos(phistart);
     }
+	  double rad_final = sqrt(x_final * x_final + y_final * y_final);
+	  // remove electrons outside of our acceptance. Careful though, electrons from just inside 30 cm can contribute in the 1st active layer readout, so leave a little margin
+	  if (rad_final < min_active_radius - 2.0 || rad_final > max_active_radius + 1.0)
+	    {
+	      continue;
+	    }
 
-    double rad_final = sqrt(x_final * x_final + y_final * y_final);
-    // remove electrons outside of our acceptance. Careful though, electrons from just inside 30 cm can contribute in the 1st active layer readout, so leave a little margin
-    if (rad_final < min_active_radius - 2.0 || rad_final > max_active_radius + 1.0)
-      {
-        continue;
-      }
+	  if (Verbosity() > 1000)
+	    {
+	      cout << "ihit " << ihit << " electron " << i << " g4hitid " << hiter->first << " f " << f << endl;
+	      cout << "radstart " << radstart << " x_start: " << x_start
+		   << ", y_start: " << y_start
+		   << ",z_start: " << z_start
+		   << " t_start " << t_start
+		   << " t_path " << t_path
+		   << " t_sigma " << t_sigma
+		   << " rantime " << rantime
+		   << endl;
 
-    if (Verbosity() > 1000)
-      {
-        cout << "ihit " << ihit << " electron " << i << " g4hitid " << hiter->first << " f " << f << endl;
-        cout << "radstart " << radstart << " x_start: " << x_start
-       << ", y_start: " << y_start
-       << ",z_start: " << z_start
-       << " t_start " << t_start
-       << " t_path " << t_path
-       << " t_sigma " << t_sigma
-       << " rantime " << rantime
-       << endl;
+	      //if( sqrt(x_start*x_start+y_start*y_start) > 68.0 && sqrt(x_start*x_start+y_start*y_start) < 72.0)
+	      cout << "       rad_final " << rad_final << " x_final " << x_final << " y_final " << y_final
+		   << " z_final " << z_final << " t_final " << t_final << " zdiff " << z_final - z_start << endl;
+	    }
 
-        //if( sqrt(x_start*x_start+y_start*y_start) > 68.0 && sqrt(x_start*x_start+y_start*y_start) < 72.0)
-        cout << "       rad_final " << rad_final << " x_final " << x_final << " y_final " << y_final
-       << " z_final " << z_final << " t_final " << t_final << " zdiff " << z_final - z_start << endl;
-      }
-
-    if (Verbosity() > 0)
+	  if (Verbosity() > 0)
+	  {
+	    assert(nt);
       nt->Fill(ihit, t_start, t_final, t_sigma, rad_final, z_start, z_final);
+	  }
 
-    // this fills the cells and updates the hits in temp_hitsetcontainer for this drifted electron hitting the GEM stack
-    MapToPadPlane(x_final, y_final, z_final, hiter, ntpad, nthit);
-  }  // end loop over electrons for this g4hit
+	  // this fills the cells and updates the hits in temp_hitsetcontainer for this drifted electron hitting the GEM stack
+	  MapToPadPlane(x_final, y_final, z_final, hiter, ntpad, nthit);
+	}  // end loop over electrons for this g4hit
 
       if(Verbosity() > 100)
   cout << "Finished drifting " << n_electrons << " electrons from ihit " << ihit
@@ -529,12 +542,18 @@ int PHG4TpcElectronDrift::End(PHCompositeNode *topNode)
 {
   if (Verbosity() > 0)
   {
-    TFile *outf = new TFile("nt_out.root", "recreate");
-    outf->WriteTObject(nt);
-    outf->WriteTObject(ntpad);
-    outf->WriteTObject(nthit);
-    outf->WriteTObject(ntfinalhit);
-    outf->Close();
+    assert(m_outf);
+    assert(nt);
+    assert(ntpad);
+    assert(nthit);
+    assert(ntfinalhit);
+
+    m_outf->cd();
+    nt->Write();
+    ntpad->Write();
+    nthit->Write();
+    ntfinalhit->Write();
+    m_outf->Close();
   }
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -570,8 +589,8 @@ void PHG4TpcElectronDrift::SetDefaultParameters()
 
   // These are purely fudge factors, used to increase the resolution to 150 microns and 500 microns, respectively
   // override them from the macro to get a different resolution
-  set_default_double_param("added_smear_trans", 0.12);  // cm
-  set_default_double_param("added_smear_long", 0.15);   // cm
+  set_default_double_param("added_smear_trans", 0.085);  // cm
+  set_default_double_param("added_smear_long", 0.105);   // cm
 
   return;
 }

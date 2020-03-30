@@ -1353,12 +1353,12 @@ void SvtxEvaluator::fillOutputNtuples(PHCompositeNode* topNode)
       float cellID = 0;
       float ecell = hit->getAdc();
 
-      int phibin = NAN;
-      int zbin = NAN;
+      int phibin = -1;
+      int zbin = -1;
       float phi = NAN;
       float z = NAN;
 
-      if (layer >= _nlayers_maps + _nlayers_intt && layer < _nlayers_maps + _nlayers_intt + _nlayers_tpc)
+      if (layer >= _nlayers_maps + _nlayers_intt)
         {
     PHG4CylinderCellGeom* GeoLayer = geom_container->GetLayerCellGeom(layer);
     phibin = TpcDefs::getPad(hit_key);
@@ -1486,11 +1486,11 @@ void SvtxEvaluator::fillOutputNtuples(PHCompositeNode* topNode)
         nhit_tpc_all,
         nhit_tpc_in,
         nhit_tpc_mid,
-        nhit_tpc_out, nclus_all, nclus_tpc, nclus_intt, nclus_maps, nclus_outertracker};
+        nhit_tpc_out, nclus_all, nclus_tpc, nclus_intt, nclus_maps};
 
       _ntp_hit->Fill(hit_data);
     }
-      }
+  }
     }
     if (Verbosity() >= 1)
     {
