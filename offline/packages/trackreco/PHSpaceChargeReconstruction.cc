@@ -293,11 +293,6 @@ void  PHSpaceChargeReconstruction::calculate_distortions( PHCompositeNode* topNo
 
   for( int i = 0; i < m_totalbins; ++i )
   {
-    std::cout
-      << PHWHERE << " lhs[" << i << "]" << std::endl
-      << m_lhs[i]
-      << std::endl;
-
     cov[i] = m_lhs[i].inverse();
     delta[i] = m_lhs[i].partialPivLu().solve( m_rhs[i] );
   }
@@ -319,8 +314,8 @@ void  PHSpaceChargeReconstruction::calculate_distortions( PHCompositeNode* topNo
     {
 
       // get layers corresponding to bins
-      const int inner_layer = m_nlayers_tpc*ir/m_rbins;
-      const int outer_layer = m_nlayers_tpc*(ir+1)/m_rbins-1;
+      const int inner_layer = m_firstlayer_tpc + m_nlayers_tpc*ir/m_rbins;
+      const int outer_layer = m_firstlayer_tpc + m_nlayers_tpc*(ir+1)/m_rbins-1;
 
       const auto inner_radius = geom_container->GetLayerCellGeom(inner_layer)->get_radius();
       const auto outer_radius = geom_container->GetLayerCellGeom(outer_layer)->get_radius();
