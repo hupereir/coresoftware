@@ -110,19 +110,19 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
         switch( trkrid )
         {
           case TrkrDefs::tpcId:
-          phg4hit = phg4hits_tpc->findHit( g4hitkey );
+          if (phg4hits_tpc) phg4hit = phg4hits_tpc->findHit( g4hitkey );
           break;
 
           case TrkrDefs::inttId:
-          phg4hit = phg4hits_intt->findHit( g4hitkey );
+          if (phg4hits_intt) phg4hit = phg4hits_intt->findHit( g4hitkey );
           break;
 
           case TrkrDefs::outertrackerId:
-          phg4hit = phg4hits_outertracker->findHit( g4hitkey );
+          if (phg4hits_outertracker) phg4hit = phg4hits_outertracker->findHit( g4hitkey );
           break;
 
           case TrkrDefs::mvtxId:
-          phg4hit = phg4hits_mvtx->findHit( g4hitkey );
+          if (phg4hits_mvtx) phg4hit = phg4hits_mvtx->findHit( g4hitkey );
           break;
 
           default: break;
@@ -130,7 +130,7 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
         if( !phg4hit )
         {
-          std::cout<<__PRETTY_FUNCTION__<<" unable to find g4hit" << std::endl;
+          std::cout<<PHWHERE<<" unable to find g4hit" << std::endl;
           continue;
         }
 
@@ -325,8 +325,7 @@ int PHTruthTrackSeeding::GetNodes(PHCompositeNode* topNode)
     if( !( node.second = findNode::getClass<PHG4HitContainer>( topNode, node.first ) ) )
     {
       if (Verbosity() >= 0)
-      { std::cerr << PHWHERE << " ERROR: No PHG4HitContainer found!" << std::endl; }
-      return Fun4AllReturnCodes::ABORTRUN;
+      { std::cerr << PHWHERE << " PHG4HitContainer " << node.first << " not found" << std::endl; }
     }
 
   }
