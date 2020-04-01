@@ -59,7 +59,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
     unsigned int nlayers_maps = 3,
     unsigned int nlayers_intt = 8,
     unsigned int nlayers_tpc = 60,
-    unsigned int nlayers_outer = 2);
+    unsigned int nlayers_outer = 0);
 
   protected:
 
