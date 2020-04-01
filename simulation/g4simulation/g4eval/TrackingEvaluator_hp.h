@@ -32,6 +32,7 @@ class ClusterStruct: public TObject
 
   unsigned int _layer = 0;
   unsigned int _size = 0;
+  unsigned int _embed = 0;
 
   ///@name cluster position
   //@{
@@ -95,7 +96,7 @@ class ClusterStruct: public TObject
   float _truth_beta = 0;
   //@}
 
-  ///@name truth momentum
+  ///@name truth momentum at origin
   //@{
   float _truth_px = 0;
   float _truth_py = 0;
@@ -119,6 +120,8 @@ class TrackStruct: public TObject
 
   int _charge = 0;
   int _pid = 0;
+  int _embed = 0;
+  int _nclusters = 0;
 
   ///@name position
   //@{
@@ -137,9 +140,18 @@ class TrackStruct: public TObject
   float _pt = 0;
   float _p = 0;
   float _eta = 0;
-
   //@}
 
+  ///@name truth momentum
+  //@{
+  int _mc_trkid = 0;
+  float _truth_px = 0;
+  float _truth_py = 0;
+  float _truth_pz = 0;
+  float _truth_pt = 0;
+  float _truth_p = 0;
+  float _truth_eta = 0;
+  //@}
   ClassDef(TrackStruct,1)
 
 };
@@ -282,6 +294,9 @@ class TrackingEvaluator_hp : public SubsysReco
   // get geant hits associated to a cluster
   using G4HitSet = std::set<PHG4Hit*>;
   G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
+
+  // get G4Particle id of max contributor to a given track
+  int get_max_contributor( SvtxTrack* ) const;
 
   // get embedded id for given g4track
   int get_embed(PHG4Particle*) const;
