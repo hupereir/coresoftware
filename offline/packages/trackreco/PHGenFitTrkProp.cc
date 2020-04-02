@@ -106,7 +106,7 @@ PHGenFitTrkProp::PHGenFitTrkProp(
   , _firstlayer_intt(_firstlayer_maps + _nlayers_maps)
   , _firstlayer_tpc(_firstlayer_intt + _nlayers_intt)
   , _firstlayer_outer(_firstlayer_tpc + _nlayers_tpc)
-{}
+{ std::cout << "PHGenFitTrkProp::PHGenFitTrkProp" << std::endl; }
 
 //___________________________________________
 int PHGenFitTrkProp::Setup(PHCompositeNode* topNode)
@@ -300,7 +300,10 @@ int PHGenFitTrkProp::InitializePHGenFit(PHCompositeNode* topNode)
   // create fitter
   auto tgeo_manager = PHGeomUtility::GetTGeoManager(topNode);
   auto field = PHFieldUtility::GetFieldMapNode(nullptr, topNode);
-  _fitter.reset( PHGenFit::Fitter::getInstance(tgeo_manager, field, _track_fitting_alg_name, "RKTrackRep", _do_evt_display) );
+  _fitter.reset( PHGenFit::Fitter::getInstance(
+    tgeo_manager, field,
+    _track_fitting_alg_name, "RKTrackRep",
+    _do_evt_display) );
 
   if (!_fitter)
   {
@@ -424,7 +427,8 @@ int PHGenFitTrkProp::KalmanTrkProp()
       }
 
       // associate this track with the same vertex as the seed track
-      unsigned int ivert = tracklet->get_vertex_id();
+      // unsigned int ivert = tracklet->get_vertex_id();
+      unsigned int ivert = 0;
       gftrk_iter->second->set_vertex_id(ivert);
       if(ivert > _vertex.size())
       {
@@ -577,11 +581,11 @@ int PHGenFitTrkProp::OutputPHGenFitTrack( MapPHGenFitTrack::iterator gftrk_iter,
 
   // Use fitted vertex
   TVector3 vertex_position(_vertex[vertex_id][0], _vertex[vertex_id][1], _vertex[vertex_id][2]);
-  std::unique_ptr<genfit::MeasuredStateOnPlane> gf_state_vertex_ca = nullptr;
+  std::unique_ptr<genfit::MeasuredStateOnPlane> gf_state_vertex_ca;
   try
   {
 
-    gf_state_vertex_ca = std::unique_ptr<genfit::MeasuredStateOnPlane>(gftrk_iter->second->extrapolateToPoint(vertex_position));
+    gf_state_vertex_ca.reset(gftrk_iter->second->extrapolateToPoint(vertex_position));
 
   } catch (...) {
 
@@ -836,9 +840,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
 
   bool use_fitted_state = use_fitted_state_once;
   float blowup_factor = use_fitted_state ? _blowup_factor : 1.;
-  unsigned int layer_occupied[_nlayers_all];
-
-  for(int i = 0;i<_nlayers_all;i++) layer_occupied[i] = 0;
+  std::vector<bool> layer_occupied(_nlayers_all,false);
 
   /*
   * Find the last layer of with TrackPoint (TP)
@@ -849,7 +851,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
   for (unsigned int i = 0; i < clusterkeys.size(); ++i)
   {
     unsigned int layer = TrkrDefs::getLayer(clusterkeys[i]);
-    layer_occupied[layer] = 1;
+    layer_occupied[layer] = true;
     if(layer == init_layer)
     {
       first_extrapolate_base_TP_id = i;
@@ -866,7 +868,10 @@ int PHGenFitTrkProp::TrackPropPatRec(
   int extrapolate_base_TP_id = first_extrapolate_base_TP_id;
 
   unsigned int consecutive_missing_layer = 0;
-  for( unsigned int layer = init_layer + direction; layer != end_layer + direction; layer += direction)
+  for(
+    unsigned int layer = init_layer + direction;
+    layer != end_layer + direction;
+    layer += direction)
   {
     // layer is unsigned int, check for >=0 is meaningless
     if (layer >= (unsigned int) _nlayers_all) break;
@@ -927,8 +932,8 @@ int PHGenFitTrkProp::TrackPropPatRec(
     std::unique_ptr<genfit::MeasuredStateOnPlane> state;
     try
     {
-      state = std::unique_ptr<genfit::MeasuredStateOnPlane>(track->extrapolateToCylinder(
-        layer_r, TVector3(0, 0, 0),
+      state.reset(
+        track->extrapolateToCylinder(layer_r, TVector3(0, 0, 0),
         TVector3(0, 0, 1), extrapolate_base_TP_id, direction));
     } catch (...) {
 
@@ -1023,7 +1028,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
     #endif
 
     if (Verbosity() >= 1) _t_search_clusters->restart();
-    std::vector<TrkrDefs::cluskey> new_cluster_keys = SearchHitsNearBy(
+    const auto new_cluster_keys = SearchHitsNearBy(
       ivert, layer,
       theta_center, phi_center, theta_window, phi_window);
     if (Verbosity() >= 1) _t_search_clusters->stop();
@@ -1195,16 +1200,16 @@ PHGenFit::Measurement* PHGenFitTrkProp::TrkrClusterToPHGenFitMeasurement( const 
     int stave_index = MvtxDefs::getStaveId(cluster_id);
     int chip_index = MvtxDefs::getChipId(cluster_id);
 
-    auto geom = dynamic_cast<CylinderGeom_Mvtx*>(_geom_container_maps->GetLayerGeom(layer));
-    std::array<double,3> ladder_location;
+    auto geom = static_cast<CylinderGeom_Mvtx*>(_geom_container_maps->GetLayerGeom(layer));
+    std::array<double,3> ladder_location = {{0,0,0}};
     geom->find_sensor_center(stave_index, 0, 0, chip_index, &ladder_location[0]);
     n.SetXYZ(ladder_location[0], ladder_location[1], 0);
     n.RotateZ(geom->get_stave_phi_tilt());
 
   } else if(trkrid == TrkrDefs::inttId) {
 
-    auto geom = dynamic_cast<CylinderGeomIntt*>(_geom_container_intt->GetLayerGeom(layer));
-    std::array<double,3> hit_location;
+    auto geom = static_cast<CylinderGeomIntt*>(_geom_container_intt->GetLayerGeom(layer));
+    std::array<double,3> hit_location = {{0,0,0}};
     geom->find_segment_center(InttDefs::getLadderZId(cluster_id), InttDefs::getLadderPhiId(cluster_id), &hit_location[0]);
     n.SetXYZ(hit_location[0], hit_location[1], 0);
     n.RotateZ(geom->get_strip_phi_tilt());
@@ -1237,7 +1242,7 @@ int PHGenFitTrkProp::BuildLayerZPhiHitMap(unsigned int ivert)
   std::multimap<unsigned int, TrkrDefs::cluskey> this_layer_thetaID_phiID_clusterID;
 
   auto clusrange = _cluster_map->getClusters();
-  for(TrkrClusterContainer::ConstIterator clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
+  for( auto clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
   {
     auto cluster = clusiter->second;
     auto cluskey = clusiter->first;
@@ -1448,14 +1453,7 @@ int PHGenFitTrkProp::InitializeGeometry(PHCompositeNode* topNode)
   {
     const auto range = mapsladdergeos->get_begin_end();
     for (auto layeriter = range.first; layeriter != range.second; ++layeriter)
-    {
-      std::cout
-        << "PHGenFitTrkProp::InitializeGeometry -"
-        << " mvtx adding layer: " << layeriter->second->get_layer()
-        << " radius: " << layeriter->second->get_radius() << std::endl;
-      radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer()));
-
-    }
+    { radius_layer_map.insert( std::make_pair(layeriter->second->get_radius(), layeriter->second->get_layer())); }
   }
 
   // map layer id to index
