@@ -328,7 +328,7 @@ int PHGenFitTrkProp::GetNodes(PHCompositeNode* topNode)
 }
 
 //______________________________________________________________
-int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTrackMap::Iter phtrk_iter)
+bool PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTrackMap::Iter phtrk_iter)
 {
   //Loop over hitIDs on current track and check if they have been used
   unsigned int n_clu = iter->second->get_cluster_keys().size();
@@ -355,9 +355,9 @@ int PHGenFitTrkProp::check_track_exists(MapPHGenFitTrack::iterator iter, SvtxTra
   if (((float) n_clu_used / n_clu) > 0.3)
   {
     if (Verbosity() >= 1) std::cout << "Found duplicate track. n_clu: " << n_clu << " c_clu_used: " << n_clu_used << std::endl;
-    return 0;
+    return false;
   }
-  return 1;
+  return true;
 }
 
 //_________________________________________________________________________
@@ -427,7 +427,6 @@ int PHGenFitTrkProp::KalmanTrkProp()
       }
 
       // associate this track with the same vertex as the seed track
-      // unsigned int ivert = tracklet->get_vertex_id();
       unsigned int ivert = 0;
       gftrk_iter->second->set_vertex_id(ivert);
       if(ivert > _vertex.size())

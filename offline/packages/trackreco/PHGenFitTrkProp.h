@@ -483,7 +483,7 @@ class PHGenFitTrkProp : public PHTrackPropagating
   int InitializePHGenFit(PHCompositeNode* topNode);
 
   ///
-  int check_track_exists(MapPHGenFitTrack::iterator, SvtxTrackMap::Iter);
+  bool check_track_exists(MapPHGenFitTrack::iterator, SvtxTrackMap::Iter);
 
   /// Main function
   int KalmanTrkProp();
