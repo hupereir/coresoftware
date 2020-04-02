@@ -47,15 +47,14 @@ namespace
   ParticleStruct create_particle( PHG4Particle* particle )
   {
     ParticleStruct particleStruct;
+    particleStruct._pid = particle->get_pid();
+    particleStruct._charge = particle->get_IonCharge()/eplus;
     particleStruct._px = particle->get_px();
     particleStruct._py = particle->get_py();
     particleStruct._pz = particle->get_pz();
     particleStruct._pt = get_pt( particle->get_px(), particle->get_py() );
     particleStruct._p = get_p( particle->get_px(), particle->get_py(), particle->get_pz() );
     particleStruct._eta = get_eta( particleStruct._p, particleStruct._pz );
-
-    particleStruct._charge = particle->get_IonCharge()/eplus;
-
     return particleStruct;
   }
 
@@ -229,6 +228,7 @@ void SimEvaluator_hp::fill_particles()
     if( particle )
     {
       auto particleStruct = create_particle( particle );
+      particleStruct._embed = get_embed( particle );
       new((*_container->particle_list())[_particle_count++]) ParticleStruct( std::move( particleStruct ) );
     }
 
@@ -269,3 +269,7 @@ void SimEvaluator_hp::print_vertices()
   }
 
 }
+
+//_____________________________________________________________________
+int SimEvaluator_hp::get_embed( PHG4Particle* particle ) const
+{ return (_g4truthinfo && particle) ? _g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }

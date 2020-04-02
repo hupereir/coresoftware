@@ -6,6 +6,7 @@
 
 #include <TClonesArray.h>
 
+class PHG4Particle;
 class PHG4TruthInfoContainer;
 
 // vertex information
@@ -35,13 +36,16 @@ class ParticleStruct: public TObject
   virtual const char* GetName() const
   { return "ParticleStruct"; }
 
+  int _charge = 0;
+  int _pid = 0;
+  int _embed = 0;
+
   float _px = 0;
   float _py = 0;
   float _pz = 0;
   float _pt = 0;
   float _p = 0;
   float _eta = 0;
-  int _charge = 0;
 
   ClassDef(ParticleStruct,1)
 
@@ -120,6 +124,9 @@ class SimEvaluator_hp : public SubsysReco
 
   /// print vertices
   void print_vertices();
+
+  // get embedded id for given g4track
+  int get_embed(PHG4Particle*) const;
 
   //* data container
   Container* _container = nullptr;

@@ -119,8 +119,6 @@ class TrackStruct: public TObject
   { return "TrackStruct"; }
 
   int _charge = 0;
-  int _pid = 0;
-  int _embed = 0;
   int _nclusters = 0;
 
   ///@name position
@@ -144,6 +142,8 @@ class TrackStruct: public TObject
 
   ///@name truth momentum
   //@{
+  int _pid = 0;
+  int _embed = 0;
   int _mc_trkid = 0;
   float _truth_px = 0;
   float _truth_py = 0;
@@ -236,9 +236,6 @@ class TrackingEvaluator_hp : public SubsysReco
     TClonesArray* track_pairs() const
     { return _track_pairs; }
 
-    TClonesArray* mc_tracks() const
-    { return _mc_tracks; }
-
     //@}
 
     private:
@@ -251,9 +248,6 @@ class TrackingEvaluator_hp : public SubsysReco
 
     /// track pairs array
     TClonesArray* _track_pairs = nullptr;
-
-    /// tracks array
-    TClonesArray* _mc_tracks = nullptr;
 
     ClassDef(Container,1)
 
@@ -275,9 +269,6 @@ class TrackingEvaluator_hp : public SubsysReco
 
   /// evaluate track pairs
   void evaluate_track_pairs();
-
-  /// evaluate mc tracks
-  void evaluate_mc_tracks();
 
   /// print clusters
   void print_clusters() const;

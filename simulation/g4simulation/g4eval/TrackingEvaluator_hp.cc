@@ -305,10 +305,6 @@ TrackingEvaluator_hp::Container::Container()
   _track_pairs = new TClonesArray( "TrackPairStruct" );
   _track_pairs->SetName( "TrackPairArray" );
   _track_pairs->SetOwner( kTRUE );
-
-  _mc_tracks = new TClonesArray( "TrackStruct" );
-  _mc_tracks->SetName( "TrackArray" );
-  _mc_tracks->SetOwner( kTRUE );
 }
 
 //_____________________________________________________________________
@@ -317,7 +313,6 @@ TrackingEvaluator_hp::Container::~Container()
   delete _clusters;
   delete _tracks;
   delete _track_pairs;
-  delete _mc_tracks;
 }
 
 //_____________________________________________________________________
@@ -326,7 +321,6 @@ void TrackingEvaluator_hp::Container::Reset()
   _clusters->Clear();
   _tracks->Clear();
   _track_pairs->Clear();
-  _mc_tracks->Clear();
 }
 
 //_____________________________________________________________________
@@ -385,12 +379,11 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   // print_clusters();
-  // print_tracks();
+  print_tracks();
 
   // evaluate_clusters();
   evaluate_tracks();
   // evaluate_track_pairs();
-  // evaluate_mc_tracks();
 
   // fill_mc_track_map();
 
@@ -591,36 +584,6 @@ void TrackingEvaluator_hp::evaluate_track_pairs()
       new((*_container->track_pairs())[_track_pair_count++]) TrackPairStruct( std::move( trackPairStruct ) );
 
     }
-
-  }
-
-}
-
-//_____________________________________________________________________
-void TrackingEvaluator_hp::evaluate_mc_tracks()
-{
-
-  // std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks." << std::endl;
-
-  // reset container
-  _container->mc_tracks()->Clear();
-  _mc_track_count = 0;
-
-  if( !_g4truthinfo )
-  {
-    std::cout << "TrackingEvaluator_hp::evaluate_mc_tracks - could not find truth info" << std::endl;
-    return;
-  }
-
-  const auto range = _g4truthinfo->GetPrimaryParticleRange();
-  for( auto iter = range.first; iter != range.second; ++iter )
-  {
-
-    const auto track = iter->second;
-    auto trackStruct = create_mc_track( track );
-
-    // add to array
-    new((*_container->mc_tracks())[_mc_track_count++]) TrackStruct( std::move( trackStruct ) );
 
   }
 
