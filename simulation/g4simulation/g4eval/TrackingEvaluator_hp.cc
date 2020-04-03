@@ -379,7 +379,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   // print_clusters();
-  print_tracks();
+  // print_tracks();
 
   // evaluate_clusters();
   evaluate_tracks();
