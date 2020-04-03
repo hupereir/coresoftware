@@ -3,19 +3,17 @@
 
 #include <fun4all/SubsysReco.h>
 #include <phool/PHObject.h>
-
-#include <TClonesArray.h>
+#include <vector>
 
 class PHG4Particle;
 class PHG4TruthInfoContainer;
 
 // vertex information
-class VertexStruct: public TObject
+class VertexStruct
 {
   public:
 
-  virtual const char* GetName() const
-  { return "VertexStruct"; }
+  using List = std::vector<VertexStruct>;
 
   float _x = 0;
   float _y = 0;
@@ -24,17 +22,13 @@ class VertexStruct: public TObject
 
   bool _is_main_vertex = false;
 
-  ClassDef(VertexStruct,1)
-
 };
 
 // vertex information
-class ParticleStruct: public TObject
+class ParticleStruct
 {
   public:
-
-  virtual const char* GetName() const
-  { return "ParticleStruct"; }
+  using List = std::vector<ParticleStruct>;
 
   int _charge = 0;
   int _pid = 0;
@@ -46,8 +40,6 @@ class ParticleStruct: public TObject
   float _pt = 0;
   float _p = 0;
   float _eta = 0;
-
-  ClassDef(ParticleStruct,1)
 
 };
 
@@ -77,7 +69,7 @@ class SimEvaluator_hp : public SubsysReco
     public:
 
     /// constructor
-    Container();
+    explicit Container() = default;
 
     /// copy constructor
     explicit Container(const Container &) = delete;
@@ -85,27 +77,33 @@ class SimEvaluator_hp : public SubsysReco
     /// assignment operator
     Container& operator = ( const Container& ) = delete;
 
-    /// destructor
-    virtual ~Container();
-
     /// reset
     virtual void Reset();
 
-    TClonesArray* primary_vertex_list()
-    { return _vertex_list; }
+    ///@name modifiers
+    //@{
 
-    TClonesArray* particle_list()
-    { return _particle_list; }
+    void addVertex( const VertexStruct& vertex )
+    { _vertex_list.push_back( vertex ); }
+
+    void addParticle( const ParticleStruct& particle )
+    { _particle_list.push_back( particle ); }
+
+    void clearVertexList()
+    { _vertex_list.clear(); }
+
+    void clearParticleList()
+    { _particle_list.clear(); }
 
     //@}
 
     private:
 
     //* vertex list
-    TClonesArray* _vertex_list = nullptr;
+    VertexStruct::List _vertex_list;
 
     //* particles
-    TClonesArray* _particle_list = nullptr;
+    ParticleStruct::List _particle_list;
 
     ClassDef(Container,1)
 
@@ -130,8 +128,6 @@ class SimEvaluator_hp : public SubsysReco
 
   //* data container
   Container* _container = nullptr;
-  int _vertex_count = 0;
-  int _particle_count = 0;
 
   //* truth information
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;

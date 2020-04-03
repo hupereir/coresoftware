@@ -149,20 +149,6 @@ namespace
     return trackpair_struct;
   }
 
-  /// create track struct from struct from PHG4Particle
-  TrackStruct create_mc_track( PHG4Particle* track )
-  {
-    TrackStruct trackStruct;
-    trackStruct._pid = track->get_pid();
-    trackStruct._px = track->get_px();
-    trackStruct._py = track->get_py();
-    trackStruct._pz = track->get_pz();
-    trackStruct._pt = get_pt( trackStruct._px, trackStruct._py );
-    trackStruct._p = get_p( trackStruct._px, trackStruct._py, trackStruct._pz );
-    trackStruct._eta = get_eta( trackStruct._p, trackStruct._pz );
-    return trackStruct;
-  }
-
   /// create cluster struct from svx cluster
   ClusterStruct create_cluster( TrkrDefs::cluskey key, TrkrCluster* cluster )
   {
@@ -215,17 +201,6 @@ namespace
 
   }
 
-  /// add track momentum at vertex information
-  void add_trk_momentum_information( ClusterStruct& cluster, SvtxTrack* track )
-  {
-    cluster._trk_px = track->get_px();
-    cluster._trk_py = track->get_py();
-    cluster._trk_pz = track->get_pz();
-    cluster._trk_pt = get_pt( cluster._trk_px, cluster._trk_py );
-    cluster._trk_p = get_p( cluster._trk_px, cluster._trk_py, cluster._trk_pz );
-    cluster._trk_eta = get_eta( cluster._trk_p, cluster._trk_pz );
-  }
-
   /// number of hits associated to cluster
   unsigned int cluster_size( TrkrDefs::cluskey key, TrkrClusterHitAssoc* cluster_hit_map )
   {
@@ -265,8 +240,7 @@ namespace
   }
 
   // add truth information
-  template<class T>
-  void add_truth_momentum_information( T& object, PHG4Particle* track )
+  void add_truth_momentum_information( TrackStruct& object, PHG4Particle* track )
   {
     if( track )
     {
@@ -462,7 +436,6 @@ void TrackingEvaluator_hp::evaluate_tracks()
   if( !( _track_map && _cluster_map && _container ) ) return;
 
   // clear array
-  _container->clearClusters();
   _container->clearTracks();
 
   for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
@@ -472,13 +445,15 @@ void TrackingEvaluator_hp::evaluate_tracks()
     auto track_struct = create_track( track );
 
     // truth information
-    track_struct._mc_trkid = get_max_contributor( track );
+    const auto pair = get_max_contributor( track );
+    track_struct._mc_trkid = pair.first;
+    track_struct._contributors = pair.second;
+
     auto particle = _g4truthinfo->GetParticle(track_struct._mc_trkid);
+    track_struct._pid = particle->get_pid();
     track_struct._embed = get_embed( particle );
 
     add_truth_momentum_information( track_struct, particle );
-
-    _container->addTrack( track_struct );
 
     // loop over clusters
     auto state_iter = track->begin_states();
@@ -496,9 +471,6 @@ void TrackingEvaluator_hp::evaluate_tracks()
       // create new cluster struct
       auto cluster_struct = create_cluster( cluster_key, cluster );
       cluster_struct._size = cluster_size( cluster_key, _cluster_hit_map );
-
-      // track momentum information
-      add_trk_momentum_information( cluster_struct, track );
 
       const auto radius( cluster_struct._r );
 
@@ -521,13 +493,13 @@ void TrackingEvaluator_hp::evaluate_tracks()
       // truth information
       const auto g4hits = find_g4hits( cluster_key );
       add_truth_information( cluster_struct, g4hits );
-      add_truth_momentum_information( cluster_struct, particle );
-      cluster_struct._embed = track_struct._embed;
 
-      // add to array
-      _container->addCluster( cluster_struct );
+      // add to track
+      track_struct._clusters.push_back( cluster_struct );
 
     }
+
+    _container->addTrack( track_struct );
 
   }
 
@@ -760,9 +732,9 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
 }
 
 //_____________________________________________________________________
-int TrackingEvaluator_hp::get_max_contributor( SvtxTrack* track ) const
+std::pair<int,int> TrackingEvaluator_hp::get_max_contributor( SvtxTrack* track ) const
 {
-  if(!(_track_map && _cluster_map && _g4truthinfo)) return 0;
+  if(!(_track_map && _cluster_map && _g4truthinfo)) return {0,0};
 
   // maps MC track id and number of matching g4hits
   using IdMap = std::map<int,int>;
@@ -783,11 +755,11 @@ int TrackingEvaluator_hp::get_max_contributor( SvtxTrack* track ) const
     }
   }
 
-  if( contributor_map.empty() ) return 0;
-  return std::max_element(
+  if( contributor_map.empty() ) return {0,0};
+  else return *std::max_element(
     contributor_map.cbegin(), contributor_map.cend(),
     []( const IdMap::value_type& first, const IdMap::value_type& second )
-    { return first.second < second.second; } )->first;
+    { return first.second < second.second; } );
 
 }
 

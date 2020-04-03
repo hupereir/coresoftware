@@ -68,29 +68,10 @@ namespace
 }
 
 //_____________________________________________________________________
-SimEvaluator_hp::Container::Container()
-{
-  _vertex_list = new TClonesArray( "VertexStruct" );
-  _vertex_list->SetName( "VertexList" );
-  _vertex_list->SetOwner( kTRUE );
-
-  _particle_list = new TClonesArray( "ParticleStruct" );
-  _particle_list->SetName( "ParticleList" );
-  _particle_list->SetOwner( kTRUE );
-}
-
-//_____________________________________________________________________
-SimEvaluator_hp::Container::~Container()
-{
-  delete _vertex_list;
-  delete _particle_list;
-}
-
-//_____________________________________________________________________
 void SimEvaluator_hp::Container::Reset()
 {
-  _vertex_list->Clear();
-  _particle_list->Clear();
+  _vertex_list.clear();
+  _particle_list.clear();
 }
 
 //_____________________________________________________________________
@@ -186,8 +167,7 @@ void SimEvaluator_hp::fill_vertices()
   }
 
   // clear vertices from previous event
-  _container->primary_vertex_list()->Clear();
-  _vertex_count = 0;
+  _container->clearVertexList();
 
   // get main primary vertex id
   const auto main_vertex_id = _g4truthinfo->GetPrimaryVertexIndex();
@@ -200,7 +180,7 @@ void SimEvaluator_hp::fill_vertices()
     {
       auto vertexStruct = create_vertex( vertex );
       vertexStruct._is_main_vertex = ( vertex->get_id() == main_vertex_id );
-      new((*_container->primary_vertex_list())[_vertex_count++]) VertexStruct( std::move( vertexStruct ) );
+      _container->addVertex( vertexStruct );
     }
 
   }
@@ -218,8 +198,7 @@ void SimEvaluator_hp::fill_particles()
   }
 
   // clear vertices from previous event
-  _container->particle_list()->Clear();
-  _particle_count = 0;
+  _container->clearParticleList();
 
   auto range = _g4truthinfo->GetPrimaryParticleRange();
   for( auto iter = range.first; iter != range.second; ++iter )
@@ -229,7 +208,7 @@ void SimEvaluator_hp::fill_particles()
     {
       auto particleStruct = create_particle( particle );
       particleStruct._embed = get_embed( particle );
-      new((*_container->particle_list())[_particle_count++]) ParticleStruct( std::move( particleStruct ) );
+      _container->addParticle( particleStruct );
     }
 
   }

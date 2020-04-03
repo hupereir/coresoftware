@@ -5,11 +5,10 @@
 #include <phool/PHObject.h>
 #include <trackbase/TrkrDefs.h>
 
-#include <TClonesArray.h>
-
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 class PHG4Hit;
 class PHG4HitContainer;
@@ -27,9 +26,16 @@ class ClusterStruct
 {
   public:
 
+  using List = std::vector<ClusterStruct>;
+
+  /// cluster layer
   unsigned int _layer = 0;
+
+  /// number of hits belonging to the cluster
   unsigned int _size = 0;
-  unsigned int _embed = 0;
+
+  /// number of g4hits associated to this cluster
+  unsigned int _truth_size = 0;
 
   ///@name cluster position
   //@{
@@ -38,10 +44,6 @@ class ClusterStruct
   float _z = 0;
   float _r = 0;
   float _phi = 0;
-  //@}
-
-  //@name cluster error
-  //@{
   float _phi_error = 0;
   float _z_error = 0;
   //@}
@@ -66,18 +68,6 @@ class ClusterStruct
 
   //@}
 
-  ///@name track momentum at origin
-  float _trk_px = 0;
-  float _trk_py = 0;
-  float _trk_pz = 0;
-  float _trk_pt = 0;
-  float _trk_p = 0;
-  float _trk_eta = 0;
-  //@}
-
-  /// number of G4Hits contributing to this cluster
-  unsigned int _truth_size = 0;
-
   ///@name truth position
   //@{
   float _truth_x = 0;
@@ -93,22 +83,22 @@ class ClusterStruct
   float _truth_beta = 0;
   //@}
 
-  ///@name truth momentum at origin
-  //@{
-  float _truth_px = 0;
-  float _truth_py = 0;
-  float _truth_pz = 0;
-  float _truth_pt = 0;
-  float _truth_p = 0;
-  float _truth_eta = 0;
-  //@}
-
 };
 
 // track information to be stored in tree
 class TrackStruct
 {
   public:
+
+  // constructor
+  explicit TrackStruct()
+  {
+    // allocate enough size for the clusters
+    static constexpr int max_layers = 60;
+    _clusters.reserve( max_layers );
+  }
+
+  using List = std::vector<TrackStruct>;
 
   int _charge = 0;
   int _nclusters = 0;
@@ -137,6 +127,10 @@ class TrackStruct
   int _pid = 0;
   int _embed = 0;
   int _mc_trkid = 0;
+
+  // number of g4hits from this MC track that match
+  int _contributors = 0;
+
   float _truth_px = 0;
   float _truth_py = 0;
   float _truth_pz = 0;
@@ -145,6 +139,9 @@ class TrackStruct
   float _truth_eta = 0;
   //@}
 
+  // associate clusters
+  ClusterStruct::List _clusters;
+
 };
 
 // pair information to be stored in tree
@@ -152,8 +149,7 @@ class TrackPairStruct
 {
   public:
 
-  virtual const char* GetName() const
-  { return "TrackPairStruct"; }
+  using List = std::vector<TrackPairStruct>;
 
   int _charge = 0;
 
@@ -237,13 +233,13 @@ class TrackingEvaluator_hp : public SubsysReco
     private:
 
     /// clusters array
-    std::vector<ClusterStruct> _clusters;
+    ClusterStruct::List _clusters;
 
     /// tracks array
-    std::vector<TrackStruct> _tracks;
+    TrackStruct::List _tracks;
 
     /// track pairs array
-    std::vector<TrackPairStruct> _track_pairs;
+    TrackPairStruct::List _track_pairs;
 
     ClassDef(Container,1)
 
@@ -283,7 +279,7 @@ class TrackingEvaluator_hp : public SubsysReco
   G4HitSet find_g4hits( TrkrDefs::cluskey ) const;
 
   // get G4Particle id of max contributor to a given track
-  int get_max_contributor( SvtxTrack* ) const;
+  std::pair<int,int> get_max_contributor( SvtxTrack* ) const;
 
   // get embedded id for given g4track
   int get_embed(PHG4Particle*) const;
