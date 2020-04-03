@@ -23,12 +23,9 @@ class TrkrClusterHitAssoc;
 class TrkrHitTruthAssoc;
 
 // cluster information to be stored in tree
-class ClusterStruct: public TObject
+class ClusterStruct
 {
   public:
-
-  virtual const char* GetName() const
-  { return "ClusterStruct"; }
 
   unsigned int _layer = 0;
   unsigned int _size = 0;
@@ -106,17 +103,12 @@ class ClusterStruct: public TObject
   float _truth_eta = 0;
   //@}
 
-  ClassDef(ClusterStruct,1)
-
 };
 
 // track information to be stored in tree
-class TrackStruct: public TObject
+class TrackStruct
 {
   public:
-
-  virtual const char* GetName() const
-  { return "TrackStruct"; }
 
   int _charge = 0;
   int _nclusters = 0;
@@ -152,12 +144,11 @@ class TrackStruct: public TObject
   float _truth_p = 0;
   float _truth_eta = 0;
   //@}
-  ClassDef(TrackStruct,1)
 
 };
 
 // pair information to be stored in tree
-class TrackPairStruct: public TObject
+class TrackPairStruct
 {
   public:
 
@@ -180,8 +171,6 @@ class TrackPairStruct: public TObject
   std::array<float,2> _trk_pt = {{0,0}};
 
   //@}
-
-  ClassDef(TrackPairStruct,1)
 
 };
 
@@ -211,7 +200,7 @@ class TrackingEvaluator_hp : public SubsysReco
     public:
 
     /// constructor
-    Container();
+    explicit Container() = default;
 
     /// copy constructor
     explicit Container(const Container &) = delete;
@@ -219,35 +208,42 @@ class TrackingEvaluator_hp : public SubsysReco
     /// assignment operator
     Container& operator = ( const Container& ) = delete;
 
-    /// destructor
-    virtual ~Container();
-
     /// reset
     virtual void Reset();
 
-    ///@name accessors
+    ///@name modifiers
     //@{
-    TClonesArray* clusters() const
-    { return _clusters; }
 
-    TClonesArray* tracks() const
-    { return _tracks; }
+    void addCluster( const ClusterStruct& cluster )
+    { _clusters.push_back( cluster ); }
 
-    TClonesArray* track_pairs() const
-    { return _track_pairs; }
+    void addTrack( const TrackStruct& track )
+    { _tracks.push_back( track ); }
+
+    void addTrackPair( const TrackPairStruct& pair )
+    { _track_pairs.push_back( pair ); }
+
+    void clearClusters()
+    { _clusters.clear(); }
+
+    void clearTracks()
+    { _tracks.clear(); }
+
+    void clearTrackPairs()
+    { _track_pairs.clear(); }
 
     //@}
 
     private:
 
     /// clusters array
-    TClonesArray* _clusters = nullptr;
+    std::vector<ClusterStruct> _clusters;
 
     /// tracks array
-    TClonesArray* _tracks = nullptr;
+    std::vector<TrackStruct> _tracks;
 
     /// track pairs array
-    TClonesArray* _track_pairs = nullptr;
+    std::vector<TrackPairStruct> _track_pairs;
 
     ClassDef(Container,1)
 
@@ -294,10 +290,6 @@ class TrackingEvaluator_hp : public SubsysReco
 
   // cluster array
   Container* _container = nullptr;
-  int _cluster_count = 0;
-  int _track_count = 0;
-  int _track_pair_count = 0;
-  int _mc_track_count = 0;
 
   // nodes
   SvtxTrackMap* _track_map = nullptr;
