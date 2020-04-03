@@ -328,14 +328,12 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
-  // print_clusters();
-  // print_tracks();
+  print_clusters();
+  print_tracks();
 
   // evaluate_clusters();
   evaluate_tracks();
   // evaluate_track_pairs();
-
-  // fill_mc_track_map();
 
   // clear maps
   _g4hit_map.clear();
@@ -380,24 +378,6 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   return Fun4AllReturnCodes::EVENT_OK;
 
 }
-
-// //_____________________________________________________________________
-// void TrackingEvaluator_hp::fill_mc_track_map()
-// {
-//   _mc_track_map.clear();
-//
-//   for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
-//   {
-//
-//     if( !container ) continue;
-//
-//     // loop over hits
-//     const auto range = container->getHits();
-//     for( auto iter = range.first; iter != range.second; ++iter )
-//     { _mc_track_map[iter->second->get_trkid()].insert( iter->second ); }
-//   }
-//
-// }
 
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_clusters()
@@ -644,7 +624,7 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   }
 
   // loop over track states
-  if( false )
+  if( true )
   {
     for( auto state_iter = track->begin_states(); state_iter != track->end_states(); ++ state_iter )
     {

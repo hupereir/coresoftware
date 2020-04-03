@@ -250,9 +250,6 @@ class TrackingEvaluator_hp : public SubsysReco
   /// load nodes
   int load_nodes( PHCompositeNode* );
 
-//   /// fill MC track map
-//   void fill_mc_track_map();
-
   /// evaluate clusters
   void evaluate_clusters();
 
@@ -303,10 +300,6 @@ class TrackingEvaluator_hp : public SubsysReco
   // map cluster keys to g4hits
   using G4HitMap = std::map<TrkrDefs::cluskey,G4HitSet>;
   mutable G4HitMap _g4hit_map;
-
-//   // map trk_id to list of g4 hits
-//   using G4TrackMap = std::map<int,G4HitSet>;
-//   G4TrackMap _mc_track_map;
 
 };
 
