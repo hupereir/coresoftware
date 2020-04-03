@@ -19,8 +19,9 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-#include <iostream>
 #include <algorithm>
+#include <bitset>
+#include <iostream>
 #include <numeric>
 
 //_____________________________________________________________________
@@ -100,11 +101,17 @@ namespace
   inline int is_primary( PHG4Particle* particle )
   { return particle->get_parent_id() == 0; }
 
-    /// get mask from track clusters
+  /// get mask from track clusters
   int64_t get_mask( SvtxTrack* track )
   { return std::accumulate( track->begin_cluster_keys(), track->end_cluster_keys(), int64_t(0),
-      []( int64_t value, const TrkrDefs::cluskey& key ) { return TrkrDefs::getLayer(key)<64 ? value|(1LL<<TrkrDefs::getLayer(key)) : 0; } );
+      []( int64_t value, const TrkrDefs::cluskey& key ) {
+        return TrkrDefs::getLayer(key)<64 ? value|(1LL<<TrkrDefs::getLayer(key)) : value;
+      } );
   }
+
+  /// true if given layer is in mask
+  bool has_layer( int64_t mask, int layer )
+  { return mask & (1LL<<layer); }
 
   /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
@@ -442,6 +449,8 @@ void TrackingEvaluator_hp::evaluate_tracks()
     track_struct._embed = get_embed( particle );
 
     add_truth_momentum_information( track_struct, particle );
+
+    std::cout << "TrackingEvaluator_hp::evaluate_tracks - mask: " << track_struct._mask << " bits: " << std::bitset<64>(track_struct._mask) << std::endl;
 
     // loop over clusters
     auto state_iter = track->begin_states();
