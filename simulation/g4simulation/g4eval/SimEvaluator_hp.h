@@ -80,6 +80,16 @@ class SimEvaluator_hp : public SubsysReco
     /// reset
     virtual void Reset();
 
+    ///@name accessors
+    //@{
+    const VertexStruct::List& vertexList() const
+    { return _vertex_list; }
+
+    const ParticleStruct::List& particleList() const
+    { return _particle_list; }
+
+    //@}
+
     ///@name modifiers
     //@{
 
