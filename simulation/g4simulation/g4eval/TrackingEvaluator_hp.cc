@@ -100,6 +100,12 @@ namespace
   inline int is_primary( PHG4Particle* particle )
   { return particle->get_parent_id() == 0; }
 
+    /// get mask from track clusters
+  int64_t get_mask( SvtxTrack* track )
+  { return std::accumulate( track->begin_cluster_keys(), track->end_cluster_keys(), int64_t(0),
+      []( int64_t value, const TrkrDefs::cluskey& key ) { return TrkrDefs::getLayer(key)<64 ? value|(1LL<<TrkrDefs::getLayer(key)) : 0; } );
+  }
+
   /// create track struct from struct from svx track
   TrackStruct create_track( SvtxTrack* track )
   {
@@ -107,6 +113,8 @@ namespace
 
     trackStruct._charge = track->get_charge();
     trackStruct._nclusters = track->size_cluster_keys();
+    trackStruct._mask = get_mask( track );
+
     trackStruct._x = track->get_x();
     trackStruct._y = track->get_y();
     trackStruct._z = track->get_z();

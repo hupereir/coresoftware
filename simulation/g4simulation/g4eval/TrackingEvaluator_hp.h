@@ -102,6 +102,7 @@ class TrackStruct
 
   int _charge = 0;
   int _nclusters = 0;
+  int64_t _mask = 0;
 
   ///@name position
   //@{
