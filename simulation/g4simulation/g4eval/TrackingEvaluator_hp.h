@@ -208,6 +208,20 @@ class TrackingEvaluator_hp : public SubsysReco
     /// reset
     virtual void Reset();
 
+    ///@name accessors
+    //@{
+
+    const ClusterStruct::List& clusters() const
+    { return _clusters; }
+
+    const TrackStruct::List& tracks() const
+    { return _tracks; }
+
+    const TrackPairStruct::List& trackPairs() const
+    { return _track_pairs; }
+
+    //@}
+
     ///@name modifiers
     //@{
 
