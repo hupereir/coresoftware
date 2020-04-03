@@ -20,7 +20,6 @@
 #include <Eigen/Dense>
 
 #include <algorithm>
-#include <bitset>
 #include <iostream>
 #include <numeric>
 
@@ -449,8 +448,6 @@ void TrackingEvaluator_hp::evaluate_tracks()
     track_struct._embed = get_embed( particle );
 
     add_truth_momentum_information( track_struct, particle );
-
-    std::cout << "TrackingEvaluator_hp::evaluate_tracks - mask: " << track_struct._mask << " bits: " << std::bitset<64>(track_struct._mask) << std::endl;
 
     // loop over clusters
     auto state_iter = track->begin_states();
