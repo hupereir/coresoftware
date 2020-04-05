@@ -901,7 +901,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
       std::cout << "=========================" << std::endl;
     }
 
-
+    std::cout << PHWHERE << " extrapolate_base_TP_id: " << extrapolate_base_TP_id << " layer: " << layer << std::endl;
 
     #ifdef _DEBUG_
     {
@@ -936,7 +936,6 @@ int PHGenFitTrkProp::TrackPropPatRec(
         TVector3(0, 0, 1), extrapolate_base_TP_id, direction));
     } catch (...) {
 
-      // if (Verbosity() > 1)
       LogWarning("Can not extrapolate to Cylinder") << " from " << extrapolate_base_TP_id << " to layer: " << layer << " (r= " << layer_r << ")" << std::endl;
       continue;
 
@@ -944,7 +943,6 @@ int PHGenFitTrkProp::TrackPropPatRec(
 
     if (!state)
     {
-      // if (Verbosity() > 1)
       LogWarning("Can not extrapolate to Cylinder") << " from " << extrapolate_base_TP_id << " to layer: " << layer << " (r= " << layer_r << ")" << std::endl;
       continue;
     }
