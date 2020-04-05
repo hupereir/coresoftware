@@ -901,7 +901,7 @@ int PHGenFitTrkProp::TrackPropPatRec(
       std::cout << "=========================" << std::endl;
     }
 
-    std::cout << PHWHERE << " extrapolate_base_TP_id: " << extrapolate_base_TP_id << " layer: " << layer << std::endl;
+    // std::cout << PHWHERE << " extrapolate_base_TP_id: " << extrapolate_base_TP_id << " layer: " << layer << std::endl;
 
     #ifdef _DEBUG_
     {
