@@ -363,12 +363,9 @@ int PHGenFitTrkFitter::process_event(PHCompositeNode* topNode)
           _trackmap->erase(key);
           continue;
         } else {
-
           ++iter;
           continue;
-
         }
-
       }
 
       if (!(_over_write_svtxtrackmap) || _output_mode == DebugMode)
