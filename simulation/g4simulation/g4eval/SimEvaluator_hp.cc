@@ -1,6 +1,8 @@
 #include "SimEvaluator_hp.h"
 
 #include <fun4all/Fun4AllReturnCodes.h>
+#include <g4main/PHG4Hit.h>
+#include <g4main/PHG4HitContainer.h>
 #include <g4main/PHG4Particle.h>
 #include <g4main/PHG4TruthInfoContainer.h>
 #include <g4main/PHG4VtxPoint.h>
@@ -33,6 +35,15 @@ namespace
   /// true if particle is primary
   inline bool is_primary( PHG4Particle* particle )
   { return particle->get_parent_id() == 0; }
+
+  /// get mask from track clusters
+  template<class T>
+  int64_t get_mask( const T& hits )
+  { return std::accumulate( hits.cbegin(), hits.cend(), int64_t(0),
+      []( int64_t value, const typename T::value_type& hit ) {
+        return hit->get_layer()<64 ? value|(1LL<<hit->get_layer()) : value;
+      } );
+  }
 
   //_____________________________________________________________________
   /// create track struct from struct from svx track
@@ -134,8 +145,11 @@ int SimEvaluator_hp::process_event(PHCompositeNode* topNode)
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   fill_vertices();
+  fill_mc_track_map();
   fill_particles();
   // print_vertices();
+
+  _g4particle_map.clear();
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -157,7 +171,31 @@ int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   // g4 truth info
   _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
 
+  // g4hits
+  _g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
+  _g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
+  _g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
+  _g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
+
   return Fun4AllReturnCodes::EVENT_OK;
+
+}
+
+
+//_____________________________________________________________________
+void SimEvaluator_hp::fill_mc_track_map()
+{
+  _g4particle_map.clear();
+  for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
+  {
+    if( container ) continue;
+    {
+      // loop over hits
+      const auto range = container->getHits();
+      for( auto iter = range.first; iter != range.second; ++iter )
+      { _g4particle_map[iter->second->get_trkid()].insert( iter->second ); }
+    }
+  }
 
 }
 
@@ -212,7 +250,15 @@ void SimEvaluator_hp::fill_particles()
     if( particle )
     {
       auto particleStruct = create_particle( particle );
+
+      // embed index
       particleStruct._embed = get_embed( particle );
+
+      // hit mask
+      const auto iter( _g4particle_map.find( particle->get_track_id() ) );
+      if( iter !=  _g4particle_map.cend() )
+      { particleStruct._mask = get_mask( iter->second ); }
+
       _container->addParticle( particleStruct );
     }
 
