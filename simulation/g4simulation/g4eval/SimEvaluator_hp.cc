@@ -85,15 +85,11 @@ void SimEvaluator_hp::Container::Reset()
 //_____________________________________________________________________
 SimEvaluator_hp::SimEvaluator_hp( const std::string& name ):
   SubsysReco( name)
-{
-  std::cout << "SimEvaluator_hp::SimEvaluator_hp." << std::endl;
-}
+{}
 
 //_____________________________________________________________________
 int SimEvaluator_hp::Init(PHCompositeNode* topNode )
 {
-
-  std::cout << "SimEvaluator_hp::Init." << std::endl;
 
   // find DST node
   PHNodeIterator iter(topNode);
@@ -124,10 +120,7 @@ int SimEvaluator_hp::Init(PHCompositeNode* topNode )
 
 //_____________________________________________________________________
 int SimEvaluator_hp::InitRun(PHCompositeNode* )
-{
-  std::cout << "SimEvaluator_hp::InitRun." << std::endl;
-  return Fun4AllReturnCodes::EVENT_OK;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }
 
 //_____________________________________________________________________
 int SimEvaluator_hp::process_event(PHCompositeNode* topNode)
@@ -148,10 +141,7 @@ int SimEvaluator_hp::process_event(PHCompositeNode* topNode)
 
 //_____________________________________________________________________
 int SimEvaluator_hp::End(PHCompositeNode* )
-{
-  std::cout << "SimEvaluator_hp::End." << std::endl;
-  return Fun4AllReturnCodes::EVENT_OK;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }
 
 //_____________________________________________________________________
 int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )

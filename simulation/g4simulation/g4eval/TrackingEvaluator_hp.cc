@@ -16,9 +16,6 @@
 #include <trackbase_historic/SvtxTrack.h>
 #include <trackbase_historic/SvtxTrackMap.h>
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-
 #include <algorithm>
 #include <bitset>
 #include <iostream>
@@ -293,16 +290,11 @@ void TrackingEvaluator_hp::Container::Reset()
 //_____________________________________________________________________
 TrackingEvaluator_hp::TrackingEvaluator_hp( const std::string& name ):
   SubsysReco( name)
-{
-  std::cout << "TrackingEvaluator_hp::TrackingEvaluator_hp - new container" << std::endl;
-}
+{}
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
 {
-
-  std::cout << "TrackingEvaluator_hp::Init." << std::endl;
-
   // find DST node
   PHNodeIterator iter(topNode);
   auto dstNode = dynamic_cast<PHCompositeNode*>(iter.findFirst("PHCompositeNode", "DST"));
@@ -332,10 +324,7 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::InitRun(PHCompositeNode* )
-{
-  std::cout << "TrackingEvaluator_hp::InitRun." << std::endl;
-  return Fun4AllReturnCodes::EVENT_OK;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
@@ -359,10 +348,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::End(PHCompositeNode* )
-{
-  std::cout << "TrackingEvaluator_hp::End." << std::endl;
-  return Fun4AllReturnCodes::EVENT_OK;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
