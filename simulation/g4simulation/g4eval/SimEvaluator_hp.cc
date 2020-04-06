@@ -30,6 +30,10 @@ namespace
   /// eta
   template<class T> T get_eta( T p, T pz ) { return std::log( (p+pz)/(p-pz) )/2; }
 
+  /// true if particle is primary
+  inline bool is_primary( PHG4Particle* particle )
+  { return particle->get_parent_id() == 0; }
+
   //_____________________________________________________________________
   /// create track struct from struct from svx track
   VertexStruct create_vertex( PHG4VtxPoint* vertex )
@@ -49,6 +53,7 @@ namespace
     ParticleStruct particleStruct;
     particleStruct._pid = particle->get_pid();
     particleStruct._charge = particle->get_IonCharge()/eplus;
+    particleStruct._is_primary = is_primary( particle );
     particleStruct._px = particle->get_px();
     particleStruct._py = particle->get_py();
     particleStruct._pz = particle->get_pz();

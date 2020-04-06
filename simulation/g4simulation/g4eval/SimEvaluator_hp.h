@@ -33,6 +33,9 @@ class ParticleStruct
   int _charge = 0;
   int _pid = 0;
   int _embed = 0;
+  bool _is_primary = false;
+  int64_t _mask = 0;
+
 
   float _px = 0;
   float _py = 0;
