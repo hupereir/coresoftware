@@ -152,9 +152,16 @@ void PHTruthClustering_hp::replace_clusters()
   auto range = _cluster_map->getClusters();
   for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
   {
-    [[maybe_unused]] const auto& key = clusterIter->first;
-    [[maybe_unused]] const auto& cluster = clusterIter->second;
-    [[maybe_unused]] const auto g4hits = find_g4hits( key );
+    const auto& key = clusterIter->first;
+    const auto& cluster = clusterIter->second;
+    const auto g4hits = find_g4hits( key );
+    if( g4hits.empty() ) continue;
+
+    // get averaged coordinates and assign to cluster
+    const auto rextrap = get_r( cluster->getX(), cluster->getY() );
+    cluster->setX( interpolate<&PHG4Hit::get_x>( g4hits, rextrap ) );
+    cluster->setY( interpolate<&PHG4Hit::get_y>( g4hits, rextrap ) );
+    cluster->setZ( interpolate<&PHG4Hit::get_z>( g4hits, rextrap ) );
   }
 
 }
