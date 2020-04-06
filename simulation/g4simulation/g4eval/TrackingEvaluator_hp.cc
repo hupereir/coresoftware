@@ -254,16 +254,18 @@ namespace
   }
 
   // add truth information
-  void add_truth_momentum_information( TrackStruct& object, PHG4Particle* track )
+  void add_truth_information( TrackStruct& track, PHG4Particle* particle )
   {
-    if( track )
+    if( particle )
     {
-      object._truth_px = track->get_px();
-      object._truth_py = track->get_py();
-      object._truth_pz = track->get_pz();
-      object._truth_pt = get_pt( object._truth_px, object._truth_py );
-      object._truth_p = get_p( object._truth_px, object._truth_py, object._truth_pz );
-      object._truth_eta = get_eta( object._truth_p, object._truth_pz );
+      track._is_primary = is_primary( particle );
+      track._pid = particle->get_pid();
+      track._truth_px = particle->get_px();
+      track._truth_py = particle->get_py();
+      track._truth_pz = particle->get_pz();
+      track._truth_pt = get_pt( track._truth_px, track._truth_py );
+      track._truth_p = get_p( track._truth_px, track._truth_py, track._truth_pz );
+      track._truth_eta = get_eta( track._truth_p, track._truth_pz );
     }
   }
 
@@ -444,10 +446,8 @@ void TrackingEvaluator_hp::evaluate_tracks()
     track_struct._contributors = pair.second;
 
     auto particle = _g4truthinfo->GetParticle(track_struct._mc_trkid);
-    track_struct._pid = particle->get_pid();
     track_struct._embed = get_embed( particle );
-
-    add_truth_momentum_information( track_struct, particle );
+    add_truth_information( track_struct, particle );
 
     // loop over clusters
     auto state_iter = track->begin_states();

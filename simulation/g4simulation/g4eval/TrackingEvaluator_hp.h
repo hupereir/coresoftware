@@ -128,6 +128,7 @@ class TrackStruct
   int _pid = 0;
   int _embed = 0;
   int _mc_trkid = 0;
+  bool _is_primary = false;
 
   // number of g4hits from this MC track that match
   int _contributors = 0;
