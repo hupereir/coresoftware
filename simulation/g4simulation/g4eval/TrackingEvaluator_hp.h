@@ -176,7 +176,7 @@ class TrackingEvaluator_hp : public SubsysReco
   public:
 
   /// constructor
-  TrackingEvaluator_hp( const std::string& = "TRACKINGEVALUATOR_HP" );
+  TrackingEvaluator_hp( const std::string& = "TrackingEvaluator_hp" );
 
   /// global initialization
   virtual int Init(PHCompositeNode*);
