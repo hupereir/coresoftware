@@ -12,8 +12,9 @@
 
 #include <Geant4/G4SystemOfUnits.hh>
 
-#include <iostream>
 #include <algorithm>
+#include <bitset>
+#include <iostream>
 #include <numeric>
 
 //_____________________________________________________________________
@@ -35,15 +36,6 @@ namespace
   /// true if particle is primary
   inline bool is_primary( PHG4Particle* particle )
   { return particle->get_parent_id() == 0; }
-
-  /// get mask from track clusters
-  template<class T>
-  int64_t get_mask( const T& hits )
-  { return std::accumulate( hits.cbegin(), hits.cend(), int64_t(0),
-      []( int64_t value, const typename T::value_type& hit ) {
-        return hit->get_layer()<64 ? value|(1LL<<hit->get_layer()) : value;
-      } );
-  }
 
   //_____________________________________________________________________
   /// create track struct from struct from svx track
@@ -145,7 +137,7 @@ int SimEvaluator_hp::process_event(PHCompositeNode* topNode)
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   fill_vertices();
-  fill_mc_track_map();
+  fill_g4particle_map();
   fill_particles();
   // print_vertices();
 
@@ -183,18 +175,31 @@ int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 
 
 //_____________________________________________________________________
-void SimEvaluator_hp::fill_mc_track_map()
+void SimEvaluator_hp::fill_g4particle_map()
 {
   _g4particle_map.clear();
   for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
   {
-    if( container ) continue;
+    if( !container ) continue;
+
+    // loop over hits
+    const auto range = container->getHits();
+    for( auto iter = range.first; iter != range.second; ++iter )
     {
-      // loop over hits
-      const auto range = container->getHits();
-      for( auto iter = range.first; iter != range.second; ++iter )
-      { _g4particle_map[iter->second->get_trkid()].insert( iter->second ); }
+      const auto map_iter = _g4particle_map.lower_bound( iter->second->get_trkid() );
+      if( map_iter != _g4particle_map.end() && map_iter->first == iter->second->get_trkid() )
+      {
+
+        map_iter->second |= (1LL<<iter->second->get_layer());
+
+      } else {
+
+        _g4particle_map.insert( map_iter, std::make_pair( iter->second->get_trkid(), 1LL<<iter->second->get_layer() ) );
+
+      }
+
     }
+
   }
 
 }
@@ -257,8 +262,9 @@ void SimEvaluator_hp::fill_particles()
       // hit mask
       const auto iter( _g4particle_map.find( particle->get_track_id() ) );
       if( iter !=  _g4particle_map.cend() )
-      { particleStruct._mask = get_mask( iter->second ); }
+      { particleStruct._mask = iter->second; }
 
+      // std::cout << "SimEvaluator_hp::fill_particles       - mask: " << std::bitset<64>( particleStruct._mask ) << std::endl;
       _container->addParticle( particleStruct );
     }
 

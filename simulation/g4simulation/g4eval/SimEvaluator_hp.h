@@ -8,7 +8,6 @@
 #include <set>
 #include <vector>
 
-class PHG4Hit;
 class PHG4HitContainer;
 class PHG4Particle;
 class PHG4TruthInfoContainer;
@@ -133,7 +132,7 @@ class SimEvaluator_hp : public SubsysReco
   int load_nodes( PHCompositeNode* );
 
   /// fill MC track map
-  void fill_mc_track_map();
+  void fill_g4particle_map();
 
   /// fill vertices
   void fill_vertices();
@@ -158,9 +157,8 @@ class SimEvaluator_hp : public SubsysReco
   //* truth information
   PHG4TruthInfoContainer* _g4truthinfo = nullptr;
 
-  // map trk_id to list of g4 hits
-  using G4HitSet = std::set<PHG4Hit*>;
-  using G4ParticleMap = std::map<int,G4HitSet>;
+  // map trk_id to layer mask
+  using G4ParticleMap = std::map<int,int64_t>;
   G4ParticleMap _g4particle_map;
 
 };

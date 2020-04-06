@@ -20,6 +20,7 @@
 #include <Eigen/Dense>
 
 #include <algorithm>
+#include <bitset>
 #include <iostream>
 #include <numeric>
 
@@ -439,6 +440,8 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
     const auto track = trackIter->second;
     auto track_struct = create_track( track );
+
+    // std::cout << "TrackingEvaluator_hp::evaluate_tracks - mask: " << std::bitset<64>( track_struct._mask ) << std::endl;
 
     // truth information
     const auto pair = get_max_contributor( track );
