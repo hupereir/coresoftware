@@ -442,12 +442,12 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
     // truth information
     const auto pair = get_max_contributor( track );
-    track_struct._mc_trkid = pair.first;
+    const auto id = pair.first;
     track_struct._contributors = pair.second;
 
-    auto particle = _g4truthinfo->GetParticle(track_struct._mc_trkid);
-    track_struct._embed = get_embed( particle );
-    add_truth_information( track_struct, particle );
+    auto particle = _g4truthinfo->GetParticle(id);
+    track_struct._embed = get_embed(particle);
+    add_truth_information(track_struct, particle);
 
     // loop over clusters
     auto state_iter = track->begin_states();
