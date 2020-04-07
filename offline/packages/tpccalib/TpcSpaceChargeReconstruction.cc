@@ -132,9 +132,9 @@ void TpcSpaceChargeReconstruction::process_track( SvtxTrack* track )
       continue;
     }
 
-    // should make sure that cluster belongs to TPC
-    const auto layer = TrkrDefs::getLayer(cluster_key);
-    if( layer < m_firstlayer_tpc || layer >= m_firstlayer_tpc + m_nlayers_tpc ) continue;
+    // make sure cluster belongs to TPC
+    const auto trkrid = TrkrDefs::getTrkrId(cluster_key);
+    if( trkrid != TrkrDefs::tpcId ) continue;
 
     // cluster r, phi and z
     const auto cluster_r = get_r( cluster->getX(), cluster->getY() );
