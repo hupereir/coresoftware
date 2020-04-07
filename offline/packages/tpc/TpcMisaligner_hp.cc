@@ -14,23 +14,11 @@ template<class T> constexpr T square( const T& x ) { return x*x; }
 //_____________________________________________________________________
 TpcMisaligner_hp::TpcMisaligner_hp( const std::string& name ):
   SubsysReco( name)
-{ std::cout << "TpcMisaligner_hp::TpcMisaligner_hp." << std::endl; }
-
-//_____________________________________________________________________
-void TpcMisaligner_hp::set_tpc_layers( unsigned int first_layer, unsigned int n_layers )
-{
-  _firstlayer_tpc = first_layer;
-  _nlayers_tpc = n_layers;
-}
+  {}
 
 //_____________________________________________________________________
 int TpcMisaligner_hp::Init(PHCompositeNode*)
-{
-  std::cout << "TpcMisaligner_hp::Init." << std::endl;
-  std::cout << "TpcMisaligner_hp::Init - _firstlayer_tpc: " << _firstlayer_tpc << std::endl;
-  std::cout << "TpcMisaligner_hp::Init - _nlayers_tpc: " << _nlayers_tpc << std::endl;
-  return Fun4AllReturnCodes::EVENT_OK;
-}
+{ return Fun4AllReturnCodes::EVENT_OK; }
 
 //_____________________________________________________________________
 int TpcMisaligner_hp::process_event(PHCompositeNode* topNode)
@@ -61,8 +49,8 @@ void TpcMisaligner_hp::transform_clusters()
   {
     // check if cluster belongs to TPC
     const auto& key = clusterIter->first;
-    const auto layer = TrkrDefs::getLayer(key);
-    if( layer >= _firstlayer_tpc && layer < _firstlayer_tpc + _nlayers_tpc )
+    const auto trkrid = TrkrDefs::getTrkrId(key);
+    if( trkrid == TrkrDefs::tpcId )
     { transform_cluster( clusterIter->second ); }
   }
 

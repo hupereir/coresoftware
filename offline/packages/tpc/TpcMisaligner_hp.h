@@ -16,9 +16,6 @@ class TpcMisaligner_hp : public SubsysReco
   /// constructor
   TpcMisaligner_hp(  const std::string& = "TPCMISALIGNER_HP" );
 
-  /// set tpc layers
-  void set_tpc_layers( unsigned int first_layer, unsigned int n_layers );
-
   /// global initialization
   virtual int Init(PHCompositeNode*);
 
@@ -38,9 +35,6 @@ class TpcMisaligner_hp : public SubsysReco
 
   /// cluster container
   TrkrClusterContainer* _cluster_map = nullptr;
-
-  unsigned int _firstlayer_tpc = 7;
-  unsigned int _nlayers_tpc = 48;
 
 };
 
