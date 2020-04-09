@@ -282,7 +282,7 @@ namespace
 //_____________________________________________________________________
 void TrackingEvaluator_hp::Container::Reset()
 {
-  _event = EventStruct();
+  _events.clear();
   _clusters.clear();
   _tracks.clear();
   _track_pairs.clear();
@@ -413,7 +413,7 @@ void TrackingEvaluator_hp::evaluate_event()
   std::cout << "TrackingEvaluator_hp::evaluate_event - _nclusters_tpc: " << event._nclusters_tpc << std::endl;
 
   // store
-  _container->setEvent(std::move(event));
+  _container->addEvent(std::move(event));
 
 }
 

@@ -27,6 +27,8 @@ class EventStruct
 
   public:
 
+  using List = std::vector<EventStruct>;
+
   int _nclusters_mvtx = 0;
   int _nclusters_intt = 0;
   int _nclusters_tpc = 0;
@@ -224,8 +226,8 @@ class TrackingEvaluator_hp : public SubsysReco
     ///@name accessors
     //@{
 
-    const EventStruct& event() const
-    { return _event; }
+    const EventStruct::List& events() const
+    { return _events; }
 
     const ClusterStruct::List& clusters() const
     { return _clusters; }
@@ -241,8 +243,8 @@ class TrackingEvaluator_hp : public SubsysReco
     ///@name modifiers
     //@{
 
-    void setEvent( const EventStruct& event )
-    { _event = event; }
+    void addEvent( const EventStruct& event )
+    { _events.push_back( event ); }
 
     void addCluster( const ClusterStruct& cluster )
     { _clusters.push_back( cluster ); }
@@ -252,6 +254,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
     void addTrackPair( const TrackPairStruct& pair )
     { _track_pairs.push_back( pair ); }
+
+    void clearEvents()
+    { _events.clear(); }
 
     void clearClusters()
     { _clusters.clear(); }
@@ -267,7 +272,7 @@ class TrackingEvaluator_hp : public SubsysReco
     private:
 
     /// event struct
-    EventStruct _event;
+    EventStruct::List _events;
 
     /// clusters array
     ClusterStruct::List _clusters;
