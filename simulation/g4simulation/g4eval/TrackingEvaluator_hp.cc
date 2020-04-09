@@ -282,6 +282,7 @@ namespace
 //_____________________________________________________________________
 void TrackingEvaluator_hp::Container::Reset()
 {
+  _event = EventStruct();
   _clusters.clear();
   _tracks.clear();
   _track_pairs.clear();
@@ -329,14 +330,17 @@ int TrackingEvaluator_hp::InitRun(PHCompositeNode* )
 //_____________________________________________________________________
 int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
 {
-
   // load nodes
   auto res =  load_nodes(topNode);
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
+  // cleanup output
+  if( _container ) _container->Reset();
+
   // print_clusters();
   // print_tracks();
 
+  evaluate_event();
   // evaluate_clusters();
   evaluate_tracks();
   // evaluate_track_pairs();
@@ -383,11 +387,41 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 }
 
 //_____________________________________________________________________
-void TrackingEvaluator_hp::evaluate_clusters()
+void TrackingEvaluator_hp::evaluate_event()
 {
 
   if( !( _cluster_map && _container ) ) return;
 
+  // create event struct
+  EventStruct event;
+
+  auto range = _cluster_map->getClusters();
+  for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
+  {
+    const auto& key = clusterIter->first;
+    const auto trkrid = TrkrDefs::getTrkrId(key);
+    switch( trkrid )
+    {
+      case TrkrDefs::mvtxId: ++event._nclusters_mvtx; break;
+      case TrkrDefs::inttId: ++event._nclusters_intt; break;
+      case TrkrDefs::tpcId: ++event._nclusters_tpc; break;
+      case TrkrDefs::outertrackerId: ++event._nclusters_ot; break;
+    }
+  }
+
+  // printout
+  std::cout << "TrackingEvaluator_hp::evaluate_event - _nclusters_tpc: " << event._nclusters_tpc << std::endl;
+
+  // store
+  _container->setEvent(std::move(event));
+
+}
+
+//_____________________________________________________________________
+void TrackingEvaluator_hp::evaluate_clusters()
+{
+
+  if( !( _cluster_map && _container ) ) return;
   // clear array
   _container->clearClusters();
 
@@ -603,7 +637,7 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   std::cout << "TrackingEvaluator_hp::print_track - clusters: " << track->size_cluster_keys() << ", states: " << track->size_states() << std::endl;
 
   // loop over cluster keys
-  if( true && _cluster_map )
+  if( false && _cluster_map )
   {
     for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
     {
@@ -627,7 +661,7 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   }
 
   // loop over track states
-  if( true )
+  if( false )
   {
     for( auto state_iter = track->begin_states(); state_iter != track->end_states(); ++ state_iter )
     {

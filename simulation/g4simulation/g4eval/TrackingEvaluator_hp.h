@@ -21,6 +21,19 @@ class TrkrClusterContainer;
 class TrkrClusterHitAssoc;
 class TrkrHitTruthAssoc;
 
+// event information
+class EventStruct
+{
+
+  public:
+
+  int _nclusters_mvtx = 0;
+  int _nclusters_intt = 0;
+  int _nclusters_tpc = 0;
+  int _nclusters_ot = 0;
+
+};
+
 // cluster information to be stored in tree
 class ClusterStruct
 {
@@ -211,6 +224,9 @@ class TrackingEvaluator_hp : public SubsysReco
     ///@name accessors
     //@{
 
+    const EventStruct& event() const
+    { return _event; }
+
     const ClusterStruct::List& clusters() const
     { return _clusters; }
 
@@ -224,6 +240,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
     ///@name modifiers
     //@{
+
+    void setEvent( const EventStruct& event )
+    { _event = event; }
 
     void addCluster( const ClusterStruct& cluster )
     { _clusters.push_back( cluster ); }
@@ -247,6 +266,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
     private:
 
+    /// event struct
+    EventStruct _event;
+
     /// clusters array
     ClusterStruct::List _clusters;
 
@@ -264,6 +286,9 @@ class TrackingEvaluator_hp : public SubsysReco
 
   /// load nodes
   int load_nodes( PHCompositeNode* );
+
+  /// evaluate evens
+  void evaluate_event();
 
   /// evaluate clusters
   void evaluate_clusters();
