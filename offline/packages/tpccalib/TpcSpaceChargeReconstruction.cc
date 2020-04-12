@@ -14,10 +14,29 @@
 #include <TFile.h>
 #include <TGraphErrors.h>
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <memory>
 
 namespace
 {
+
+  /// initialize zero array
+  template<class A>
+    A zero()
+  {
+    A out;
+    for( auto&& value:out ) { value = 0; }
+    return out;
+  }
+
+
+  // get unique index in symetric matrix from i and j
+  constexpr inline unsigned int array_index(unsigned int i, unsigned int j)
+  {
+    if(i>j) std::swap(i, j);
+    return i + j*(j+1)/2;
+  }
 
   /// square
   template<class T> T square( T x ) { return x*x; }
@@ -33,6 +52,7 @@ namespace
 
   /// radius
   template<class T> T get_r( T x, T y ) { return std::sqrt( square(x) + square(y) ); }
+
 }
 
 //_____________________________________________________________________
@@ -65,8 +85,8 @@ int TpcSpaceChargeReconstruction::Init(PHCompositeNode* topNode )
 {
 
   // resize vectors
-  m_lhs = std::vector<matrix_t>( m_totalbins, matrix_t::Zero() );
-  m_rhs = std::vector<column_t>( m_totalbins, column_t::Zero() );
+  m_lhs = std::vector<lhs_array_t>( m_totalbins, zero<lhs_array_t>() );
+  m_rhs = std::vector<rhs_array_t>( m_totalbins, zero<rhs_array_t>() );
   m_cluster_count = std::vector<int>( m_totalbins, 0 );
   return Fun4AllReturnCodes::EVENT_OK;
 
@@ -225,21 +245,15 @@ void TpcSpaceChargeReconstruction::process_track( SvtxTrack* track )
 
     if( i < 0 || i >= m_totalbins ) continue;
 
-    m_lhs[i](0,0) += 1./erp;
-    m_lhs[i](0,1) += 0;
-    m_lhs[i](0,2) += talpha/erp;
+    std::get<array_index(0,0)>( m_lhs[i] ) += 1./erp;
+    std::get<array_index(0,2)>( m_lhs[i] ) += talpha/erp;
+    std::get<array_index(1,1)>( m_lhs[i] ) += 1./ez;
+    std::get<array_index(1,2)>( m_lhs[i] ) += tbeta/ez;
+    std::get<array_index(2,2)>( m_lhs[i] ) += square(talpha)/erp + square(tbeta)/ez;
 
-    m_lhs[i](1,0) += 0;
-    m_lhs[i](1,1) += 1./ez;
-    m_lhs[i](1,2) += tbeta/ez;
-
-    m_lhs[i](2,0) += talpha/erp;
-    m_lhs[i](2,1) += tbeta/ez;
-    m_lhs[i](2,2) += square(talpha)/erp + square(tbeta)/ez;
-
-    m_rhs[i](0,0) += drp/erp;
-    m_rhs[i](1,0) += dz/ez;
-    m_rhs[i](2,0) += talpha*drp/erp + tbeta*dz/ez;
+    std::get<0>(m_rhs[i]) += drp/erp;
+    std::get<1>(m_rhs[i]) += dz/ez;
+    std::get<2>(m_rhs[i]) += talpha*drp/erp + tbeta*dz/ez;
 
     ++m_cluster_count[i];
 
@@ -259,14 +273,41 @@ void  TpcSpaceChargeReconstruction::calculate_distortions( PHCompositeNode* topN
     return;
   }
 
-  // calculate distortions in each volume elements
-  std::vector<column_t> delta(m_totalbins);
-  std::vector<matrix_t> cov(m_totalbins);
+  // relevant matrix definitions
+  using matrix_t = Eigen::Matrix<float, m_ncoord, m_ncoord >;
+  using column_t = Eigen::Matrix<float, m_ncoord, 1 >;
+  matrix_t lhs;
+  column_t rhs;
 
-  for( int i = 0; i < m_totalbins; ++i )
+  // calculate distortions in each volume elements
+  std::vector<rhs_array_t> delta(m_totalbins);
+  std::vector<lhs_array_t> cov(m_totalbins);
+  for( int ibin = 0; ibin < m_totalbins; ++ibin )
   {
-    cov[i] = m_lhs[i].inverse();
-    delta[i] = m_lhs[i].partialPivLu().solve( m_rhs[i] );
+    // convert arrays to matrices
+    for( int i = 0; i < m_ncoord; ++i )
+    {
+      for( int j = 0; j < m_ncoord; ++j )
+      { lhs(i,j) = m_lhs[ibin][array_index(i,j)]; }
+
+      rhs(i,0) = m_rhs[ibin][i];
+    }
+
+    // perfome inversion
+    // calculate delta corrections
+    rhs = lhs.partialPivLu().solve( rhs );
+
+    // calculate covariance matrix
+    lhs = lhs.inverse();
+
+    // store in arrays
+    for( int i = 0; i < m_ncoord; ++i )
+    {
+      for( int j = i; j < m_ncoord; ++j )
+      { cov[ibin][array_index(i,j)] = lhs(i,j);}
+      delta[ibin][i] = rhs(i,0);
+    }
+
   }
 
   // create tgraphs
@@ -294,8 +335,8 @@ void  TpcSpaceChargeReconstruction::calculate_distortions( PHCompositeNode* topN
       const float r = (inner_radius+outer_radius)/2;
 
       int index = get_cell( iz, ir, iphi );
-      tg[tgindex]->SetPoint( ir, r, delta[index](icoord,0) );
-      tg[tgindex]->SetPointError( ir, 0, std::sqrt(cov[index](icoord,icoord)) );
+      tg[tgindex]->SetPoint( ir, r, delta[index][icoord] );
+      tg[tgindex]->SetPointError( ir, 0, std::sqrt(cov[index][array_index(icoord,icoord)]) );
     }
   }
 

@@ -8,9 +8,7 @@
 #include <fun4all/SubsysReco.h>
 #include <trackbase/TrkrDefs.h>
 
-#include <Eigen/Core>
-#include <Eigen/Dense>
-
+#include <array>
 #include <vector>
 
 // forward declaration
@@ -112,16 +110,23 @@ class TpcSpaceChargeReconstruction: public SubsysReco
   int m_totalbins = m_zbins*m_phibins*m_rbins;
   //@}
 
-  // shortcut for relevant eigen matrices
+  // number of coordinates
   static constexpr int m_ncoord = 3;
-  using matrix_t = Eigen::Matrix<float, m_ncoord, m_ncoord >;
-  using column_t = Eigen::Matrix<float, m_ncoord, 1 >;
+
+  // number of independent elements in symetrix matrix of size n_coord
+  static constexpr int m_nelement = m_ncoord*(m_ncoord+1)/2l;
+
+  // left hand side array type
+  using lhs_array_t = std::array<float, m_nelement>;
+
+  // right hand side array type
+  using rhs_array_t = std::array<float, m_ncoord>;
 
   /// left hand side matrices for distortion inversions
-  std::vector<matrix_t> m_lhs;
+  std::vector<lhs_array_t> m_lhs;
 
   /// right hand side matrices for distortion inversions
-  std::vector<column_t> m_rhs;
+  std::vector<rhs_array_t> m_rhs;
 
   /// keep track of how many clusters are used per cell
   std::vector<int> m_cluster_count;
