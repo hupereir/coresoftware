@@ -70,7 +70,7 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
   const float phi = std::atan2( cluster->getY(), cluster->getX() );
   const float z = cluster->getZ();
 
-  #if false
+  #if true
   // rphi distortion
   static constexpr float deltarphi_max = 1.5;
   const float deltarphi = deltarphi_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
@@ -87,7 +87,7 @@ void TpcMisaligner_hp::transform_cluster( TrkrCluster* cluster )
   const float deltaz = 0;
   #endif
 
-  #if true
+  #if false
   // r distortion
   static constexpr float deltar_max = 1.5;
   const float deltar = deltar_max*std::cos(2.*M_PI*(r-rmin_tpc)/rlength_tpc);
