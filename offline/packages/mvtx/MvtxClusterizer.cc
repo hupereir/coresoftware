@@ -37,6 +37,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
+#include <array>
 #include <cmath>
 #include <cstdlib>                                 // for exit
 #include <iostream>
@@ -353,22 +354,23 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   clus->setPosition(2, clusz);
   clus->setGlobal();
 
-  double thickness = layergeom->get_pixel_thickness();
-  double pitch = layergeom->get_pixel_x();
-  double length = layergeom->get_pixel_z();
-  double phisize = phibins.size() * pitch;
-  double zsize = zbins.size() * length;
+  const double thickness = layergeom->get_pixel_thickness();
+  const double pitch = layergeom->get_pixel_x();
+  const double length = layergeom->get_pixel_z();
+  const double phisize = phibins.size() * pitch;
+  const double zsize = zbins.size() * length;
 
-  double ladder_location[3] = {0.0, 0.0, 0.0};
+  static constexpr double invsqrt12 = 1.0 / sqrt(12);
+
   // returns the center of the sensor in world coordinates - used to get the ladder phi location
-  layergeom->find_sensor_center(stave, 0, 0, chip, ladder_location);
-  double ladderphi = atan2(ladder_location[1], ladder_location[0]);
-  ladderphi += layergeom->get_stave_phi_tilt();
+  std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
+  layergeom->find_sensor_center(stave, 0, 0, chip, &ladder_location[0]);
+
+  // ladder phi angle
+  const double ladderphi = std::atan2(ladder_location[1], ladder_location[0]) + layergeom->get_stave_phi_tilt();
 
   // tilt refers to a rotation around the radial vector from the origin, and this is zero for the MVTX ladders
   //float tilt = 0.0;
-
-  static constexpr double invsqrt12 = 1.0 / sqrt(12);
 
   TMatrixF DIM(3, 3);
   DIM[0][0] = square(0.5 * thickness);
