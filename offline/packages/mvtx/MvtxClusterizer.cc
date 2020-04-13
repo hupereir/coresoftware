@@ -360,9 +360,9 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   const double phisize = phibins.size() * pitch;
   const double zsize = zbins.size() * length;
 
-  static constexpr double invsqrt12 = 1.0 / sqrt(12);
-  const double phierror = pitch*invsqrt12/std::sqrt( phibins.size() );
-  const double zerror = length*invsqrt12/std::sqrt( zbins.size() );
+  static constexpr double invsqrt12 = 1/std::sqrt(12);
+  const double phierror = pitch*invsqrt12/std::sqrt(phibins.size());
+  const double zerror = length*invsqrt12/std::sqrt(zbins.size());
 
   // returns the center of the sensor in world coordinates - used to get the ladder phi location
   std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
