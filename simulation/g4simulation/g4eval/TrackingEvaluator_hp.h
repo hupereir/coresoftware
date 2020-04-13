@@ -52,6 +52,10 @@ class ClusterStruct
   /// number of g4hits associated to this cluster
   unsigned int _truth_size = 0;
 
+  /// cluster size (cm)
+  float _phi_size = 0;
+  float _z_size = 0;
+
   ///@name cluster position
   //@{
   float _x = 0;

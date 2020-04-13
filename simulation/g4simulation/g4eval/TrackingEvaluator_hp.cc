@@ -166,6 +166,8 @@ namespace
   {
     ClusterStruct cluster_struct;
     cluster_struct._layer = TrkrDefs::getLayer(key);
+    cluster_struct._phi_size = cluster->getPhiSize();
+    cluster_struct._z_size = cluster->getZSize();
     cluster_struct._x = cluster->getX();
     cluster_struct._y = cluster->getY();
     cluster_struct._z = cluster->getZ();
@@ -409,9 +411,6 @@ void TrackingEvaluator_hp::evaluate_event()
     }
   }
 
-  // printout
-  std::cout << "TrackingEvaluator_hp::evaluate_event - _nclusters_tpc: " << event._nclusters_tpc << std::endl;
-
   // store
   _container->addEvent(std::move(event));
 
@@ -584,43 +583,43 @@ void TrackingEvaluator_hp::print_tracks() const
 void TrackingEvaluator_hp::print_cluster( TrkrDefs::cluskey key, TrkrCluster* cluster ) const
 {
 
-     std::cout
-        << "TrackingEvaluator_hp::print_cluster -"
-        << " layer: " << (int)TrkrDefs::getLayer(key)
-        << " position: (" << cluster->getX() << "," << cluster->getY() << "," << cluster->getZ() << ")"
-        << " polar: (" << get_r( cluster->getX(), cluster->getY()) << "," << get_phi( cluster->getX(), cluster->getY()) << "," << cluster->getZ() << ")"
-        << std::endl;
+  std::cout
+    << "TrackingEvaluator_hp::print_cluster -"
+    << " layer: " << (int)TrkrDefs::getLayer(key)
+    << " position: (" << cluster->getX() << "," << cluster->getY() << "," << cluster->getZ() << ")"
+    << " polar: (" << get_r( cluster->getX(), cluster->getY()) << "," << get_phi( cluster->getX(), cluster->getY()) << "," << cluster->getZ() << ")"
+    << std::endl;
 
-      // get associated g4 hist
-      auto g4hits = find_g4hits( key );
-      for( const auto& g4hit:g4hits )
-      {
+  // get associated g4 hist
+  auto g4hits = find_g4hits( key );
+  for( const auto& g4hit:g4hits )
+  {
 
-        std::cout
-          << "TrackingEvaluator_hp::print_cluster -"
-          << " layer: " << g4hit->get_layer()
-          << " track: " << g4hit->get_trkid()
-          << " in: (" << g4hit->get_x(0) << "," << g4hit->get_y(0) << "," << g4hit->get_z(0) << ")"
-          << " out: (" << g4hit->get_x(1) << "," << g4hit->get_y(1) << "," << g4hit->get_z(1) << ")"
-          << " polar in: (" << get_r( g4hit->get_x(0), g4hit->get_y(0) ) << "," << get_phi( g4hit->get_x(0), g4hit->get_y(0) ) << "," << g4hit->get_z(0) << ")"
-          << " polar out: (" << get_r( g4hit->get_x(1), g4hit->get_y(1) ) << "," << get_phi( g4hit->get_x(1), g4hit->get_y(1) ) << "," << g4hit->get_z(1) << ")"
-          << std::endl;
-      }
+    std::cout
+      << "TrackingEvaluator_hp::print_cluster -"
+      << " layer: " << g4hit->get_layer()
+      << " track: " << g4hit->get_trkid()
+      << " in: (" << g4hit->get_x(0) << "," << g4hit->get_y(0) << "," << g4hit->get_z(0) << ")"
+      << " out: (" << g4hit->get_x(1) << "," << g4hit->get_y(1) << "," << g4hit->get_z(1) << ")"
+      << " polar in: (" << get_r( g4hit->get_x(0), g4hit->get_y(0) ) << "," << get_phi( g4hit->get_x(0), g4hit->get_y(0) ) << "," << g4hit->get_z(0) << ")"
+      << " polar out: (" << get_r( g4hit->get_x(1), g4hit->get_y(1) ) << "," << get_phi( g4hit->get_x(1), g4hit->get_y(1) ) << "," << g4hit->get_z(1) << ")"
+      << std::endl;
+  }
 
-      // interpolate g4hits positions at the same radius as the cluster to get resolution
-      const auto rextrap = get_r( cluster->getX(), cluster->getY());
-      const auto xextrap = interpolate<&PHG4Hit::get_x>( g4hits, rextrap );
-      const auto yextrap = interpolate<&PHG4Hit::get_y>( g4hits, rextrap );
-      const auto zextrap = interpolate<&PHG4Hit::get_z>( g4hits, rextrap );
+  // interpolate g4hits positions at the same radius as the cluster to get resolution
+  const auto rextrap = get_r( cluster->getX(), cluster->getY());
+  const auto xextrap = interpolate<&PHG4Hit::get_x>( g4hits, rextrap );
+  const auto yextrap = interpolate<&PHG4Hit::get_y>( g4hits, rextrap );
+  const auto zextrap = interpolate<&PHG4Hit::get_z>( g4hits, rextrap );
 
-      // print interpolation
-      std::cout
-        << "TrackingEvaluator_hp::print_cluster -"
-        << " interpolation: (" << xextrap << "," << yextrap << "," << zextrap << ")"
-        << " polar: (" << get_r( xextrap, yextrap ) << "," << get_phi( xextrap, yextrap ) << "," << zextrap << ")"
-        << std::endl;
+  // print interpolation
+  std::cout
+    << "TrackingEvaluator_hp::print_cluster -"
+    << " interpolation: (" << xextrap << "," << yextrap << "," << zextrap << ")"
+    << " polar: (" << get_r( xextrap, yextrap ) << "," << get_phi( xextrap, yextrap ) << "," << zextrap << ")"
+    << std::endl;
 
-      std::cout << std::endl;
+  std::cout << std::endl;
 
 }
 
