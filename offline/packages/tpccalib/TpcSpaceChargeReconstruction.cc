@@ -33,10 +33,7 @@ namespace
 
   // get unique index in symetric matrix from i and j
   constexpr inline unsigned int array_index(unsigned int i, unsigned int j)
-  {
-    if(i>j) std::swap(i, j);
-    return i + j*(j+1)/2;
-  }
+  { return (i<j) ? (i + j*(j+1)/2):(j + i*(i+1)/2); }
 
   /// square
   template<class T> T square( T x ) { return x*x; }
