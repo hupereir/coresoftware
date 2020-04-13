@@ -324,7 +324,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
       //	 << " row " << row << " col " << col << " pixnum " << pixnum << endl;;
 
       //TVector3 local_coords = layergeom->get_local_coords_from_pixel(pixnum);
-      TVector3 world_coords = layergeom->get_world_from_local_coords(stave,
+      const TVector3 world_coords = layergeom->get_world_from_local_coords(stave,
                                                                      chip,
                                                                      layergeom->get_local_coords_from_pixel(row,col)
                                                                     );
@@ -361,6 +361,8 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   const double zsize = zbins.size() * length;
 
   static constexpr double invsqrt12 = 1.0 / sqrt(12);
+  const double phierror = pitch*invsqrt12/std::sqrt( phibins.size() );
+  const double zerror = length*invsqrt12/std::sqrt( zbins.size() );
 
   // returns the center of the sensor in world coordinates - used to get the ladder phi location
   std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
@@ -384,15 +386,15 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   DIM[2][2] = square(0.5 * zsize);
 
   TMatrixF ERR(3, 3);
-  ERR[0][0] = square(0.5 * thickness * invsqrt12);
+  ERR[0][0] = square(thickness*invsqrt12);
   ERR[0][1] = 0.0;
   ERR[0][2] = 0.0;
   ERR[1][0] = 0.0;
-  ERR[1][1] = square(0.5 * phisize * invsqrt12);
+  ERR[1][1] = square( phierror );
   ERR[1][2] = 0.0;
   ERR[2][0] = 0.0;
   ERR[2][1] = 0.0;
-  ERR[2][2] = square(0.5 * zsize * invsqrt12);
+  ERR[2][2] = square( zerror );
 
   if(Verbosity() > 2)
     cout << " Local ERR = " << ERR[0][0] << "  " << ERR[1][1] << "  " << ERR[2][2] << endl;
