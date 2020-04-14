@@ -360,7 +360,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   const double phisize = phibins.size() * pitch;
   const double zsize = zbins.size() * length;
 
-  static constexpr double invsqrt12 = 1/std::sqrt(12);
+  static constexpr double invsqrt12 = 1./std::sqrt(12);
   const double phierror = pitch*invsqrt12/std::sqrt(phibins.size());
   const double zerror = length*invsqrt12/std::sqrt(zbins.size());
 

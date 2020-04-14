@@ -31,7 +31,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
-
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <set>
@@ -455,7 +455,7 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
   std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
   geom->find_segment_center(ladder_z_index,
           ladder_phi_index,
-          ladder_location);
+          &ladder_location[0]);
   double ladderphi = atan2(ladder_location[1], ladder_location[0]);
   ladderphi += geom->get_strip_phi_tilt();
 
