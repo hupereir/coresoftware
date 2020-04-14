@@ -112,9 +112,9 @@ class TrackStruct
   // constructor
   explicit TrackStruct()
   {
-    // allocate enough size for the clusters
-    static constexpr int max_layers = 60;
-    _clusters.reserve( max_layers );
+//     // allocate enough size for the clusters
+//     static constexpr int max_layers = 60;
+//     _clusters.reserve( max_layers );
   }
 
   using List = std::vector<TrackStruct>;
