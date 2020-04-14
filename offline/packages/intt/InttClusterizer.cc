@@ -40,25 +40,33 @@
 using namespace boost;
 using namespace std;
 
+namespace
+{
+
+  /// convenience square method
+  template<class T>
+    inline constexpr T square( const T& x ) { return x*x; }
+}
+
 bool InttClusterizer::ladder_are_adjacent( const std::pair<TrkrDefs::hitkey, TrkrHit*> &lhs, const std::pair<TrkrDefs::hitkey, TrkrHit*> &rhs, const int layer)
 {
   if (get_z_clustering(layer))
     {
       if (fabs( InttDefs::getCol(lhs.first) - InttDefs::getCol(rhs.first) ) <= 1)
-	{
-	  if (fabs( InttDefs::getRow(lhs.first) - InttDefs::getRow(rhs.first) ) <= 1)
-	    {
-	      return true;
-	    }
-	}
+  {
+    if (fabs( InttDefs::getRow(lhs.first) - InttDefs::getRow(rhs.first) ) <= 1)
+      {
+        return true;
+      }
+  }
     }
   else
     if (fabs( InttDefs::getCol(lhs.first) - InttDefs::getCol(rhs.first) ) == 0)
       {
-	if (fabs( InttDefs::getRow(lhs.first) - InttDefs::getRow(rhs.first) ) <= 1)
-	  {
-	    return true;
-	  }
+  if (fabs( InttDefs::getRow(lhs.first) - InttDefs::getRow(rhs.first) ) <= 1)
+    {
+      return true;
+    }
       }
 
   return false;
@@ -114,10 +122,10 @@ int InttClusterizer::InitRun(PHCompositeNode* topNode)
       dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
     if (!DetNode)
       {
-	DetNode = new PHCompositeNode("TRKR");
-	dstNode->addNode(DetNode);
+  DetNode = new PHCompositeNode("TRKR");
+  dstNode->addNode(DetNode);
       }
-    
+
     trkrclusters = new TrkrClusterContainer();
     PHIODataNode<PHObject> *TrkrClusterContainerNode =
       new PHIODataNode<PHObject>(trkrclusters, "TRKR_CLUSTER", "PHObject");
@@ -131,10 +139,10 @@ int InttClusterizer::InitRun(PHCompositeNode* topNode)
       PHCompositeNode *DetNode =
         dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
-	{
-	  DetNode = new PHCompositeNode("TRKR");
-	  dstNode->addNode(DetNode);
-	}
+  {
+    DetNode = new PHCompositeNode("TRKR");
+    dstNode->addNode(DetNode);
+  }
 
       clusterhitassoc = new TrkrClusterHitAssoc();
       PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(clusterhitassoc, "TRKR_CLUSTERHITASSOC", "PHObject");
@@ -144,7 +152,7 @@ int InttClusterizer::InitRun(PHCompositeNode* topNode)
 
   //---------------------
   // Calculate Thresholds
-  //---------------------
+  //[3]---------------------
 
   CalculateLadderThresholds(topNode);
 
@@ -287,12 +295,12 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
     int ladder_z_index = InttDefs::getLadderZId(hitsetitr->first);
     int ladder_phi_index = InttDefs::getLadderPhiId(hitsetitr->first);
 
-    // we will need the geometry object for this layer to get the global position	
+    // we will need the geometry object for this layer to get the global position
     CylinderGeomIntt* geom = dynamic_cast<CylinderGeomIntt*>(geom_container->GetLayerGeom(layer));
     float thickness = geom->get_thickness();
     float pitch = geom->get_strip_y_spacing();
     float length = geom->get_strip_z_spacing();
-    
+
     // fill a vector of hits to make things easier - gets every hit in the hitset
     std::vector <std::pair< TrkrDefs::hitkey, TrkrHit*> > hitvec;
     TrkrHitSet::ConstRange hitrangei = hitset->getHits();
@@ -300,26 +308,26 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
          hitr != hitrangei.second;
          ++hitr)
       {
-	hitvec.push_back(make_pair(hitr->first, hitr->second));
+  hitvec.push_back(make_pair(hitr->first, hitr->second));
       }
     if (Verbosity() > 2)
       cout << "hitvec.size(): " << hitvec.size() << endl;
-    
+
     typedef adjacency_list<vecS, vecS, undirectedS> Graph;
     Graph G;
-    
+
     // Find adjacent strips
     for (unsigned int i = 0; i < hitvec.size(); i++)
       {
-	for (unsigned int j = i + 1; j < hitvec.size(); j++)
-	  {
-	    if (ladder_are_adjacent(hitvec[i], hitvec[j], layer))
-	      {
-		add_edge(i, j, G);
-	      }
-	  }
-	
-	add_edge(i, i, G);
+  for (unsigned int j = i + 1; j < hitvec.size(); j++)
+    {
+      if (ladder_are_adjacent(hitvec[i], hitvec[j], layer))
+        {
+    add_edge(i, j, G);
+        }
+    }
+
+  add_edge(i, i, G);
       }
 
     // Find the connections between the vertices of the graph (vertices are the rawhits,
@@ -336,215 +344,214 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
     multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*> >  clusters;
     for (unsigned int i = 0; i < component.size(); i++)
       {
-	cluster_ids.insert(component[i]); // one entry per unique cluster id
-	clusters.insert(make_pair(component[i], hitvec[i]));  // multiple entries per unique cluster id
+  cluster_ids.insert(component[i]); // one entry per unique cluster id
+  clusters.insert(make_pair(component[i], hitvec[i]));  // multiple entries per unique cluster id
       }
 
     // loop over the cluster ID's and make the clusters from the connected hits
     for (set<int>::iterator clusiter = cluster_ids.begin(); clusiter != cluster_ids.end(); ++clusiter)
       {
-	int clusid = *clusiter;
-	//cout << " intt clustering: add cluster number " << clusid << endl; 
-	// get all hits for this cluster ID only
-	pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,  
-	     multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
-	multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
-	
-	// make the cluster directly in the node tree
-	TrkrDefs::cluskey ckey = InttDefs::genClusKey(hitset->getHitSetKey(), clusid);
-	TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
+  int clusid = *clusiter;
+  //cout << " intt clustering: add cluster number " << clusid << endl;
+  // get all hits for this cluster ID only
+  pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,
+       multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
+  multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
 
-	if (Verbosity() > 2)
-	  cout << "Filling cluster with key " << ckey << endl;
-		
-	// determine the size of the cluster in phi and z, useful for track fitting the cluster
-	set<int> phibins;
-	set<int> zbins;
+  // make the cluster directly in the node tree
+  TrkrDefs::cluskey ckey = InttDefs::genClusKey(hitset->getHitSetKey(), clusid);
+  TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
 
-	// tilt refers to a rotation around the radial vector from the origin, and this is zero for the INTT ladders
-	float tilt = 0;  //geom->get_strip_tilt();
-	
-	// determine the cluster position...
-	double xsum = 0.0;
-	double ysum = 0.0;
-	double zsum = 0.0;
-	double clus_adc = 0.0;
-	unsigned nhits = 0;
-	
-	for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
-	  {
-	    // mapiter->second.first  is the hit key
-	    //cout << " adding hitkey " << mapiter->second.first << endl; 
-	    int col =  InttDefs::getCol( (mapiter->second).first);
-	    int row = InttDefs::getRow( (mapiter->second).first);
-	    zbins.insert(col);
-	    phibins.insert(row);
+  if (Verbosity() > 2)
+    cout << "Filling cluster with key " << ckey << endl;
 
-	    // mapiter->second.second is the hit
-	    double hit_adc = (mapiter->second).second->getAdc();
-	    
-	    // now get the positions from the geometry
-	    
-	    double hit_location[3] = {0.0, 0.0, 0.0};
-	    geom->find_strip_center(ladder_z_index,
-				    ladder_phi_index,
-				    col,
-				    row,
-				    hit_location);
-	    
-	    if (_make_e_weights[layer])
-	      {
-		xsum += hit_location[0] * hit_adc;
-		ysum += hit_location[1] * hit_adc;
-		zsum += hit_location[2] * hit_adc;
-	      }
-	    else
-	      {
-		xsum += hit_location[0];
-		ysum += hit_location[1];
-		zsum += hit_location[2];
-	      }
+  // determine the size of the cluster in phi and z, useful for track fitting the cluster
+  set<int> phibins;
+  set<int> zbins;
 
-	    clus_adc += hit_adc;
-	    ++nhits;
+  // tilt refers to a rotation around the radial vector from the origin, and this is zero for the INTT ladders
+  float tilt = 0;  //geom->get_strip_tilt();
 
-	    // add this cluster-hit association to the association map of (clusterkey,hitkey)
-	    m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+  // determine the cluster position...
+  double xsum = 0.0;
+  double ysum = 0.0;
+  double zsum = 0.0;
+  double clus_adc = 0.0;
+  unsigned nhits = 0;
 
-	    if (Verbosity() > 2) cout << "     nhits = " << nhits << endl;
-	    if (Verbosity() > 2)
-	      {
-		cout << "  From  geometry object: hit x " << hit_location[0] << " hit y " << hit_location[1] << " hit z " << hit_location[2] << endl;
-		cout << "     nhits " << nhits << " clusx  = " << xsum / nhits << " clusy " << ysum / nhits << " clusz " << zsum / nhits << endl;
-		
-	      }
-	  }
+  for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
+    {
+      // mapiter->second.first  is the hit key
+      //cout << " adding hitkey " << mapiter->second.first << endl;
+      int col =  InttDefs::getCol( (mapiter->second).first);
+      int row = InttDefs::getRow( (mapiter->second).first);
+      zbins.insert(col);
+      phibins.insert(row);
 
-	float phisize = phibins.size() * pitch;
-	float zsize = zbins.size() * length;
-	
-	double clusx = NAN;
-	double clusy = NAN;
-	double clusz = NAN;
+      // mapiter->second.second is the hit
+      double hit_adc = (mapiter->second).second->getAdc();
 
+      // now get the positions from the geometry
 
-	if (_make_e_weights[layer])
-	  {
-	    clusx = xsum / clus_adc;
-	    clusy = ysum / clus_adc;
-	    clusz = zsum / clus_adc;
-	  }
-	else
-	  {
-	    clusx = xsum / nhits;
-	    clusy = ysum / nhits;
-	    clusz = zsum / nhits;
-	  }
-	
-	double ladder_location[3] = {0.0, 0.0, 0.0};
-	geom->find_segment_center(ladder_z_index,
-				  ladder_phi_index,
-				  ladder_location);
-	double ladderphi = atan2(ladder_location[1], ladder_location[0]);
-	ladderphi += geom->get_strip_phi_tilt();
+      double hit_location[3] = {0.0, 0.0, 0.0};
+      geom->find_strip_center(ladder_z_index,
+            ladder_phi_index,
+            col,
+            row,
+            hit_location);
 
-	// Fill the cluster fields
-	clus->setAdc(clus_adc);
-	clus->setPosition(0, clusx);
-	clus->setPosition(1, clusy);
-	clus->setPosition(2, clusz);
-	clus->setGlobal();
+      if (_make_e_weights[layer])
+        {
+    xsum += hit_location[0] * hit_adc;
+    ysum += hit_location[1] * hit_adc;
+    zsum += hit_location[2] * hit_adc;
+        }
+      else
+        {
+    xsum += hit_location[0];
+    ysum += hit_location[1];
+    zsum += hit_location[2];
+        }
 
-	float invsqrt12 = 1.0 / sqrt(12.0);
-	
-	TMatrixF DIM(3, 3);
-	DIM[0][0] = pow(0.5 * thickness, 2);
-	DIM[0][1] = 0.0;
-	DIM[0][2] = 0.0;
-	DIM[1][0] = 0.0;
-	DIM[1][1] = pow(0.5 * phisize, 2);
-	DIM[1][2] = 0.0;
-	DIM[2][0] = 0.0;
-	DIM[2][1] = 0.0;
-	DIM[2][2] = pow(0.5 * zsize, 2);
-	
-	const float corr_factor = 1.0;  // ladder
-	
-	TMatrixF ERR(3, 3);
-	ERR[0][0] = pow(thickness * invsqrt12 * corr_factor, 2);
-	ERR[0][1] = 0.0;
-	ERR[0][2] = 0.0;
-	ERR[1][0] = 0.0;
-	ERR[1][1] = pow(phisize * invsqrt12 * corr_factor, 2);
-	ERR[1][2] = 0.0;
-	ERR[2][0] = 0.0;
-	ERR[2][1] = 0.0;
-	ERR[2][2] = pow(zsize * invsqrt12 * corr_factor, 2);
+      clus_adc += hit_adc;
+      ++nhits;
 
-	TMatrixF ROT(3, 3);
-	ROT[0][0] = cos(ladderphi);
-	ROT[0][1] = -1.0 * sin(ladderphi);
-	ROT[0][2] = 0.0;
-	ROT[1][0] = sin(ladderphi);
-	ROT[1][1] = cos(ladderphi);
-	ROT[1][2] = 0.0;
-	ROT[2][0] = 0.0;
-	ROT[2][1] = 0.0;
-	ROT[2][2] = 1.0;
-	
-	TMatrixF TILT(3, 3);
-	TILT[0][0] = 1.0;
-	TILT[0][1] = 0.0;
-	TILT[0][2] = 0.0;
-	TILT[1][0] = 0.0;
-	TILT[1][1] = cos(tilt);
-	TILT[1][2] = -1.0 * sin(tilt);
-	TILT[2][0] = 0.0;
-	TILT[2][1] = sin(tilt);
-	TILT[2][2] = cos(tilt);
-	
-	TMatrixF R(3, 3);
-	R = ROT * TILT;
-	R = ROT;
-	
-	TMatrixF R_T(3, 3);
-	R_T.Transpose(R);
-	
-	TMatrixF COVAR_DIM(3, 3);
-	COVAR_DIM = R * DIM * R_T;
-	
-	clus->setSize(0, 0, COVAR_DIM[0][0]);
-	clus->setSize(0, 1, COVAR_DIM[0][1]);
-	clus->setSize(0, 2, COVAR_DIM[0][2]);
-	clus->setSize(1, 0, COVAR_DIM[1][0]);
-	clus->setSize(1, 1, COVAR_DIM[1][1]);
-	clus->setSize(1, 2, COVAR_DIM[1][2]);
-	clus->setSize(2, 0, COVAR_DIM[2][0]);
-	clus->setSize(2, 1, COVAR_DIM[2][1]);
-	clus->setSize(2, 2, COVAR_DIM[2][2]);
-	
-	TMatrixF COVAR_ERR(3, 3);
-	COVAR_ERR = R * ERR * R_T;
-	
-	clus->setError(0, 0, COVAR_ERR[0][0]);
-	clus->setError(0, 1, COVAR_ERR[0][1]);
-	clus->setError(0, 2, COVAR_ERR[0][2]);
-	clus->setError(1, 0, COVAR_ERR[1][0]);
-	clus->setError(1, 1, COVAR_ERR[1][1]);
-	clus->setError(1, 2, COVAR_ERR[1][2]);
-	clus->setError(2, 0, COVAR_ERR[2][0]);
-	clus->setError(2, 1, COVAR_ERR[2][1]);
-	clus->setError(2, 2, COVAR_ERR[2][2]);
+      // add this cluster-hit association to the association map of (clusterkey,hitkey)
+      m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
 
-	// Add the hit associations to the TrkrClusterHitAssoc node
-	// we need the cluster key and all associated hit keys
-	/*
-	for(unsigned int i=0;i<hitvec.size();i++)
-	  {
-	    m_clusterhitassoc->addAssoc(ckey, hitvec[i].first);
-	  }
-	*/
-	
+      if (Verbosity() > 2) cout << "     nhits = " << nhits << endl;
+      if (Verbosity() > 2)
+        {
+    cout << "  From  geometry object: hit x " << hit_location[0] << " hit y " << hit_location[1] << " hit z " << hit_location[2] << endl;
+    cout << "     nhits " << nhits << " clusx  = " << xsum / nhits << " clusy " << ysum / nhits << " clusz " << zsum / nhits << endl;
+
+        }
+    }
+
+  float phisize = phibins.size() * pitch;
+  float zsize = zbins.size() * length;
+
+  static constexpr float invsqrt12 = 1./sqrt(12);
+  const float phierror = pitch*invsqrt12/std::sqrt(phibins.size());
+  const float zerror = length*invsqrt12/std::sqrt(zbins.size());
+
+  double clusx = NAN;
+  double clusy = NAN;
+  double clusz = NAN;
+
+  if (_make_e_weights[layer])
+    {
+      clusx = xsum / clus_adc;
+      clusy = ysum / clus_adc;
+      clusz = zsum / clus_adc;
+    }
+  else
+    {
+      clusx = xsum / nhits;
+      clusy = ysum / nhits;
+      clusz = zsum / nhits;
+    }
+
+  std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
+  geom->find_segment_center(ladder_z_index,
+          ladder_phi_index,
+          ladder_location);
+  double ladderphi = atan2(ladder_location[1], ladder_location[0]);
+  ladderphi += geom->get_strip_phi_tilt();
+
+  // Fill the cluster fields
+  clus->setAdc(clus_adc);
+  clus->setPosition(0, clusx);
+  clus->setPosition(1, clusy);
+  clus->setPosition(2, clusz);
+  clus->setGlobal();
+
+  TMatrixF DIM(3, 3);
+  DIM[0][0] = square(0.5 * thickness);
+  DIM[0][1] = 0.0;
+  DIM[0][2] = 0.0;
+  DIM[1][0] = 0.0;
+  DIM[1][1] = square(0.5 * phisize);
+  DIM[1][2] = 0.0;
+  DIM[2][0] = 0.0;
+  DIM[2][1] = 0.0;
+  DIM[2][2] = square(0.5 * zsize);
+
+  TMatrixF ERR(3, 3);
+  ERR[0][0] = square(thickness * invsqrt12);
+  ERR[0][1] = 0.0;
+  ERR[0][2] = 0.0;
+  ERR[1][0] = 0.0;
+  ERR[1][1] = square(phierror);
+  ERR[1][2] = 0.0;
+  ERR[2][0] = 0.0;
+  ERR[2][1] = 0.0;
+  ERR[2][2] = square(zerror);
+
+  TMatrixF ROT(3, 3);
+  ROT[0][0] = cos(ladderphi);
+  ROT[0][1] = -1.0 * sin(ladderphi);
+  ROT[0][2] = 0.0;
+  ROT[1][0] = sin(ladderphi);
+  ROT[1][1] = cos(ladderphi);
+  ROT[1][2] = 0.0;
+  ROT[2][0] = 0.0;
+  ROT[2][1] = 0.0;
+  ROT[2][2] = 1.0;
+
+  TMatrixF TILT(3, 3);
+  TILT[0][0] = 1.0;
+  TILT[0][1] = 0.0;
+  TILT[0][2] = 0.0;
+  TILT[1][0] = 0.0;
+  TILT[1][1] = cos(tilt);
+  TILT[1][2] = -1.0 * sin(tilt);
+  TILT[2][0] = 0.0;
+  TILT[2][1] = sin(tilt);
+  TILT[2][2] = cos(tilt);
+
+  TMatrixF R(3, 3);
+  R = ROT * TILT;
+  R = ROT;
+
+  TMatrixF R_T(3, 3);
+  R_T.Transpose(R);
+
+  TMatrixF COVAR_DIM(3, 3);
+  COVAR_DIM = R * DIM * R_T;
+
+  clus->setSize(0, 0, COVAR_DIM[0][0]);
+  clus->setSize(0, 1, COVAR_DIM[0][1]);
+  clus->setSize(0, 2, COVAR_DIM[0][2]);
+  clus->setSize(1, 0, COVAR_DIM[1][0]);
+  clus->setSize(1, 1, COVAR_DIM[1][1]);
+  clus->setSize(1, 2, COVAR_DIM[1][2]);
+  clus->setSize(2, 0, COVAR_DIM[2][0]);
+  clus->setSize(2, 1, COVAR_DIM[2][1]);
+  clus->setSize(2, 2, COVAR_DIM[2][2]);
+
+  TMatrixF COVAR_ERR(3, 3);
+  COVAR_ERR = R * ERR * R_T;
+
+  clus->setError(0, 0, COVAR_ERR[0][0]);
+  clus->setError(0, 1, COVAR_ERR[0][1]);
+  clus->setError(0, 2, COVAR_ERR[0][2]);
+  clus->setError(1, 0, COVAR_ERR[1][0]);
+  clus->setError(1, 1, COVAR_ERR[1][1]);
+  clus->setError(1, 2, COVAR_ERR[1][2]);
+  clus->setError(2, 0, COVAR_ERR[2][0]);
+  clus->setError(2, 1, COVAR_ERR[2][1]);
+  clus->setError(2, 2, COVAR_ERR[2][2]);
+
+  // Add the hit associations to the TrkrClusterHitAssoc node
+  // we need the cluster key and all associated hit keys
+  /*
+  for(unsigned int i=0;i<hitvec.size();i++)
+    {
+      m_clusterhitassoc->addAssoc(ckey, hitvec[i].first);
+    }
+  */
+
       } // end loop over cluster ID's
   }  // end loop over hitsets
 
@@ -555,7 +562,7 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
       cout << "After InttClusterizer, cluster-hit associations are:" << endl;
       m_clusterhitassoc->identify();
     }
-  
+
   return;
 }
 
