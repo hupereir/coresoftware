@@ -361,8 +361,30 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   const double zsize = zbins.size() * length;
 
   static constexpr double invsqrt12 = 1./std::sqrt(12);
-  const double phierror = pitch*invsqrt12/std::sqrt(phibins.size());
-  const double zerror = length*invsqrt12/std::sqrt(zbins.size());
+
+  // scale factors (phi direction)
+  /*
+  they corresponds to clusters of size (2,2), (2,3), (3,2) and (3,3) in phi and z
+  other clusters, which are very few and pathological, get a scale factor of 1
+  */
+  static constexpr std::array<double, 4> scalefactors_phi = {{ 0.31, 0.31, 0.66, 0.44 }};
+  double phierror = pitch*invsqrt12;
+  if( phibins.size() == 2 && zbins.size() == 2 ) phierror*=scalefactors_phi[0];
+  else if( phibins.size() == 2 && zbins.size() == 3 )  phierror*=scalefactors_phi[1];
+  else if( phibins.size() == 3 && zbins.size() == 2 )  phierror*=scalefactors_phi[2];
+  else if( phibins.size() == 3 && zbins.size() == 3 )  phierror*=scalefactors_phi[3];
+
+  // scale factors (z direction)
+  /*
+  they corresponds to clusters of size (2,2), (2,3), (3,2) and (3,3) in z and phi
+  other clusters, which are very few and pathological, get a scale factor of 1
+  */
+  static constexpr std::array<double, 4> scalefactors_z = {{ 0.47, 0.48, 0.71, 0.55 }};
+  double zerror = length*invsqrt12;
+  if( zbins.size() == 2 && phibins.size() == 2 ) zerror*=scalefactors_z[0];
+  else if( zbins.size() == 2 && phibins.size() == 3 )  zerror*=scalefactors_z[1];
+  else if( zbins.size() == 3 && phibins.size() == 2 )  zerror*=scalefactors_z[2];
+  else if( zbins.size() == 3 && phibins.size() == 3 )  zerror*=scalefactors_z[3];
 
   // returns the center of the sensor in world coordinates - used to get the ladder phi location
   std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
