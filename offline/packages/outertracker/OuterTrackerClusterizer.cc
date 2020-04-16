@@ -46,20 +46,20 @@ bool OuterTrackerClusterizer::ladder_are_adjacent( const std::pair<TrkrDefs::hit
   if (get_z_clustering(layer))
     {
       if (fabs( OuterTrackerDefs::getCol(lhs.first) - OuterTrackerDefs::getCol(rhs.first) ) <= 1)
-	{
-	  if (fabs( OuterTrackerDefs::getRow(lhs.first) - OuterTrackerDefs::getRow(rhs.first) ) <= 1)
-	    {
-	      return true;
-	    }
-	}
+  {
+    if (fabs( OuterTrackerDefs::getRow(lhs.first) - OuterTrackerDefs::getRow(rhs.first) ) <= 1)
+      {
+        return true;
+      }
+  }
     }
   else
     if (fabs( OuterTrackerDefs::getCol(lhs.first) - OuterTrackerDefs::getCol(rhs.first) ) == 0)
       {
-	if (fabs( OuterTrackerDefs::getRow(lhs.first) - OuterTrackerDefs::getRow(rhs.first) ) <= 1)
-	  {
-	    return true;
-	  }
+  if (fabs( OuterTrackerDefs::getRow(lhs.first) - OuterTrackerDefs::getRow(rhs.first) ) <= 1)
+    {
+      return true;
+    }
       }
 
   return false;
@@ -106,10 +106,10 @@ int OuterTrackerClusterizer::InitRun(PHCompositeNode* topNode)
       dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
     if (!DetNode)
       {
-	DetNode = new PHCompositeNode("TRKR");
-	dstNode->addNode(DetNode);
+  DetNode = new PHCompositeNode("TRKR");
+  dstNode->addNode(DetNode);
       }
-    
+
     trkrclusters = new TrkrClusterContainer();
     PHIODataNode<PHObject> *TrkrClusterContainerNode =
       new PHIODataNode<PHObject>(trkrclusters, "TRKR_CLUSTER", "PHObject");
@@ -123,10 +123,10 @@ int OuterTrackerClusterizer::InitRun(PHCompositeNode* topNode)
       PHCompositeNode *DetNode =
         dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
-	{
-	  DetNode = new PHCompositeNode("TRKR");
-	  dstNode->addNode(DetNode);
-	}
+  {
+    DetNode = new PHCompositeNode("TRKR");
+    dstNode->addNode(DetNode);
+  }
 
       clusterhitassoc = new TrkrClusterHitAssoc();
       PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(clusterhitassoc, "TRKR_CLUSTERHITASSOC", "PHObject");
@@ -219,7 +219,7 @@ void OuterTrackerClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
   // get the geometry node
   PHG4CylinderGeomContainer* geom_container = findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_OuterTracker");
   if (!geom_container)
-    { 
+    {
       cout << PHWHERE << " Did not find node CYLINDERGEOM_OuterTracker" << endl;
       return;
     }
@@ -245,7 +245,7 @@ void OuterTrackerClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
     // we have a single hitset, get the info that identifies the sensor
     int layer = TrkrDefs::getLayer(hitsetitr->first);
 
-    // we will need the geometry object for this layer to get the global position	
+    // we will need the geometry object for this layer to get the global position
     CylinderGeomOuterTracker* geom = dynamic_cast<CylinderGeomOuterTracker*>(geom_container->GetLayerGeom(layer));
 
     double thickness = geom->get_thickness();
@@ -260,26 +260,26 @@ void OuterTrackerClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
          hitr != hitrangei.second;
          ++hitr)
       {
-	hitvec.push_back(make_pair(hitr->first, hitr->second));
+  hitvec.push_back(make_pair(hitr->first, hitr->second));
       }
     if (Verbosity() > 2)
       cout << "hitvec.size(): " << hitvec.size() << endl;
-    
+
     typedef adjacency_list<vecS, vecS, undirectedS> Graph;
     Graph G;
-    
+
     // Find adjacent strips
     for (unsigned int i = 0; i < hitvec.size(); i++)
       {
-	for (unsigned int j = i + 1; j < hitvec.size(); j++)
-	  {
-	    if (ladder_are_adjacent(hitvec[i], hitvec[j], layer))
-	      {
-		add_edge(i, j, G);
-	      }
-	  }
-	
-	add_edge(i, i, G);
+  for (unsigned int j = i + 1; j < hitvec.size(); j++)
+    {
+      if (ladder_are_adjacent(hitvec[i], hitvec[j], layer))
+        {
+    add_edge(i, j, G);
+        }
+    }
+
+  add_edge(i, i, G);
       }
 
     // Find the connections between the vertices of the graph (vertices are the rawhits,
@@ -296,183 +296,185 @@ void OuterTrackerClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
     multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*> >  clusters;
     for (unsigned int i = 0; i < component.size(); i++)
       {
-	cluster_ids.insert(component[i]); // one entry per unique cluster id
-	clusters.insert(make_pair(component[i], hitvec[i]));  // multiple entries per unique cluster id
+  cluster_ids.insert(component[i]); // one entry per unique cluster id
+  clusters.insert(make_pair(component[i], hitvec[i]));  // multiple entries per unique cluster id
       }
 
     // loop over the cluster ID's and make the clusters from the connected hits
     for (set<int>::iterator clusiter = cluster_ids.begin(); clusiter != cluster_ids.end(); ++clusiter)
       {
-	int clusid = *clusiter;
-	//cout << " OuterTracker clustering: add cluster number " << clusid << endl; 
-	// get all hits for this cluster ID only
-	pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,  
-	     multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
-	multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
-	
-	// make the cluster directly in the node tree
-	TrkrDefs::cluskey ckey = OuterTrackerDefs::genClusKey(hitset->getHitSetKey(), clusid);
-	TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
+  int clusid = *clusiter;
+  //cout << " OuterTracker clustering: add cluster number " << clusid << endl;
+  // get all hits for this cluster ID only
+  pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,
+       multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
+  multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
 
-	if (Verbosity() > 2)
-	  cout << "Filling cluster with key " << ckey << endl;
-		
-	// determine the size of the cluster in phi and z, useful for track fitting the cluster
-	set<int> phibins;
-	set<int> zbins;
+  // make the cluster directly in the node tree
+  TrkrDefs::cluskey ckey = OuterTrackerDefs::genClusKey(hitset->getHitSetKey(), clusid);
+  TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
 
-	// determine the cluster position...
-	double phisum = 0.0;
-	//double xsum = 0.0;
-	//double ysum = 0.0;
-	double zsum = 0.0;
-	double clus_adc = 0.0;
-	unsigned nhits = 0;
-	
-	for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
-	  {
-	    // mapiter->second.first  is the hit key
-	    //cout << " adding hitkey " << mapiter->second.first << endl; 
-	    int col =  OuterTrackerDefs::getCol( (mapiter->second).first);
-	    int row = OuterTrackerDefs::getRow( (mapiter->second).first);
-	    zbins.insert(col);
-	    phibins.insert(row);
+  if (Verbosity() > 2)
+    cout << "Filling cluster with key " << ckey << endl;
 
-	    // mapiter->second.second is the hit
-	    double hit_adc = (mapiter->second).second->getAdc();
-	    
-	    // now get the positions from the geometry
-	    
-	    double phi_location, z_location;
-	    geom->find_pixel_center(row, col, phi_location, z_location);
-	    
-	    phisum += phi_location * hit_adc;
-	    zsum += z_location * hit_adc;
-	  
-	    clus_adc += hit_adc;
-	    ++nhits;
+  // determine the size of the cluster in phi and z, useful for track fitting the cluster
+  set<int> phibins;
+  set<int> zbins;
 
-	    // add this cluster-hit association to the association map of (clusterkey,hitkey)
-	    m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+  // determine the cluster position...
+  double phisum = 0.0;
+  //double xsum = 0.0;
+  //double ysum = 0.0;
+  double zsum = 0.0;
+  double clus_adc = 0.0;
+  unsigned nhits = 0;
 
-	    if (Verbosity() > 2) cout << "     nhits = " << nhits << endl;
-	    if (Verbosity() > 2)
-	      {
-		cout << "  From  geometry object: hit phi " << phi_location << " hit z " << z_location  << endl;
-	      }
-	  }
+  for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
+    {
+      // mapiter->second.first  is the hit key
+      //cout << " adding hitkey " << mapiter->second.first << endl;
+      int col =  OuterTrackerDefs::getCol( (mapiter->second).first);
+      int row = OuterTrackerDefs::getRow( (mapiter->second).first);
+      zbins.insert(col);
+      phibins.insert(row);
 
-	float phisize = phibins.size() * pitch;
-	float zsize = zbins.size() * length;
-	double tilt = 0;
+      // mapiter->second.second is the hit
+      double hit_adc = (mapiter->second).second->getAdc();
 
-	double clusphi = NAN;	
-	double clusx = NAN;
-	double clusy = NAN;
-	double clusz = NAN;
+      // now get the positions from the geometry
 
-	clusphi = phisum / clus_adc;
-	clusx = radius * cos(clusphi);
-	clusy = radius * sin(clusphi);
-	clusz = zsum / clus_adc;
-		
-	// Fill the cluster fields
-	clus->setAdc(clus_adc);
-	clus->setPosition(0, clusx);
-	clus->setPosition(1, clusy);
-	clus->setPosition(2, clusz);
-	clus->setGlobal();
+      double phi_location, z_location;
+      geom->find_pixel_center(row, col, phi_location, z_location);
 
-	float invsqrt12 = 1.0 / sqrt(12.0);
-	
-	TMatrixF DIM(3, 3);
-	DIM[0][0] = pow(0.5 * thickness, 2);
-	DIM[0][1] = 0.0;
-	DIM[0][2] = 0.0;
-	DIM[1][0] = 0.0;
-	DIM[1][1] = pow(0.5 * phisize, 2);
-	DIM[1][2] = 0.0;
-	DIM[2][0] = 0.0;
-	DIM[2][1] = 0.0;
-	DIM[2][2] = pow(0.5 * zsize, 2);
-	
-	const float corr_factor = 1.0;  // ladder
-	
-	TMatrixF ERR(3, 3);
-	ERR[0][0] = pow(thickness * invsqrt12 * corr_factor, 2);
-	ERR[0][1] = 0.0;
-	ERR[0][2] = 0.0;
-	ERR[1][0] = 0.0;
-	ERR[1][1] = pow(phisize * invsqrt12 * corr_factor, 2);
-	ERR[1][2] = 0.0;
-	ERR[2][0] = 0.0;
-	ERR[2][1] = 0.0;
-	ERR[2][2] = pow(zsize * invsqrt12 * corr_factor, 2);
-	
-	TMatrixF ROT(3, 3);
-	ROT[0][0] = cos(clusphi);
-	ROT[0][1] = -1.0 * sin(clusphi);
-	ROT[0][2] = 0.0;
-	ROT[1][0] = sin(clusphi);
-	ROT[1][1] = cos(clusphi);
-	ROT[1][2] = 0.0;
-	ROT[2][0] = 0.0;
-	ROT[2][1] = 0.0;
-	ROT[2][2] = 1.0;
-	
-	TMatrixF TILT(3, 3);
-	TILT[0][0] = 1.0;
-	TILT[0][1] = 0.0;
-	TILT[0][2] = 0.0;
-	TILT[1][0] = 0.0;
-	TILT[1][1] = cos(tilt);
-	TILT[1][2] = -1.0 * sin(tilt);
-	TILT[2][0] = 0.0;
-	TILT[2][1] = sin(tilt);
-	TILT[2][2] = cos(tilt);
-	
-	TMatrixF R(3, 3);
-	R = ROT * TILT;
-	R = ROT;
-	
-	TMatrixF R_T(3, 3);
-	R_T.Transpose(R);
-	
-	TMatrixF COVAR_DIM(3, 3);
-	COVAR_DIM = R * DIM * R_T;
-	
-	clus->setSize(0, 0, COVAR_DIM[0][0]);
-	clus->setSize(0, 1, COVAR_DIM[0][1]);
-	clus->setSize(0, 2, COVAR_DIM[0][2]);
-	clus->setSize(1, 0, COVAR_DIM[1][0]);
-	clus->setSize(1, 1, COVAR_DIM[1][1]);
-	clus->setSize(1, 2, COVAR_DIM[1][2]);
-	clus->setSize(2, 0, COVAR_DIM[2][0]);
-	clus->setSize(2, 1, COVAR_DIM[2][1]);
-	clus->setSize(2, 2, COVAR_DIM[2][2]);
-	
-	TMatrixF COVAR_ERR(3, 3);
-	COVAR_ERR = R * ERR * R_T;
-	
-	clus->setError(0, 0, COVAR_ERR[0][0]);
-	clus->setError(0, 1, COVAR_ERR[0][1]);
-	clus->setError(0, 2, COVAR_ERR[0][2]);
-	clus->setError(1, 0, COVAR_ERR[1][0]);
-	clus->setError(1, 1, COVAR_ERR[1][1]);
-	clus->setError(1, 2, COVAR_ERR[1][2]);
-	clus->setError(2, 0, COVAR_ERR[2][0]);
-	clus->setError(2, 1, COVAR_ERR[2][1]);
-	clus->setError(2, 2, COVAR_ERR[2][2]);
+      phisum += phi_location * hit_adc;
+      zsum += z_location * hit_adc;
 
-	// Add the hit associations to the TrkrClusterHitAssoc node
-	// we need the cluster key and all associated hit keys
-	/*
-	for(unsigned int i=0;i<hitvec.size();i++)
-	  {
-	    m_clusterhitassoc->addAssoc(ckey, hitvec[i].first);
-	  }
-	*/
-	
+      clus_adc += hit_adc;
+      ++nhits;
+
+      // add this cluster-hit association to the association map of (clusterkey,hitkey)
+      m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+
+      if (Verbosity() > 2) cout << "     nhits = " << nhits << endl;
+      if (Verbosity() > 2)
+        {
+    cout << "  From  geometry object: hit phi " << phi_location << " hit z " << z_location  << endl;
+        }
+    }
+
+  float phisize = phibins.size() * pitch;
+  float zsize = zbins.size() * length;
+  double tilt = 0;
+
+  double clusphi = NAN;
+  double clusx = NAN;
+  double clusy = NAN;
+  double clusz = NAN;
+
+  clusphi = phisum / clus_adc;
+  clusx = radius * cos(clusphi);
+  clusy = radius * sin(clusphi);
+  clusz = zsum / clus_adc;
+
+  // Fill the cluster fields
+  clus->setAdc(clus_adc);
+  clus->setPosition(0, clusx);
+  clus->setPosition(1, clusy);
+  clus->setPosition(2, clusz);
+  clus->setGlobal();
+
+  // std::cout << "OuterTrackerClusterizer::ClusterMvtx - layer: " << layer << " pitch: " << pitch << " length: " << length << std::endl;
+
+  float invsqrt12 = 1.0 / sqrt(12.0);
+
+  TMatrixF DIM(3, 3);
+  DIM[0][0] = pow(0.5 * thickness, 2);
+  DIM[0][1] = 0.0;
+  DIM[0][2] = 0.0;
+  DIM[1][0] = 0.0;
+  DIM[1][1] = pow(0.5 * phisize, 2);
+  DIM[1][2] = 0.0;
+  DIM[2][0] = 0.0;
+  DIM[2][1] = 0.0;
+  DIM[2][2] = pow(0.5 * zsize, 2);
+
+  const float corr_factor = 1.0;  // ladder
+
+  TMatrixF ERR(3, 3);
+  ERR[0][0] = pow(thickness * invsqrt12 * corr_factor, 2);
+  ERR[0][1] = 0.0;
+  ERR[0][2] = 0.0;
+  ERR[1][0] = 0.0;
+  ERR[1][1] = pow(phisize * invsqrt12 * corr_factor, 2);
+  ERR[1][2] = 0.0;
+  ERR[2][0] = 0.0;
+  ERR[2][1] = 0.0;
+  ERR[2][2] = pow(zsize * invsqrt12 * corr_factor, 2);
+
+  TMatrixF ROT(3, 3);
+  ROT[0][0] = cos(clusphi);
+  ROT[0][1] = -1.0 * sin(clusphi);
+  ROT[0][2] = 0.0;
+  ROT[1][0] = sin(clusphi);
+  ROT[1][1] = cos(clusphi);
+  ROT[1][2] = 0.0;
+  ROT[2][0] = 0.0;
+  ROT[2][1] = 0.0;
+  ROT[2][2] = 1.0;
+
+  TMatrixF TILT(3, 3);
+  TILT[0][0] = 1.0;
+  TILT[0][1] = 0.0;
+  TILT[0][2] = 0.0;
+  TILT[1][0] = 0.0;
+  TILT[1][1] = cos(tilt);
+  TILT[1][2] = -1.0 * sin(tilt);
+  TILT[2][0] = 0.0;
+  TILT[2][1] = sin(tilt);
+  TILT[2][2] = cos(tilt);
+
+  TMatrixF R(3, 3);
+  R = ROT * TILT;
+  R = ROT;
+
+  TMatrixF R_T(3, 3);
+  R_T.Transpose(R);
+
+  TMatrixF COVAR_DIM(3, 3);
+  COVAR_DIM = R * DIM * R_T;
+
+  clus->setSize(0, 0, COVAR_DIM[0][0]);
+  clus->setSize(0, 1, COVAR_DIM[0][1]);
+  clus->setSize(0, 2, COVAR_DIM[0][2]);
+  clus->setSize(1, 0, COVAR_DIM[1][0]);
+  clus->setSize(1, 1, COVAR_DIM[1][1]);
+  clus->setSize(1, 2, COVAR_DIM[1][2]);
+  clus->setSize(2, 0, COVAR_DIM[2][0]);
+  clus->setSize(2, 1, COVAR_DIM[2][1]);
+  clus->setSize(2, 2, COVAR_DIM[2][2]);
+
+  TMatrixF COVAR_ERR(3, 3);
+  COVAR_ERR = R * ERR * R_T;
+
+  clus->setError(0, 0, COVAR_ERR[0][0]);
+  clus->setError(0, 1, COVAR_ERR[0][1]);
+  clus->setError(0, 2, COVAR_ERR[0][2]);
+  clus->setError(1, 0, COVAR_ERR[1][0]);
+  clus->setError(1, 1, COVAR_ERR[1][1]);
+  clus->setError(1, 2, COVAR_ERR[1][2]);
+  clus->setError(2, 0, COVAR_ERR[2][0]);
+  clus->setError(2, 1, COVAR_ERR[2][1]);
+  clus->setError(2, 2, COVAR_ERR[2][2]);
+
+  // Add the hit associations to the TrkrClusterHitAssoc node
+  // we need the cluster key and all associated hit keys
+  /*
+  for(unsigned int i=0;i<hitvec.size();i++)
+    {
+      m_clusterhitassoc->addAssoc(ckey, hitvec[i].first);
+    }
+  */
+
       } // end loop over cluster ID's
   }  // end loop over hitsets
 
@@ -483,7 +485,7 @@ void OuterTrackerClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
       cout << "After OuterTrackerClusterizer, cluster-hit associations are:" << endl;
       m_clusterhitassoc->identify();
     }
-  
+
   return;
 }
 
