@@ -5,6 +5,9 @@
 #include <g4main/PHG4HitContainer.h>
 #include <g4main/PHG4Particle.h>
 #include <g4main/PHG4TruthInfoContainer.h>
+#include <intt/InttDefs.h>
+#include <mvtx/MvtxDefs.h>
+#include <outertracker/OuterTrackerDefs.h>
 #include <phool/getClass.h>
 #include <phool/PHCompositeNode.h>
 #include <phool/PHNodeIterator.h>
@@ -166,8 +169,6 @@ namespace
   {
     ClusterStruct cluster_struct;
     cluster_struct._layer = TrkrDefs::getLayer(key);
-    cluster_struct._phi_size = cluster->getPhiSize();
-    cluster_struct._z_size = cluster->getZSize();
     cluster_struct._x = cluster->getX();
     cluster_struct._y = cluster->getY();
     cluster_struct._z = cluster->getZ();
@@ -216,15 +217,52 @@ namespace
   }
 
   /// number of hits associated to cluster
-  unsigned int cluster_size( TrkrDefs::cluskey key, TrkrClusterHitAssoc* cluster_hit_map )
+  void add_cluster_size( ClusterStruct& cluster, TrkrDefs::cluskey key, TrkrClusterHitAssoc* cluster_hit_map )
   {
-    if( cluster_hit_map )
+    if( !cluster_hit_map ) return;
+    const auto range = cluster_hit_map->getHits(key);
+
+    // store full size
+    cluster._size =  std::distance( range.first, range.second );
+
+    // for intt, mvtx and outer tracker, also get row and column size
+    const auto detId = TrkrDefs::getTrkrId( key );
+    std::set<int> phibins;
+    std::set<int> zbins;
+    for( auto iter = range.first; iter != range.second; ++iter )
     {
-      const auto range = cluster_hit_map->getHits(key);
-      return std::distance( range.first, range.second );
-    } else {
-      return 0;
+
+      // hit key
+      const auto& hit_key = iter->second;
+      switch( detId )
+      {
+        default: break;
+
+        case TrkrDefs::mvtxId:
+        {
+          phibins.insert( MvtxDefs::getRow( hit_key ) );
+          zbins.insert( MvtxDefs::getCol( hit_key ) );
+          break;
+        }
+
+        case TrkrDefs::inttId:
+        {
+          phibins.insert( InttDefs::getRow( hit_key ) );
+          zbins.insert( InttDefs::getCol( hit_key ) );
+          break;
+        }
+
+        case TrkrDefs::outertrackerId:
+        {
+          phibins.insert( OuterTrackerDefs::getRow( hit_key ) );
+          zbins.insert( OuterTrackerDefs::getCol( hit_key ) );
+          break;
+        }
+      }
     }
+
+    cluster._phi_size = phibins.size();
+    cluster._z_size = zbins.size();
   }
 
   // add truth information
@@ -433,7 +471,7 @@ void TrackingEvaluator_hp::evaluate_clusters()
 
     // create cluster structure
     auto cluster_struct = create_cluster( key, cluster );
-    cluster_struct._size = cluster_size( key, _cluster_hit_map );
+    add_cluster_size( cluster_struct, key, _cluster_hit_map );
 
     // truth information
     const auto g4hits = find_g4hits( key );
@@ -486,12 +524,15 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
       // create new cluster struct
       auto cluster_struct = create_cluster( cluster_key, cluster );
-      cluster_struct._size = cluster_size( cluster_key, _cluster_hit_map );
+      add_cluster_size( cluster_struct, cluster_key, _cluster_hit_map );
 
-      const auto radius( cluster_struct._r );
+      // truth information
+      const auto g4hits = find_g4hits( cluster_key );
+      add_truth_information( cluster_struct, g4hits );
 
       // find track state that is the closest to cluster
       /* this assumes that both clusters and states are sorted along r */
+      const auto radius( cluster_struct._r );
       float dr_min = -1;
       for( auto iter = state_iter; iter != track->end_states(); ++iter )
       {
@@ -505,10 +546,6 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
       // store track state in cluster struct
       add_trk_information( cluster_struct, state_iter->second );
-
-      // truth information
-      const auto g4hits = find_g4hits( cluster_key );
-      add_truth_information( cluster_struct, g4hits );
 
       // add to track
       track_struct._clusters.push_back( cluster_struct );

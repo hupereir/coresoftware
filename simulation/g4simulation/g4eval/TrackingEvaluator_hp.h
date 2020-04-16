@@ -52,9 +52,9 @@ class ClusterStruct
   /// number of g4hits associated to this cluster
   unsigned int _truth_size = 0;
 
-  /// cluster size (cm)
-  float _phi_size = 0;
-  float _z_size = 0;
+  /// number of hits along phi and along z
+  int _phi_size = 0;
+  int _z_size = 0;
 
   ///@name cluster position
   //@{
@@ -112,9 +112,9 @@ class TrackStruct
   // constructor
   explicit TrackStruct()
   {
-//     // allocate enough size for the clusters
-//     static constexpr int max_layers = 60;
-//     _clusters.reserve( max_layers );
+    // allocate enough size for the clusters
+    static constexpr int max_layers = 60;
+    _clusters.reserve( max_layers );
   }
 
   using List = std::vector<TrackStruct>;
