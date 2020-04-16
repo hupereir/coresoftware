@@ -431,6 +431,8 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
   float phisize = phibins.size() * pitch;
   float zsize = zbins.size() * length;
 
+  // std::cout << "InttClusterizer::ClusterMvtx - layer: " << layer << " pitch: " << pitch << " length: " << length << " tilt: " << geom->get_strip_phi_tilt() << std::endl;
+
   static constexpr float invsqrt12 = 1./sqrt(12);
   const float phierror = pitch*invsqrt12/std::sqrt(phibins.size());
   const float zerror = length*invsqrt12/std::sqrt(zbins.size());
@@ -456,8 +458,7 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
   geom->find_segment_center(ladder_z_index,
           ladder_phi_index,
           &ladder_location[0]);
-  double ladderphi = atan2(ladder_location[1], ladder_location[0]);
-  ladderphi += geom->get_strip_phi_tilt();
+  double ladderphi = atan2(ladder_location[1], ladder_location[0]) + geom->get_strip_phi_tilt();
 
   // Fill the cluster fields
   clus->setAdc(clus_adc);
