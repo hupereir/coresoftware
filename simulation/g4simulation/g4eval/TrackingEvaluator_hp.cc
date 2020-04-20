@@ -29,10 +29,10 @@ namespace
 {
 
   /// square
-  template<class T> T square( T x ) { return x*x; }
+  template<class T> inline constexpr T square( T x ) { return x*x; }
 
   /// radius
-  template<class T> T get_r( T x, T y ) { return std::sqrt( square(x) + square(y) ); }
+  template<class T> inline constexpr T get_r( T x, T y ) { return std::sqrt( square(x) + square(y) ); }
 
   /// pt
   template<class T> T get_pt( T px, T py ) { return std::sqrt( square(px) + square(py) ); }
