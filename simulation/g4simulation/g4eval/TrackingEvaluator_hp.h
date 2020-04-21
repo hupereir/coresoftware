@@ -291,6 +291,21 @@ class TrackingEvaluator_hp : public SubsysReco
 
   };
 
+  enum Flags
+  {
+
+    EvalEvent = 1<<0,
+    EvalClusters = 1<<1,
+    EvalTracks = 1<<2,
+    EvalTrackPairs = 1<<3,
+    PrintClusters = 1<<4,
+    PrintTracks = 1<<5
+  };
+
+  /// set flags. Should be a bitwise or of Flags enum
+  void set_flags( int flags )
+  { m_flags = flags; }
+
   private:
 
   /// load nodes
@@ -331,24 +346,27 @@ class TrackingEvaluator_hp : public SubsysReco
   int get_embed(PHG4Particle*) const;
 
   // cluster array
-  Container* _container = nullptr;
+  Container* m_container = nullptr;
+
+  // flags
+  int m_flags = EvalEvent | EvalClusters | EvalTracks | EvalTrackPairs;
 
   // nodes
-  SvtxTrackMap* _track_map = nullptr;
-  TrkrClusterContainer* _cluster_map = nullptr;
-  TrkrClusterHitAssoc* _cluster_hit_map = nullptr;
-  TrkrHitTruthAssoc* _hit_truth_map = nullptr;
+  SvtxTrackMap* m_track_map = nullptr;
+  TrkrClusterContainer* m_cluster_map = nullptr;
+  TrkrClusterHitAssoc* m_cluster_hit_map = nullptr;
+  TrkrHitTruthAssoc* m_hit_truth_map = nullptr;
 
-  PHG4HitContainer* _g4hits_tpc = nullptr;
-  PHG4HitContainer* _g4hits_intt = nullptr;
-  PHG4HitContainer* _g4hits_mvtx = nullptr;
-  PHG4HitContainer* _g4hits_outertracker = nullptr;
+  PHG4HitContainer* m_g4hits_tpc = nullptr;
+  PHG4HitContainer* m_g4hits_intt = nullptr;
+  PHG4HitContainer* m_g4hits_mvtx = nullptr;
+  PHG4HitContainer* m_g4hits_outertracker = nullptr;
 
-  PHG4TruthInfoContainer* _g4truthinfo = nullptr;
+  PHG4TruthInfoContainer* m_g4truthinfo = nullptr;
 
   // map cluster keys to g4hits
   using G4HitMap = std::map<TrkrDefs::cluskey,G4HitSet>;
-  mutable G4HitMap _g4hit_map;
+  mutable G4HitMap m_g4hit_map;
 
 };
 

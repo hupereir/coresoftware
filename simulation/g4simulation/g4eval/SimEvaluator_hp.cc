@@ -111,8 +111,7 @@ int SimEvaluator_hp::Init(PHCompositeNode* topNode )
     dstNode->addNode(evalNode);
   }
 
-  _container = new Container;
-  auto newNode = new PHIODataNode<PHObject>( _container, "SimEvaluator_hp::Container", "PHObject" );
+  auto newNode = new PHIODataNode<PHObject>( new Container, "SimEvaluator_hp::Container", "PHObject" );
   evalNode->addNode(newNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -134,7 +133,7 @@ int SimEvaluator_hp::process_event(PHCompositeNode* topNode)
   fill_particles();
   // print_vertices();
 
-  _g4particle_map.clear();
+  m_g4particle_map.clear();
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
@@ -148,16 +147,16 @@ int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 {
 
   // local container
-  _container = findNode::getClass<Container>(topNode, "SimEvaluator_hp::Container");
+  m_container = findNode::getClass<Container>(topNode, "SimEvaluator_hp::Container");
 
   // g4 truth info
-  _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
+  m_g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
 
   // g4hits
-  _g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
-  _g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
-  _g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
-  _g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
+  m_g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
+  m_g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
+  m_g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
+  m_g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
 
   return Fun4AllReturnCodes::EVENT_OK;
 
@@ -167,8 +166,8 @@ int SimEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 //_____________________________________________________________________
 void SimEvaluator_hp::fill_g4particle_map()
 {
-  _g4particle_map.clear();
-  for( const auto& container: {_g4hits_tpc, _g4hits_intt, _g4hits_mvtx, _g4hits_outertracker} )
+  m_g4particle_map.clear();
+  for( const auto& container: {m_g4hits_tpc, m_g4hits_intt, m_g4hits_mvtx, m_g4hits_outertracker} )
   {
     if( !container ) continue;
 
@@ -176,15 +175,15 @@ void SimEvaluator_hp::fill_g4particle_map()
     const auto range = container->getHits();
     for( auto iter = range.first; iter != range.second; ++iter )
     {
-      const auto map_iter = _g4particle_map.lower_bound( iter->second->get_trkid() );
-      if( map_iter != _g4particle_map.end() && map_iter->first == iter->second->get_trkid() )
+      const auto map_iter = m_g4particle_map.lower_bound( iter->second->get_trkid() );
+      if( map_iter != m_g4particle_map.end() && map_iter->first == iter->second->get_trkid() )
       {
 
         map_iter->second |= (1LL<<iter->second->get_layer());
 
       } else {
 
-        _g4particle_map.insert( map_iter, std::make_pair( iter->second->get_trkid(), 1LL<<iter->second->get_layer() ) );
+        m_g4particle_map.insert( map_iter, std::make_pair( iter->second->get_trkid(), 1LL<<iter->second->get_layer() ) );
 
       }
 
@@ -198,19 +197,19 @@ void SimEvaluator_hp::fill_g4particle_map()
 void SimEvaluator_hp::fill_vertices()
 {
 
-  if( !( _container && _g4truthinfo ) )
+  if( !( m_container && m_g4truthinfo ) )
   {
     std::cerr << "SimEvaluator_hp::fill_vertices - nodes not found." << std::endl;
     return;
   }
 
   // clear vertices from previous event
-  _container->clearVertexList();
+  m_container->clearVertexList();
 
   // get main primary vertex id
-  const auto main_vertex_id = _g4truthinfo->GetPrimaryVertexIndex();
+  const auto main_vertex_id = m_g4truthinfo->GetPrimaryVertexIndex();
 
-  auto range = _g4truthinfo->GetPrimaryVtxRange();
+  auto range = m_g4truthinfo->GetPrimaryVtxRange();
   for( auto iter = range.first; iter != range.second; ++iter )
   {
     auto vertex = iter->second;
@@ -218,7 +217,7 @@ void SimEvaluator_hp::fill_vertices()
     {
       auto vertexStruct = create_vertex( vertex );
       vertexStruct._is_main_vertex = ( vertex->get_id() == main_vertex_id );
-      _container->addVertex( vertexStruct );
+      m_container->addVertex( vertexStruct );
     }
 
   }
@@ -229,16 +228,16 @@ void SimEvaluator_hp::fill_vertices()
 void SimEvaluator_hp::fill_particles()
 {
 
-  if( !( _container && _g4truthinfo ) )
+  if( !( m_container && m_g4truthinfo ) )
   {
     std::cerr << "SimEvaluator_hp::fill_vertices - nodes not found." << std::endl;
     return;
   }
 
   // clear vertices from previous event
-  _container->clearParticleList();
+  m_container->clearParticleList();
 
-  auto range = _g4truthinfo->GetPrimaryParticleRange();
+  auto range = m_g4truthinfo->GetPrimaryParticleRange();
   for( auto iter = range.first; iter != range.second; ++iter )
   {
     auto particle = iter->second;
@@ -250,12 +249,11 @@ void SimEvaluator_hp::fill_particles()
       particleStruct._embed = get_embed( particle );
 
       // hit mask
-      const auto iter( _g4particle_map.find( particle->get_track_id() ) );
-      if( iter !=  _g4particle_map.cend() )
+      const auto iter( m_g4particle_map.find( particle->get_track_id() ) );
+      if( iter !=  m_g4particle_map.cend() )
       { particleStruct._mask = iter->second; }
 
-      // std::cout << "SimEvaluator_hp::fill_particles       - mask: " << std::bitset<64>( particleStruct._mask ) << std::endl;
-      _container->addParticle( particleStruct );
+      m_container->addParticle( particleStruct );
     }
 
   }
@@ -265,15 +263,15 @@ void SimEvaluator_hp::fill_particles()
 //_____________________________________________________________________
 void SimEvaluator_hp::print_vertices()
 {
-  if( !_g4truthinfo )
+  if( !m_g4truthinfo )
   {
     std::cerr << "SimEvaluator_hp::print_vertices - nodes not found." << std::endl;
     return;
   }
 
   // get main primary vertex id
-  const auto main_vertex_id = _g4truthinfo->GetPrimaryVertexIndex();
-  const auto vertex = _g4truthinfo->GetPrimaryVtx( main_vertex_id );
+  const auto main_vertex_id = m_g4truthinfo->GetPrimaryVertexIndex();
+  const auto vertex = m_g4truthinfo->GetPrimaryVtx( main_vertex_id );
   if( vertex )
   {
 
@@ -285,7 +283,7 @@ void SimEvaluator_hp::print_vertices()
 
   }
 
-  auto range = _g4truthinfo->GetPrimaryVtxRange();
+  auto range = m_g4truthinfo->GetPrimaryVtxRange();
   std::cout << "SimEvaluator_hp::print_vertices - primary vertex count: " << std::distance( range.first, range.second ) << std::endl;
   for( auto iter = range.first; iter != range.second; ++iter )
   {
@@ -298,4 +296,4 @@ void SimEvaluator_hp::print_vertices()
 
 //_____________________________________________________________________
 int SimEvaluator_hp::get_embed( PHG4Particle* particle ) const
-{ return (_g4truthinfo && particle) ? _g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }
+{ return (m_g4truthinfo && particle) ? m_g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }

@@ -356,8 +356,7 @@ int TrackingEvaluator_hp::Init(PHCompositeNode* topNode )
     dstNode->addNode(evalNode);
   }
 
-  _container = new Container;
-  auto newNode = new PHIODataNode<PHObject>( _container, "TrackingEvaluator_hp::Container","PHObject");
+  auto newNode = new PHIODataNode<PHObject>( new Container, "TrackingEvaluator_hp::Container","PHObject");
   evalNode->addNode(newNode);
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -375,18 +374,18 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   if( res != Fun4AllReturnCodes::EVENT_OK ) return res;
 
   // cleanup output
-  if( _container ) _container->Reset();
+  if( m_container ) m_container->Reset();
 
-  // print_clusters();
-  // print_tracks();
+  if(m_flags&PrintClusters) print_clusters();
+  if(m_flags&PrintTracks) print_tracks();
 
-  evaluate_event();
-  evaluate_clusters();
-  evaluate_tracks();
-  // evaluate_track_pairs();
+  if(m_flags&EvalEvent) evaluate_event();
+  if(m_flags&EvalClusters) evaluate_clusters();
+  if(m_flags&EvalTracks) evaluate_tracks();
+  if(m_flags&EvalTrackPairs) evaluate_track_pairs();
 
   // clear maps
-  _g4hit_map.clear();
+  m_g4hit_map.clear();
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -399,28 +398,28 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 {
 
   // get necessary nodes
-  _track_map = findNode::getClass<SvtxTrackMap>(topNode, "SvtxTrackMap");
+  m_track_map = findNode::getClass<SvtxTrackMap>(topNode, "SvtxTrackMap");
 
   // cluster map
-  _cluster_map = findNode::getClass<TrkrClusterContainer>(topNode, "TRKR_CLUSTER");
+  m_cluster_map = findNode::getClass<TrkrClusterContainer>(topNode, "TRKR_CLUSTER");
 
   // cluster hit association map
-  _cluster_hit_map = findNode::getClass<TrkrClusterHitAssoc>(topNode, "TRKR_CLUSTERHITASSOC");
+  m_cluster_hit_map = findNode::getClass<TrkrClusterHitAssoc>(topNode, "TRKR_CLUSTERHITASSOC");
 
   // cluster hit association map
-  _hit_truth_map = findNode::getClass<TrkrHitTruthAssoc>(topNode,"TRKR_HITTRUTHASSOC");
+  m_hit_truth_map = findNode::getClass<TrkrHitTruthAssoc>(topNode,"TRKR_HITTRUTHASSOC");
 
   // local container
-  _container = findNode::getClass<Container>(topNode, "TrackingEvaluator_hp::Container");
+  m_container = findNode::getClass<Container>(topNode, "TrackingEvaluator_hp::Container");
 
   // g4hits
-  _g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
-  _g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
-  _g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
-  _g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
+  m_g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
+  m_g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
+  m_g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
+  m_g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
 
   // g4 truth info
-  _g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
+  m_g4truthinfo = findNode::getClass<PHG4TruthInfoContainer>(topNode, "G4TruthInfo");
 
   return Fun4AllReturnCodes::EVENT_OK;
 
@@ -430,12 +429,12 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
 void TrackingEvaluator_hp::evaluate_event()
 {
 
-  if( !( _cluster_map && _container ) ) return;
+  if( !( m_cluster_map && m_container ) ) return;
 
   // create event struct
   EventStruct event;
 
-  auto range = _cluster_map->getClusters();
+  auto range = m_cluster_map->getClusters();
   for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
   {
     const auto& key = clusterIter->first;
@@ -450,7 +449,7 @@ void TrackingEvaluator_hp::evaluate_event()
   }
 
   // store
-  _container->addEvent(std::move(event));
+  m_container->addEvent(std::move(event));
 
 }
 
@@ -458,11 +457,11 @@ void TrackingEvaluator_hp::evaluate_event()
 void TrackingEvaluator_hp::evaluate_clusters()
 {
 
-  if( !( _cluster_map && _container ) ) return;
+  if( !( m_cluster_map && m_container ) ) return;
   // clear array
-  _container->clearClusters();
+  m_container->clearClusters();
 
-  auto range = _cluster_map->getClusters();
+  auto range = m_cluster_map->getClusters();
   for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
   {
 
@@ -471,14 +470,14 @@ void TrackingEvaluator_hp::evaluate_clusters()
 
     // create cluster structure
     auto cluster_struct = create_cluster( key, cluster );
-    add_cluster_size( cluster_struct, key, _cluster_hit_map );
+    add_cluster_size( cluster_struct, key, m_cluster_hit_map );
 
     // truth information
     const auto g4hits = find_g4hits( key );
     add_truth_information( cluster_struct, g4hits );
 
     // add in array
-    _container->addCluster( cluster_struct );
+    m_container->addCluster( cluster_struct );
 
   }
 
@@ -487,15 +486,15 @@ void TrackingEvaluator_hp::evaluate_clusters()
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_tracks()
 {
-  if( !( _track_map && _cluster_map && _container ) ) return;
+  if( !( m_track_map && m_cluster_map && m_container ) ) return;
 
   // clear array
-  _container->clearTracks();
+  m_container->clearTracks();
 
-  for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
+  for( const auto& trackpair:*m_track_map )
   {
 
-    const auto track = trackIter->second;
+    const auto track = trackpair.second;
     auto track_struct = create_track( track );
 
     // std::cout << "TrackingEvaluator_hp::evaluate_tracks - mask: " << std::bitset<64>( track_struct._mask ) << std::endl;
@@ -505,7 +504,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
     const auto id = pair.first;
     track_struct._contributors = pair.second;
 
-    auto particle = _g4truthinfo->GetParticle(id);
+    auto particle = m_g4truthinfo->GetParticle(id);
     track_struct._embed = get_embed(particle);
     add_truth_information(track_struct, particle);
 
@@ -515,7 +514,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
     {
 
       const auto& cluster_key = *key_iter;
-      auto cluster = _cluster_map->findCluster( cluster_key );
+      auto cluster = m_cluster_map->findCluster( cluster_key );
       if( !cluster )
       {
         std::cout << "TrackingEvaluator_hp::evaluate_tracks - unable to find cluster for key " << cluster_key << std::endl;
@@ -524,7 +523,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
       // create new cluster struct
       auto cluster_struct = create_cluster( cluster_key, cluster );
-      add_cluster_size( cluster_struct, cluster_key, _cluster_hit_map );
+      add_cluster_size( cluster_struct, cluster_key, m_cluster_hit_map );
 
       // truth information
       const auto g4hits = find_g4hits( cluster_key );
@@ -552,7 +551,7 @@ void TrackingEvaluator_hp::evaluate_tracks()
 
     }
 
-    _container->addTrack( track_struct );
+    m_container->addTrack( track_struct );
 
   }
 
@@ -561,22 +560,22 @@ void TrackingEvaluator_hp::evaluate_tracks()
 //_____________________________________________________________________
 void TrackingEvaluator_hp::evaluate_track_pairs()
 {
-  if( !( _track_map && _container ) ) return;
+  if( !( m_track_map && m_container ) ) return;
 
   // clear array
-  _container->clearTrackPairs();
-  for( auto firstIter = _track_map->begin(); firstIter != _track_map->end(); ++firstIter )
+  m_container->clearTrackPairs();
+  for( auto firstIter = m_track_map->begin(); firstIter != m_track_map->end(); ++firstIter )
   {
 
     const auto first = firstIter->second;
-    for( auto  secondIter = _track_map->begin(); secondIter != firstIter; ++secondIter )
+    for( auto  secondIter = m_track_map->begin(); secondIter != firstIter; ++secondIter )
     {
 
       const auto second = secondIter->second;
       auto trackpair_struct = create_track_pair( first, second );
 
       // add to array
-      _container->addTrackPair( trackpair_struct );
+      m_container->addTrackPair( trackpair_struct );
 
     }
 
@@ -588,9 +587,9 @@ void TrackingEvaluator_hp::evaluate_track_pairs()
 void TrackingEvaluator_hp::print_clusters() const
 {
 
-  if( !_cluster_map ) return;
+  if( !m_cluster_map ) return;
 
-  auto range = _cluster_map->getClusters();
+  auto range = m_cluster_map->getClusters();
   for( auto clusterIter = range.first; clusterIter != range.second; ++clusterIter )
   {
     const auto& key = clusterIter->first;
@@ -604,15 +603,9 @@ void TrackingEvaluator_hp::print_clusters() const
 void TrackingEvaluator_hp::print_tracks() const
 {
 
-  if( !_track_map ) return;
-
-  for( auto trackIter = _track_map->begin(); trackIter != _track_map->end(); ++trackIter )
-  {
-
-    const auto track = trackIter->second;
-    print_track( track );
-
-  }
+  if( !m_track_map ) return;
+  for(const auto& trackpair:*m_track_map)
+  { print_track( trackpair.second ); }
 
 }
 
@@ -673,13 +666,13 @@ void TrackingEvaluator_hp::print_track(SvtxTrack* track) const
   std::cout << "TrackingEvaluator_hp::print_track - clusters: " << track->size_cluster_keys() << ", states: " << track->size_states() << std::endl;
 
   // loop over cluster keys
-  if( false && _cluster_map )
+  if( false && m_cluster_map )
   {
     for( auto key_iter = track->begin_cluster_keys(); key_iter != track->end_cluster_keys(); ++key_iter )
     {
 
       const auto& cluster_key = *key_iter;
-      auto cluster = _cluster_map->findCluster( cluster_key );
+      auto cluster = m_cluster_map->findCluster( cluster_key );
       if( !cluster )
       {
         std::cout << "TrackingEvaluator_hp::print_track - unable to find cluster for key " << cluster_key << std::endl;
@@ -722,11 +715,11 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
 {
 
   // check maps
-  if( !( _cluster_hit_map && _hit_truth_map ) ) return G4HitSet();
+  if( !( m_cluster_hit_map && m_hit_truth_map ) ) return G4HitSet();
 
   // check if in map
-  auto map_iter = _g4hit_map.lower_bound( cluster_key );
-  if( map_iter != _g4hit_map.end() && cluster_key == map_iter->first )
+  auto map_iter = m_g4hit_map.lower_bound( cluster_key );
+  if( map_iter != m_g4hit_map.end() && cluster_key == map_iter->first )
   { return map_iter->second; }
 
   // find hitset associated to cluster
@@ -734,7 +727,7 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
   const auto hitset_key = TrkrDefs::getHitSetKeyFromClusKey(cluster_key);
 
   // loop over hits associated to clusters
-  const auto range = _cluster_hit_map->getHits(cluster_key);
+  const auto range = m_cluster_hit_map->getHits(cluster_key);
   for( auto iter = range.first; iter != range.second; ++iter )
   {
 
@@ -743,7 +736,7 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
 
     // store hits to g4hit associations
     TrkrHitTruthAssoc::MMap g4hit_map;
-    _hit_truth_map->getG4Hits( hitset_key, hit_key, g4hit_map );
+    m_hit_truth_map->getG4Hits( hitset_key, hit_key, g4hit_map );
 
     // find corresponding g4 hist
     for( auto truth_iter = g4hit_map.begin(); truth_iter != g4hit_map.end(); ++truth_iter )
@@ -755,19 +748,19 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
       switch( TrkrDefs::getTrkrId( hitset_key ) )
       {
         case TrkrDefs::tpcId:
-        if( _g4hits_tpc ) g4hit = _g4hits_tpc->findHit( g4hit_key );
+        if( m_g4hits_tpc ) g4hit = m_g4hits_tpc->findHit( g4hit_key );
         break;
 
         case TrkrDefs::inttId:
-        if( _g4hits_intt ) g4hit = _g4hits_intt->findHit( g4hit_key );
+        if( m_g4hits_intt ) g4hit = m_g4hits_intt->findHit( g4hit_key );
         break;
 
         case TrkrDefs::outertrackerId:
-        if( _g4hits_outertracker ) g4hit = _g4hits_outertracker->findHit( g4hit_key );
+        if( m_g4hits_outertracker ) g4hit = m_g4hits_outertracker->findHit( g4hit_key );
         break;
 
         case TrkrDefs::mvtxId:
-        if( _g4hits_mvtx ) g4hit = _g4hits_mvtx->findHit( g4hit_key );
+        if( m_g4hits_mvtx ) g4hit = m_g4hits_mvtx->findHit( g4hit_key );
         break;
 
         default: break;
@@ -780,14 +773,14 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
   }
 
   // insert in map and return
-  return _g4hit_map.insert( map_iter, std::make_pair( cluster_key, std::move( out ) ) )->second;
+  return m_g4hit_map.insert( map_iter, std::make_pair( cluster_key, std::move( out ) ) )->second;
 
 }
 
 //_____________________________________________________________________
 std::pair<int,int> TrackingEvaluator_hp::get_max_contributor( SvtxTrack* track ) const
 {
-  if(!(_track_map && _cluster_map && _g4truthinfo)) return {0,0};
+  if(!(m_track_map && m_cluster_map && m_g4truthinfo)) return {0,0};
 
   // maps MC track id and number of matching g4hits
   using IdMap = std::map<int,int>;
@@ -818,4 +811,4 @@ std::pair<int,int> TrackingEvaluator_hp::get_max_contributor( SvtxTrack* track )
 
 //_____________________________________________________________________
 int TrackingEvaluator_hp::get_embed( PHG4Particle* particle ) const
-{ return (_g4truthinfo && particle) ? _g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }
+{ return (m_g4truthinfo && particle) ? m_g4truthinfo->isEmbeded( particle->get_primary_id() ):0; }

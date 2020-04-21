@@ -147,19 +147,19 @@ class SimEvaluator_hp : public SubsysReco
   int get_embed(PHG4Particle*) const;
 
   //* data container
-  Container* _container = nullptr;
+  Container* m_container = nullptr;
 
-  PHG4HitContainer* _g4hits_tpc = nullptr;
-  PHG4HitContainer* _g4hits_intt = nullptr;
-  PHG4HitContainer* _g4hits_mvtx = nullptr;
-  PHG4HitContainer* _g4hits_outertracker = nullptr;
+  PHG4HitContainer* m_g4hits_tpc = nullptr;
+  PHG4HitContainer* m_g4hits_intt = nullptr;
+  PHG4HitContainer* m_g4hits_mvtx = nullptr;
+  PHG4HitContainer* m_g4hits_outertracker = nullptr;
 
   //* truth information
-  PHG4TruthInfoContainer* _g4truthinfo = nullptr;
+  PHG4TruthInfoContainer* m_g4truthinfo = nullptr;
 
   // map trk_id to layer mask
   using G4ParticleMap = std::map<int,int64_t>;
-  G4ParticleMap _g4particle_map;
+  G4ParticleMap m_g4particle_map;
 
 };
 
