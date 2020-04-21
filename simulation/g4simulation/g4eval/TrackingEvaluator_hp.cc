@@ -381,7 +381,7 @@ int TrackingEvaluator_hp::process_event(PHCompositeNode* topNode)
   // print_tracks();
 
   evaluate_event();
-  // evaluate_clusters();
+  evaluate_clusters();
   evaluate_tracks();
   // evaluate_track_pairs();
 
