@@ -22,40 +22,41 @@ AM_LDFLAGS = \
 	-L$(OFFLINE_MAIN)/lib64
 
 pkginclude_HEADERS = \
-	AssocInfoContainer.h \
-	CellularAutomaton.h \
-	CellularAutomaton_v1.h \
-	HelixHoughBin.h \
-	HelixHoughBin_v1.h \
-	HelixHoughFuncs.h \
-	HelixHoughFuncs_v1.h \
-	HelixHoughSpace.h \
-	HelixHoughSpace_v1.h \
-	HelixKalmanFilter.h \
-	MakeActsGeometry.h \
-	PHGenFitTrackProjection.h \
-	PHGenFitTrkFitter.h \
-	PHActsSourceLinks.h \
-	PHActsTracks.h \
-	PHActsTrkFitter.h \
-	PHGenFitTrkProp.h \
-	PHHoughSeeding.h \
-	PHRTreeSeeding.h \
-	PHCASeeding.h \
-	PHInitVertexing.h \
-	PHInitZVertexing.h \
-	PHTrackPropagating.h \
-	PHTrackSeeding.h \
-	PHTrackFitting.h \
-	PHTrackSetMerging.h \
-	PHTruthClustering_hp.h \
-	PHTruthTrackSeeding.h \
-	PHTruthVertexing.h \
-	VertexFitter.h \
-	PHRaveVertexing.h \
-	GPUTPCBaseTrackParam.h \
-	GPUTPCTrackLinearisation.h \
-	GPUTPCTrackParam.h
+  ActsTrack.h \
+  AssocInfoContainer.h \
+  CellularAutomaton.h \
+  CellularAutomaton_v1.h \
+  HelixHoughBin.h \
+  HelixHoughBin_v1.h \
+  HelixHoughFuncs.h \
+  HelixHoughFuncs_v1.h \
+  HelixHoughSpace.h \
+  HelixHoughSpace_v1.h \
+  HelixKalmanFilter.h \
+  MakeActsGeometry.h \
+  PHGenFitTrackProjection.h \
+  PHGenFitTrkFitter.h \
+  PHActsSourceLinks.h \
+  PHActsTracks.h \
+  PHActsTrkProp.h \
+  PHActsTrkFitter.h \
+  PHGenFitTrkProp.h \
+  PHHoughSeeding.h \
+  PHRTreeSeeding.h \
+  PHCASeeding.h \
+  PHInitVertexing.h \
+  PHInitZVertexing.h \
+  PHTrackPropagating.h \
+  PHTrackSeeding.h \
+  PHTrackFitting.h \
+  PHTrackSetMerging.h \
+  PHTruthTrackSeeding.h \
+  PHTruthVertexing.h \
+  VertexFitter.h \
+  PHRaveVertexing.h \
+  GPUTPCBaseTrackParam.h \
+  GPUTPCTrackLinearisation.h \
+  GPUTPCTrackParam.h
 
 ROOTDICTS = \
 	AssocInfoContainer_Dict.cc \
@@ -110,10 +111,11 @@ libtrack_reco_io_la_SOURCES = \
 
 if MAKE_ACTS
 ACTS_SOURCES = \
-	MakeActsGeometry.cc \
-	PHActsSourceLinks.cc \
-	PHActsTracks.cc \
-	PHActsTrkFitter.cc
+  MakeActsGeometry.cc \
+  PHActsSourceLinks.cc \
+  PHActsTracks.cc \
+  PHActsTrkProp.cc \
+  PHActsTrkFitter.cc
 
 ACTS_LIBS = \
 	-lACTFramework \
