@@ -34,9 +34,8 @@ libg4detectors_la_LIBADD = \
   -lphg4gdml \
   -lphool  \
   -lCGAL \
-  -lgmp \
   -lSubsysReco \
-  -lg4testbench
+  -lg4testbench 
 
 pkginclude_HEADERS = \
   BeamLineMagnetSubsystem.h \
@@ -95,7 +94,7 @@ pkginclude_HEADERS = \
   PHG4SectorConstructor.h \
   PHG4SectorSubsystem.h \
   PHG4SpacalSubsystem.h \
-  PHG4StepStatusDecode.h
+  PHG4StepStatusDecode.h 
 
 # I/O dictionaries have to exist for root5 and root6. For ROOT6 we need
 # pcm files in addition. If someone can figure out how to make a list
@@ -171,42 +170,6 @@ nobase_dist_pcm_DATA = \
   PHG4ScintillatorSlatv1_Dict_rdict.pcm \
   PHG4ScintillatorSlatContainer_Dict_rdict.pcm
 else
-<<<<<<< HEAD
-  ROOT5_IO_DICTS = \
-  PHG4CellDefs_Dict.cc \
-  PHG4ScintillatorSlatDefs_Dict.cc
-  ROOT5_DICTS = \
-  ePHENIXRICHConstruction_Dict.cc \
-  PHG4GDMLSubsystem_Dict.cc \
-  PHG4BeamlineMagnetSubsystem_Dict.cc \
-  PHG4BlockCellReco_Dict.cc \
-  PHG4BlockSubsystem_Dict.cc \
-  PHG4CEmcTestBeamSubsystem_Dict.cc \
-  PHG4ConeSubsystem_Dict.cc \
-  PHG4CrystalCalorimeterSubsystem_Dict.cc \
-  PHG4CylinderSubsystem_Dict.cc \
-  PHG4CylinderCellReco_Dict.cc \
-  PHG4DetectorGroupSubsystem_Dict.cc \
-  PHG4DetectorSubsystem_Dict.cc \
-  PHG4EnvelopeSubsystem_Dict.cc \
-  PHG4FCalSubsystem_Dict.cc \
-  PHG4ForwardEcalSubsystem_Dict.cc \
-  PHG4ForwardHcalSubsystem_Dict.cc \
-  PHG4ForwardCalCellReco_Dict.cc \
-  PHG4FPbScSubsystem_Dict.cc \
-  PHG4GenHit_Dict.cc \
-  PHG4HcalCellReco_Dict.cc \
-  PHG4HcalSubsystem_Dict.cc \
-  PHG4InnerHcalSubsystem_Dict.cc \
-  PHG4OuterHcalSubsystem_Dict.cc \
-  PHG4RICHSubsystem_Dict.cc \
-  PHG4SectorConstructor_Dict.cc \
-  PHG4SectorSubsystem_Dict.cc \
-  PHG4PSTOFSubsystem_Dict.cc \
-  PHG4FullProjSpacalCellReco_Dict.cc \
-  PHG4SpacalSubsystem_Dict.cc \
-  PHG4mRICHSubsystem_Dict.cc
-=======
   ROOT5_IO_DICTS = \
   PHG4CellDefs_Dict.cc \
   PHG4ScintillatorSlatDefs_Dict.cc
@@ -242,7 +205,6 @@ else
   PHG4FullProjSpacalCellReco_Dict.cc \
   PHG4SpacalSubsystem_Dict.cc \
   PHG4mRICHSubsystem_Dict.cc
->>>>>>> master
 
 endif
 
@@ -281,98 +243,6 @@ libg4detectors_io_la_SOURCES = \
   PHG4ScintillatorSlatContainer.cc
 
 libg4detectors_la_SOURCES = \
-<<<<<<< HEAD
-  $(ROOT5_DICTS) \
-  PHG4GDMLDetector.cc \
-  PHG4GDMLSubsystem.cc \
-  PHG4BeamlineMagnetDetector.cc \
-  PHG4BeamlineMagnetSubsystem.cc \
-  PHG4BlockCellReco.cc \
-  PHG4BlockDetector.cc \
-  PHG4BlockDisplayAction.cc \
-  PHG4BlockSteppingAction.cc \
-  PHG4BlockSubsystem.cc \
-  PHG4CEmcTestBeamDetector.cc \
-  PHG4CEmcTestBeamSteppingAction.cc \
-  PHG4CEmcTestBeamSubsystem.cc \
-  PHG4ConeDetector.cc \
-  PHG4ConeRegionSteppingAction.cc \
-  PHG4ConeSteppingAction.cc \
-  PHG4ConeSubsystem.cc \
-  PHG4CrystalCalorimeterDetector.cc \
-  PHG4CrystalCalorimeterDisplayAction.cc \
-  PHG4CrystalCalorimeterSteppingAction.cc \
-  PHG4CrystalCalorimeterSubsystem.cc \
-  PHG4CylinderDetector.cc \
-  PHG4CylinderDisplayAction.cc \
-  PHG4CylinderSubsystem.cc \
-  PHG4CylinderCellReco.cc \
-  PHG4CylinderSteppingAction.cc \
-  PHG4DetectorGroupSubsystem.cc \
-  PHG4DetectorSubsystem.cc \
-  PHG4EnvelopeDetector.cc \
-  PHG4EnvelopeSteppingAction.cc \
-  PHG4EnvelopeSubsystem.cc \
-  PHG4EventActionClearZeroEdep.cc \
-  PHG4FCalDetector.cc \
-  PHG4FCalSteppingAction.cc \
-  PHG4FCalSubsystem.cc \
-  PHG4ForwardEcalDetector.cc \
-  PHG4ForwardEcalDisplayAction.cc \
-  PHG4EICForwardEcalDetector.cc \
-  PHG4ForwardEcalSteppingAction.cc \
-  PHG4ForwardEcalSubsystem.cc \
-  PHG4ForwardHcalDetector.cc \
-  PHG4ForwardHcalDisplayAction.cc \
-  PHG4ForwardHcalSteppingAction.cc \
-  PHG4ForwardHcalSubsystem.cc \
-  PHG4ForwardCalCellReco.cc \
-  PHG4FPbScDetector.cc \
-  PHG4FPbScSteppingAction.cc \
-  PHG4FPbScRegionSteppingAction.cc \
-  PHG4FPbScSubsystem.cc \
-  PHG4GenHit.cc \
-  PHG4HcalCellReco.cc \
-  PHG4HcalDetector.cc \
-  PHG4HcalSteppingAction.cc \
-  PHG4HcalSubsystem.cc \
-  PHG4InnerHcalDetector.cc \
-  PHG4InnerHcalDisplayAction.cc \
-  PHG4InnerHcalSteppingAction.cc \
-  PHG4InnerHcalSubsystem.cc \
-  PHG4OuterHcalDetector.cc \
-  PHG4OuterHcalDisplayAction.cc \
-  PHG4OuterHcalField.cc \
-  PHG4OuterHcalFieldSetup.cc \
-  PHG4OuterHcalSteppingAction.cc \
-  PHG4OuterHcalSubsystem.cc \
-  PHG4ProjCrystalCalorimeterDetector.cc \
-  PHG4RICHDetector.cc \
-  PHG4RICHDisplayAction.cc \
-  PHG4RICHSteppingAction.cc \
-  PHG4RICHSubsystem.cc \
-  ePHENIXRICHConstruction.cc \
-  PHG4SectorConstructor.cc \
-  PHG4SectorDetector.cc \
-  PHG4SectorDisplayAction.cc \
-  PHG4SectorSteppingAction.cc \
-  PHG4SectorSubsystem.cc \
-  PHG4StepStatusDecode.cc \
-  PHG4TrackStatusDecode.cc \
-  PHG4PSTOFDetector.cc \
-  PHG4PSTOFSteppingAction.cc \
-  PHG4PSTOFSubsystem.cc \
-  PHG4SpacalDetector.cc \
-  PHG4SpacalDisplayAction.cc \
-  PHG4FullProjSpacalDetector.cc \
-  PHG4FullProjTiltedSpacalDetector.cc \
-  PHG4FullProjSpacalCellReco.cc \
-  PHG4SpacalSteppingAction.cc \
-  PHG4SpacalSubsystem.cc \
-  PHG4mRICHDetector.cc \
-  PHG4mRICHSteppingAction.cc \
-  PHG4mRICHSubsystem.cc
-=======
   $(ROOT5_DICTS) \
   BeamLineMagnetDetector.cc \
   BeamLineMagnetDisplayAction.cc \
@@ -467,14 +337,13 @@ libg4detectors_la_SOURCES = \
   PHG4mRICHDetector.cc \
   PHG4mRICHSteppingAction.cc \
   PHG4mRICHSubsystem.cc
->>>>>>> master
 
 bin_SCRIPTS = \
   CreateG4Subsystem.pl
 
 # Rule for generating table CINT dictionaries.
 %_Dict.cc: %.h %LinkDef.h
-  rootcint -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
+	rootcint -f $@ @CINTDEFS@ -c $(DEFAULT_INCLUDES) $(AM_CPPFLAGS) $^
 
 #just to get the dependency
 %_Dict_rdict.pcm: %_Dict.cc ;
@@ -495,11 +364,11 @@ testexternals_g4detectors_io_SOURCES = testexternals.cc
 testexternals_g4detectors_io_LDADD = libg4detectors_io.la
 
 testexternals.cc:
-  echo "//*** this is a generated file. Do not commit, do not edit" > $@
-  echo "int main()" >> $@
-  echo "{" >> $@
-  echo "  return 0;" >> $@
-  echo "}" >> $@
+	echo "//*** this is a generated file. Do not commit, do not edit" > $@
+	echo "int main()" >> $@
+	echo "{" >> $@
+	echo "  return 0;" >> $@
+	echo "}" >> $@
 
 clean-local:
-  rm -f *Dict* $(BUILT_SOURCES) *.pcm
+	rm -f *Dict* $(BUILT_SOURCES) *.pcm
