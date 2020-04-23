@@ -440,10 +440,10 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
   they corresponds to clusters of size 1 and 2 in phi
   other clusters, which are very few and pathological, get a scale factor of 1
   */
-  static constexpr std::array<double, 2> scalefactors_phi = {{ 0.81, 0.36 }};
+  static constexpr std::array<double, 2> scalefactors_phi = {{ 0.81, 0.31 }};
   float phierror = pitch*invsqrt12;
-  if( phibins.size() == 2 ) phierror*=scalefactors_phi[0];
-  else if( phibins.size() == 3 )  phierror*=scalefactors_phi[1];
+  if( phibins.size() == 1 ) phierror*=scalefactors_phi[0];
+  else if( phibins.size() == 2 )  phierror*=scalefactors_phi[1];
 
   // z error. All clusters have a z-size of 1.
   const float zerror = length*invsqrt12;

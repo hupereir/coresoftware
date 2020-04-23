@@ -367,7 +367,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   they corresponds to clusters of size (2,2), (2,3), (3,2) and (3,3) in phi and z
   other clusters, which are very few and pathological, get a scale factor of 1
   */
-  static constexpr std::array<double, 4> scalefactors_phi = {{ 0.31, 0.31, 0.66, 0.44 }};
+  static constexpr std::array<double, 4> scalefactors_phi = {{ 0.2, 0.18, 0.6, 0.31 }};
   double phierror = pitch*invsqrt12;
   if( phibins.size() == 2 && zbins.size() == 2 ) phierror*=scalefactors_phi[0];
   else if( phibins.size() == 2 && zbins.size() == 3 )  phierror*=scalefactors_phi[1];
