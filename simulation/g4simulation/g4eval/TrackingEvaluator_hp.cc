@@ -122,6 +122,9 @@ namespace
     trackStruct._nclusters = track->size_cluster_keys();
     trackStruct._mask = get_mask( track );
 
+    trackStruct._chisquare = track->get_chisq();
+    trackStruct._ndf = track->get_ndf();
+
     trackStruct._x = track->get_x();
     trackStruct._y = track->get_y();
     trackStruct._z = track->get_z();
