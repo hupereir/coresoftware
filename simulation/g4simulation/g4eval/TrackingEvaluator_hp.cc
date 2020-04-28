@@ -109,6 +109,15 @@ namespace
       } );
   }
 
+  /// return number of clusters of a given type
+  template<int type>
+    int get_clusters( SvtxTrack* track )
+  {
+    return std::count_if( track->begin_cluster_keys(), track->end_cluster_keys(),
+      []( const TrkrDefs::cluskey& key ) { return TrkrDefs::getTrkrId(key) == type; } );
+  }
+
+
   /// true if given layer is in mask
   bool has_layer( int64_t mask, int layer )
   { return mask & (1LL<<layer); }
@@ -121,6 +130,10 @@ namespace
     trackStruct._charge = track->get_charge();
     trackStruct._nclusters = track->size_cluster_keys();
     trackStruct._mask = get_mask( track );
+    trackStruct._nclusters_mvtx = get_clusters<TrkrDefs::mvtxId>( track );
+    trackStruct._nclusters_intt = get_clusters<TrkrDefs::inttId>( track );
+    trackStruct._nclusters_tpc = get_clusters<TrkrDefs::tpcId>( track );
+    trackStruct._nclusters_ot = get_clusters<TrkrDefs::outertrackerId>( track );
 
     trackStruct._chisquare = track->get_chisq();
     trackStruct._ndf = track->get_ndf();
@@ -177,6 +190,11 @@ namespace
     cluster_struct._z = cluster->getZ();
     cluster_struct._r = get_r( cluster_struct._x, cluster_struct._y );
     cluster_struct._phi = get_phi( cluster_struct._x, cluster_struct._y );
+
+    // for mvtx we add offset on the cluster radius to fix pulls vs z
+    static constexpr std::array<float,3> roffset = {{ -4.1e-4, -3.7e-4, -3.7e-4 }};
+    if( cluster_struct._layer >= 0 && cluster_struct._layer < 3 )
+    { cluster_struct._r += roffset[cluster_struct._layer]; }
 
     cluster_struct._phi_error = cluster->getPhiError();
     cluster_struct._z_error = cluster->getZError();
@@ -271,7 +289,7 @@ namespace
   // add truth information
   void add_truth_information( ClusterStruct& cluster, std::set<PHG4Hit*> hits )
   {
-    const auto rextrap = get_r( cluster._x, cluster._y );
+    const auto rextrap = cluster._r;
     cluster._truth_size = hits.size();
     cluster._truth_x = interpolate<&PHG4Hit::get_x>( hits, rextrap );
     cluster._truth_y = interpolate<&PHG4Hit::get_y>( hits, rextrap );
@@ -500,7 +518,11 @@ void TrackingEvaluator_hp::evaluate_tracks()
     const auto track = trackpair.second;
     auto track_struct = create_track( track );
 
-    // std::cout << "TrackingEvaluator_hp::evaluate_tracks - mask: " << std::bitset<64>( track_struct._mask ) << std::endl;
+//     std::cout << "TrackingEvaluator_hp::evaluate_tracks -"
+//       << " mask: " << std::bitset<64>( track_struct._mask )
+//       << " nmvtx: " << track_struct._nclusters_mvtx
+//       << " intt: " << track_struct._nclusters_intt
+//       << std::endl;
 
     // truth information
     const auto pair = get_max_contributor( track );

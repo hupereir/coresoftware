@@ -123,6 +123,11 @@ class TrackStruct
   int _nclusters = 0;
   int64_t _mask = 0;
 
+  int _nclusters_mvtx = 0;
+  int _nclusters_intt = 0;
+  int _nclusters_tpc = 0;
+  int _nclusters_ot = 0;
+
   float _chisquare = 0;
   int _ndf = 0;
 
