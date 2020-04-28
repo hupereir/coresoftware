@@ -210,7 +210,6 @@ int PHG4MvtxHitReco::process_event(PHCompositeNode *topNode)
 
       TVector3 local_in(hiter->second->get_local_x(0), hiter->second->get_local_y(0), hiter->second->get_local_z(0));
       TVector3 local_out(hiter->second->get_local_x(1), hiter->second->get_local_y(1), hiter->second->get_local_z(1));
-      TVector3 midpoint((local_in.X() + local_out.X()) / 2.0, (local_in.Y() + local_out.Y()) / 2.0, (local_in.Z() + local_out.Z()) / 2.0);
 
       if (Verbosity() > 4)
       {
