@@ -26,6 +26,7 @@ libg4eval_la_LIBADD = \
   -ltpc_io \
   -lmvtx_io \
   -lintt_io \
+  -loutertracker_io \
   -lphg4hit
 
 pkginclude_HEADERS = \

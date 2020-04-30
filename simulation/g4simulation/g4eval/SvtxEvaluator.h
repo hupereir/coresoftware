@@ -36,8 +36,7 @@ class SvtxEvaluator : public SubsysReco
                 const std::string &trackmapname = "SvtxTrackMap",
                 unsigned int nlayers_maps = 3,
                 unsigned int nlayers_intt = 4,
-                unsigned int nlayers_tpc = 48,
-                unsigned int nlayers_outertracker = 2);
+                unsigned int nlayers_tpc = 48 );
   virtual ~SvtxEvaluator();
 
   int Init(PHCompositeNode *topNode);
@@ -92,7 +91,6 @@ class SvtxEvaluator : public SubsysReco
   unsigned int _nlayers_maps = 3;
   unsigned int _nlayers_intt = 4;
   unsigned int _nlayers_tpc = 48;
-  unsigned int _nlayers_outertracker = 2;
 
   TNtuple *_ntp_vertex;
   TNtuple *_ntp_gpoint;
@@ -116,7 +114,7 @@ class SvtxEvaluator : public SubsysReco
 
   void G4ClusterSize(PHCompositeNode* topNode, unsigned int layer, std::vector<std::vector<double>> contributing_hits_entry, std::vector<std::vector<double>> contributing_hits_exit, float &g4phisize, float &g4zsize);
   void LayerClusterG4Hits(PHCompositeNode* topNode, std::set<PHG4Hit*> truth_hits, std::vector<PHG4Hit*> &contributing_hits, std::vector<double> &contributing_hits_energy, std::vector<std::vector<double>> &contributing_hits_entry, std::vector<std::vector<double>> &contributing_hits_exit, float layer, float &gx, float &gy, float &gz,  float &gt, float &gedep);
-  
+
   float line_circle_intersection(float x[], float y[], float z[], float radius);
 
   // output subroutines
