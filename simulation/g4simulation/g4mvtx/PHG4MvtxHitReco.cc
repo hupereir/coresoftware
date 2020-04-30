@@ -306,7 +306,6 @@ int PHG4MvtxHitReco::process_event(PHCompositeNode *topNode)
       vector<int> vpixel;
       vector<int> vxbin;
       vector<int> vzbin;
-      vector<double> vlen;
       vector<pair<double, double> > venergy;
       //double trklen = 0.0;
 

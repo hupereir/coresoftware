@@ -15,19 +15,18 @@ libg4eval_la_LDFLAGS = \
 	-L$(OFFLINE_MAIN)/lib
 
 libg4eval_la_LIBADD = \
-	-lcalo_io \
-	-lCLHEP \
-	-lfun4all \
-	-lg4detectors_io \
-	-lg4jets_io \
-	-lg4vertex_io \
- -lintt_io \
- -lmvtx_io \
- -loutertracker_io \
-	-ltrackbase_historic_io \
-	-ltrack_io \
-	-ltpc_io \
-	-lphg4hit
+  -lcalo_io \
+  -lCLHEP \
+  -lfun4all \
+  -lg4detectors_io \
+  -lg4jets_io \
+  -lg4vertex_io \
+  -ltrackbase_historic_io \
+  -ltrack_io \
+  -ltpc_io \
+  -lmvtx_io \
+  -lintt_io \
+  -lphg4hit
 
 pkginclude_HEADERS = \
 	BaseTruthEval.h \
