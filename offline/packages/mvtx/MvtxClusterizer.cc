@@ -37,7 +37,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
-#include <array>
 #include <cmath>
 #include <cstdlib>                                 // for exit
 #include <iostream>
@@ -127,8 +126,8 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
       dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
     if (!DetNode)
       {
-  DetNode = new PHCompositeNode("TRKR");
-  dstNode->addNode(DetNode);
+	DetNode = new PHCompositeNode("TRKR");
+	dstNode->addNode(DetNode);
       }
 
     trkrclusters = new TrkrClusterContainer();
@@ -144,10 +143,10 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
       PHCompositeNode *DetNode =
         dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
-  {
-    DetNode = new PHCompositeNode("TRKR");
-    dstNode->addNode(DetNode);
-  }
+	{
+	  DetNode = new PHCompositeNode("TRKR");
+	  dstNode->addNode(DetNode);
+	}
 
       clusterhitassoc = new TrkrClusterHitAssoc();
       PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(clusterhitassoc, "TRKR_CLUSTERHITASSOC", "PHObject");
@@ -236,7 +235,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
          hitr != hitrangei.second;
          ++hitr)
       {
-  hitvec.push_back(make_pair(hitr->first, hitr->second));
+	hitvec.push_back(make_pair(hitr->first, hitr->second));
       }
     if (Verbosity() > 2)
       cout << "hitvec.size(): " << hitvec.size() << endl;
@@ -269,98 +268,98 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
     multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*> >  clusters;
     for (unsigned int i = 0; i < component.size(); i++)
       {
-  cluster_ids.insert(component[i]);
-  clusters.insert(make_pair(component[i], hitvec[i]));
+	cluster_ids.insert(component[i]);
+	clusters.insert(make_pair(component[i], hitvec[i]));
       }
 
     // loop over the componenets and make clusters
     for (set<int>::iterator clusiter = cluster_ids.begin(); clusiter != cluster_ids.end(); ++clusiter)
       {
-  int clusid = *clusiter;
-  pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,
-          multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
-  multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
+	int clusid = *clusiter;
+	pair<multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator,
+		      multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator>  clusrange = clusters.equal_range(clusid);
+	multimap<int, std::pair<TrkrDefs::hitkey, TrkrHit*>>::iterator mapiter = clusrange.first;
 
-  if (Verbosity() > 2)
-    cout << "Filling cluster id " << clusid << endl;
+	if (Verbosity() > 2)
+	  cout << "Filling cluster id " << clusid << endl;
 
-  // make the cluster directly in the node tree
-  TrkrDefs::cluskey ckey = MvtxDefs::genClusKey(hitset->getHitSetKey(), clusid);
-  TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
+	// make the cluster directly in the node tree
+	TrkrDefs::cluskey ckey = MvtxDefs::genClusKey(hitset->getHitSetKey(), clusid);
+	TrkrClusterv1 *clus = static_cast<TrkrClusterv1 *>((m_clusterlist->findOrAddCluster(ckey))->second);
 
-  // determine the size of the cluster in phi and z
-  set<int> phibins;
-  set<int> zbins;
+	// determine the size of the cluster in phi and z
+	set<int> phibins;
+	set<int> zbins;
 
-  // determine the cluster position...
-  double xsum = 0.0;
-  double ysum = 0.0;
-  double zsum = 0.0;
-  unsigned nhits = 0;
+	// determine the cluster position...
+	double xsum = 0.0;
+	double ysum = 0.0;
+	double zsum = 0.0;
+	unsigned nhits = 0;
 
-  double clusx = NAN;
-  double clusy = NAN;
-  double clusz = NAN;
+	double clusx = NAN;
+	double clusy = NAN;
+	double clusz = NAN;
 
-  // we need the geometry object for this layer to get the global positions
-  int layer = TrkrDefs::getLayer(ckey);
-  CylinderGeom_Mvtx *layergeom = dynamic_cast<CylinderGeom_Mvtx *>(geom_container->GetLayerGeom(layer));
-  if (!layergeom)
-    exit(1);
+	// we need the geometry object for this layer to get the global positions
+	int layer = TrkrDefs::getLayer(ckey);
+	CylinderGeom_Mvtx *layergeom = dynamic_cast<CylinderGeom_Mvtx *>(geom_container->GetLayerGeom(layer));
+	if (!layergeom)
+	  exit(1);
 
-  int chip = MvtxDefs::getChipId(ckey);
-  int stave =  MvtxDefs::getStaveId(ckey);
+	int chip = MvtxDefs::getChipId(ckey);
+	int stave =  MvtxDefs::getStaveId(ckey);
 
-  for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
-    {
-      // size
-      int col =  MvtxDefs::getCol( (mapiter->second).first);
-      int row = MvtxDefs::getRow( (mapiter->second).first);
-      zbins.insert(col);
-      phibins.insert(row);
+	for (mapiter = clusrange.first; mapiter != clusrange.second; ++mapiter)
+	  {
+	    // size
+	    int col =  MvtxDefs::getCol( (mapiter->second).first);
+	    int row = MvtxDefs::getRow( (mapiter->second).first);
+	    zbins.insert(col);
+	    phibins.insert(row);
 
-      //int pixnum = layergeom->get_pixel_number_from_xbin_zbin(row, col);
-      //cout << "   new mvtx clusterizer: cluster key " << ckey << " layer " << layer << " chip " << chip << " stave " << stave
-      //	 << " row " << row << " col " << col << " pixnum " << pixnum << endl;;
+	    //int pixnum = layergeom->get_pixel_number_from_xbin_zbin(row, col);
+	    //cout << "   new mvtx clusterizer: cluster key " << ckey << " layer " << layer << " chip " << chip << " stave " << stave
+	    //	 << " row " << row << " col " << col << " pixnum " << pixnum << endl;;
 
-      //TVector3 local_coords = layergeom->get_local_coords_from_pixel(pixnum);
-      const TVector3 world_coords = layergeom->get_world_from_local_coords(stave,
+	    //TVector3 local_coords = layergeom->get_local_coords_from_pixel(pixnum);
+	    TVector3 world_coords = layergeom->get_world_from_local_coords(stave,
                                                                      chip,
                                                                      layergeom->get_local_coords_from_pixel(row,col)
                                                                     );
-      //cout << "   new: world coords: X " << world_coords.X() << " Y " << world_coords.Y() << " Z " << world_coords.Z() << endl;
+	    //cout << "   new: world coords: X " << world_coords.X() << " Y " << world_coords.Y() << " Z " << world_coords.Z() << endl;
 
-      // find the center of the pixel in local coords
-      xsum += world_coords.X();
-      ysum += world_coords.Y();
-      zsum += world_coords.Z();
+	    // find the center of the pixel in local coords
+	    xsum += world_coords.X();
+	    ysum += world_coords.Y();
+	    zsum += world_coords.Z();
 
-      // add the association between this cluster key and this hitkey to the table
-      m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+	    // add the association between this cluster key and this hitkey to the table
+	    m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
 
-      ++nhits;
-    }  //mapiter
+	    ++nhits;
+	  }  //mapiter
 
 
-  // This is the global position
-  clusx = xsum / nhits;
-  clusy = ysum / nhits;
-  clusz = zsum / nhits;
-  //cout << "new mvtx clusterizer: clusx " << clusx << " clusy " << clusy << " clusz " << clusz << endl;
-  clus->setAdc(nhits);
+	// This is the global position
+	clusx = xsum / nhits;
+	clusy = ysum / nhits;
+	clusz = zsum / nhits;
+	//cout << "new mvtx clusterizer: clusx " << clusx << " clusy " << clusy << " clusz " << clusz << endl;
+	clus->setAdc(nhits);
 
-  clus->setPosition(0, clusx);
-  clus->setPosition(1, clusy);
-  clus->setPosition(2, clusz);
-  clus->setGlobal();
+	clus->setPosition(0, clusx);
+	clus->setPosition(1, clusy);
+	clus->setPosition(2, clusz);
+	clus->setGlobal();
 
-  const double thickness = layergeom->get_pixel_thickness();
-  const double pitch = layergeom->get_pixel_x();
-  const double length = layergeom->get_pixel_z();
-  const double phisize = phibins.size() * pitch;
-  const double zsize = zbins.size() * length;
+	double thickness = layergeom->get_pixel_thickness();
+	double pitch = layergeom->get_pixel_x();
+	double length = layergeom->get_pixel_z();
+	double phisize = phibins.size() * pitch;
+	double zsize = zbins.size() * length;
 
-  static constexpr double invsqrt12 = 1./std::sqrt(12);
+  static constexpr double i  static constexpr double invsqrt12 = 1./std::sqrt(12);
 
   // scale factors (phi direction)
   /*
@@ -386,101 +385,103 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   else if( zbins.size() == 3 && phibins.size() == 2 )  zerror*=scalefactors_z[2];
   else if( zbins.size() == 3 && phibins.size() == 3 )  zerror*=scalefactors_z[3];
 
-  // returns the center of the sensor in world coordinates - used to get the ladder phi location
-  std::array<double,3> ladder_location = {{0.0, 0.0, 0.0}};
-  layergeom->find_sensor_center(stave, 0, 0, chip, &ladder_location[0]);
+  if(Verbosity() > 0)
+	  cout << " MvtxClusterizer: layer " << layer << " rad " << layergeom->get_radius() << " phibins " << phibins.size() << " pitch " << pitch << " phisize " << phisize
+	       << " zbins " << zbins.size() << " length " << length << " zsize " << zsize << endl;
 
-  // ladder phi angle
+	double ladder_location[3] = {0.0, 0.0, 0.0};
+	// returns the center of the sensor in world coordinates - used to get the ladder phi location
+	layergeom->find_sensor_center(stave, 0, 0, chip, ladder_location);
   const double ladderphi = std::atan2(ladder_location[1], ladder_location[0]) + layergeom->get_stave_phi_tilt();
 
-  // tilt refers to a rotation around the radial vector from the origin, and this is zero for the MVTX ladders
-  //float tilt = 0.0;
+	// tilt refers to a rotation around the radial vector from the origin, and this is zero for the MVTX ladders
+	//float tilt = 0.0;
 
-  TMatrixF DIM(3, 3);
-  DIM[0][0] = square(0.5 * thickness);
-  DIM[0][1] = 0.0;
-  DIM[0][2] = 0.0;
-  DIM[1][0] = 0.0;
-  DIM[1][1] = square(0.5 * phisize);
-  DIM[1][2] = 0.0;
-  DIM[2][0] = 0.0;
-  DIM[2][1] = 0.0;
-  DIM[2][2] = square(0.5 * zsize);
+	TMatrixF DIM(3, 3);
+	DIM[0][0] = square(0.5 * thickness);
+	DIM[0][1] = 0.0;
+	DIM[0][2] = 0.0;
+	DIM[1][0] = 0.0;
+	DIM[1][1] = square(0.5 * phisize);
+	DIM[1][2] = 0.0;
+	DIM[2][0] = 0.0;
+	DIM[2][1] = 0.0;
+	DIM[2][2] = square(0.5 * zsize);
 
-  TMatrixF ERR(3, 3);
-  ERR[0][0] = square(thickness*invsqrt12);
-  ERR[0][1] = 0.0;
-  ERR[0][2] = 0.0;
-  ERR[1][0] = 0.0;
+	TMatrixF ERR(3, 3);
+	ERR[0][0] = square(thickness*invsqrt12);
+	ERR[0][1] = 0.0;
+	ERR[0][2] = 0.0;
+	ERR[1][0] = 0.0;
   ERR[1][1] = square( phierror );
-  ERR[1][2] = 0.0;
-  ERR[2][0] = 0.0;
-  ERR[2][1] = 0.0;
+	ERR[1][2] = 0.0;
+	ERR[2][0] = 0.0;
+	ERR[2][1] = 0.0;
   ERR[2][2] = square( zerror );
 
-  if(Verbosity() > 2)
-    cout << " Local ERR = " << ERR[0][0] << "  " << ERR[1][1] << "  " << ERR[2][2] << endl;
+	if(Verbosity() > 2)
+	  cout << " Local ERR = " << ERR[0][0] << "  " << ERR[1][1] << "  " << ERR[2][2] << endl;
 
-  TMatrixF ROT(3, 3);
-  ROT[0][0] = cos(ladderphi);
-  ROT[0][1] = -1.0 * sin(ladderphi);
-  ROT[0][2] = 0.0;
-  ROT[1][0] = sin(ladderphi);
-  ROT[1][1] = cos(ladderphi);
-  ROT[1][2] = 0.0;
-  ROT[2][0] = 0.0;
-  ROT[2][1] = 0.0;
-  ROT[2][2] = 1.0;
+	TMatrixF ROT(3, 3);
+	ROT[0][0] = cos(ladderphi);
+	ROT[0][1] = -1.0 * sin(ladderphi);
+	ROT[0][2] = 0.0;
+	ROT[1][0] = sin(ladderphi);
+	ROT[1][1] = cos(ladderphi);
+	ROT[1][2] = 0.0;
+	ROT[2][0] = 0.0;
+	ROT[2][1] = 0.0;
+	ROT[2][2] = 1.0;
 
-  // TMatrixF TILT(3, 3);
-  // TILT[0][0] = 1.0;
-  // TILT[0][1] = 0.0;
-  // TILT[0][2] = 0.0;
-  // TILT[1][0] = 0.0;
-  // TILT[1][1] = cos(tilt);
-  // TILT[1][2] = -1.0 * sin(tilt);
-  // TILT[2][0] = 0.0;
-  // TILT[2][1] = sin(tilt);
-  // TILT[2][2] = cos(tilt);
+	// TMatrixF TILT(3, 3);
+	// TILT[0][0] = 1.0;
+	// TILT[0][1] = 0.0;
+	// TILT[0][2] = 0.0;
+	// TILT[1][0] = 0.0;
+	// TILT[1][1] = cos(tilt);
+	// TILT[1][2] = -1.0 * sin(tilt);
+	// TILT[2][0] = 0.0;
+	// TILT[2][1] = sin(tilt);
+	// TILT[2][2] = cos(tilt);
 
   TMatrixF &R = ROT;
-  //TMatrixF R(3, 3);
-  //R = ROT * TILT;
+	//TMatrixF R(3, 3);
+	//R = ROT * TILT;
 
-  TMatrixF R_T(3, 3);
-  R_T.Transpose(R);
+	TMatrixF R_T(3, 3);
+	R_T.Transpose(R);
 
-  TMatrixF COVAR_DIM(3, 3);
-  COVAR_DIM = R * DIM * R_T;
+	TMatrixF COVAR_DIM(3, 3);
+	COVAR_DIM = R * DIM * R_T;
 
-  clus->setSize(0, 0, COVAR_DIM[0][0]);
-  clus->setSize(0, 1, COVAR_DIM[0][1]);
-  clus->setSize(0, 2, COVAR_DIM[0][2]);
-  clus->setSize(1, 0, COVAR_DIM[1][0]);
-  clus->setSize(1, 1, COVAR_DIM[1][1]);
-  clus->setSize(1, 2, COVAR_DIM[1][2]);
-  clus->setSize(2, 0, COVAR_DIM[2][0]);
-  clus->setSize(2, 1, COVAR_DIM[2][1]);
-  clus->setSize(2, 2, COVAR_DIM[2][2]);
+	clus->setSize(0, 0, COVAR_DIM[0][0]);
+	clus->setSize(0, 1, COVAR_DIM[0][1]);
+	clus->setSize(0, 2, COVAR_DIM[0][2]);
+	clus->setSize(1, 0, COVAR_DIM[1][0]);
+	clus->setSize(1, 1, COVAR_DIM[1][1]);
+	clus->setSize(1, 2, COVAR_DIM[1][2]);
+	clus->setSize(2, 0, COVAR_DIM[2][0]);
+	clus->setSize(2, 1, COVAR_DIM[2][1]);
+	clus->setSize(2, 2, COVAR_DIM[2][2]);
 
-  TMatrixF COVAR_ERR(3, 3);
-  COVAR_ERR = R * ERR * R_T;
+	TMatrixF COVAR_ERR(3, 3);
+	COVAR_ERR = R * ERR * R_T;
 
-  clus->setError(0, 0, COVAR_ERR[0][0]);
-  clus->setError(0, 1, COVAR_ERR[0][1]);
-  clus->setError(0, 2, COVAR_ERR[0][2]);
-  clus->setError(1, 0, COVAR_ERR[1][0]);
-  clus->setError(1, 1, COVAR_ERR[1][1]);
-  clus->setError(1, 2, COVAR_ERR[1][2]);
-  clus->setError(2, 0, COVAR_ERR[2][0]);
-  clus->setError(2, 1, COVAR_ERR[2][1]);
-  clus->setError(2, 2, COVAR_ERR[2][2]);
+	clus->setError(0, 0, COVAR_ERR[0][0]);
+	clus->setError(0, 1, COVAR_ERR[0][1]);
+	clus->setError(0, 2, COVAR_ERR[0][2]);
+	clus->setError(1, 0, COVAR_ERR[1][0]);
+	clus->setError(1, 1, COVAR_ERR[1][1]);
+	clus->setError(1, 2, COVAR_ERR[1][2]);
+	clus->setError(2, 0, COVAR_ERR[2][0]);
+	clus->setError(2, 1, COVAR_ERR[2][1]);
+	clus->setError(2, 2, COVAR_ERR[2][2]);
 
 
-  //cout << "MvtxClusterizer (x,y,z) = " << clusx << "  " << clusy << "  " << clusz << endl;
+	//cout << "MvtxClusterizer (x,y,z) = " << clusx << "  " << clusy << "  " << clusz << endl;
 
-  if (Verbosity() > 2)
-  clus->identify();
+	if (Verbosity() > 2)
+	clus->identify();
 
       }  // clusitr
   }    // hitsetitr
