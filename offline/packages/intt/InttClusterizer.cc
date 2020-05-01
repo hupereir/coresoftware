@@ -31,7 +31,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 
-
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <set>
