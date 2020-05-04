@@ -50,6 +50,7 @@ pkginclude_HEADERS = \
   PHTrackSeeding.h \
   PHTrackFitting.h \
   PHTrackSetMerging.h \
+  PHTruthClustering_hp.h \
   PHTruthTrackSeeding.h \
   PHTruthVertexing.h \
   VertexFitter.h \
