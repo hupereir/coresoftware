@@ -169,9 +169,9 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
         }
 
 
-        auto it = m_trackID_clusters.find(particle_id);
+        auto it = m_trackID_clusters.lower_bound(particle_id);
 
-        if (it != m_trackID_clusters.end())
+        if (it != m_trackID_clusters.end() && particle_id == it->first )
         {
           it->second.insert(cluster);
           if (Verbosity() >= 3)
@@ -184,7 +184,7 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
 
           std::set<TrkrCluster*> clusters;
           clusters.insert(cluster);
-          m_trackID_clusters.insert(std::pair<int, std::set<TrkrCluster*> >(particle_id, clusters));
+          m_trackID_clusters.insert(it, std::pair<int, std::set<TrkrCluster*> >(particle_id, clusters));
 
 
           if (Verbosity() >= 3)
