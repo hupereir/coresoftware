@@ -23,6 +23,7 @@
 #include <phool/getClass.h>
 #include <phool/phool.h>
 
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -253,6 +254,47 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
             <<" _track_map->size = "<< (_track_map->size()) <<": ";
         _track_map->identify();
       }
+
+      // look for duplicated layers
+      if( false )
+      {
+        std::set<uint8_t> layers;
+        const bool has_duplicated_layers = std::any_of( svtx_track->begin_cluster_keys(), svtx_track->end_cluster_keys(),
+          [&layers]( const TrkrDefs::cluskey& cluster_key )
+          { return !layers.insert( TrkrDefs::getLayer(cluster_key) ).second; } );
+
+        // print clusters
+        std::cout << "PHTruthTrackSeeding::Process -"
+          << " track: " << svtx_track->get_id()
+          << " truth id: " << svtx_track->get_truth_track_id()
+          << " duplicated layers: " << has_duplicated_layers
+          << std::endl;
+        for( auto key_iter = svtx_track->begin_cluster_keys(); key_iter != svtx_track->end_cluster_keys(); ++key_iter )
+        {
+
+          const auto& cluster_key = *key_iter;
+          auto cluster = _cluster_map->findCluster( cluster_key );
+          if( !cluster )
+          {
+            std::cout << "PHTruthTrackSeeding::print_track - unable to find cluster for key " << cluster_key << std::endl;
+            continue;
+          }
+
+          std::cout
+            << "   cluster layer: "  << (int)TrkrDefs::getLayer(cluster_key)
+            << " position: (" << cluster->getX() << ", " << cluster->getY() << ", " << cluster->getZ() << ") "
+            << " hits: ";
+
+          // also print associated hits
+          const auto range = clusterhitassoc->getHits(cluster_key);
+          for( auto iter = range.first; iter != range.second; ++iter )
+          { std::cout << iter->second << " "; }
+
+          std::cout << std::endl;
+
+        }
+      }
+
     }
   }
 
