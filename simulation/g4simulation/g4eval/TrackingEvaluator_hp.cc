@@ -192,7 +192,7 @@ namespace
     cluster_struct._phi = get_phi( cluster_struct._x, cluster_struct._y );
 
 //     // for mvtx we add offset on the cluster radius to fix pulls vs z
-//     static constexpr std::array<float,3> roffset = {{ -4.1e-4, -3.7e-4, -3.7e-4 }};
+//     static constexpr std::array<float,3> roffset = {{ -5.9e-4, -5.9e-4, -5.7e-4 }};
 //     if( cluster_struct._layer >= 0 && cluster_struct._layer < 3 )
 //     { cluster_struct._r += roffset[cluster_struct._layer]; }
 
