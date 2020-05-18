@@ -21,13 +21,14 @@
 #include <set>
 #include <utility>
 
-class PHCompositeNode;
+using namespace std;
 
 //__________________________________________
 PHTruthVertexing::PHTruthVertexing(const std::string& name)
   : PHInitVertexing(name)
   , _g4truth_container(nullptr)
   , _vertex_error({0.01, 0.01, 0.01})
+  , _embed_only(false)
 {
 
   m_RandomGenerator = gsl_rng_alloc(gsl_rng_mt19937);
@@ -73,6 +74,8 @@ int PHTruthVertexing::Process(PHCompositeNode* topNode)
       pos[1] = iter->second->get_y();
       pos[2] = iter->second->get_z();
 
+      cout << " gembed: " << gembed << " vz " << iter->second->get_z() << endl;
+
       // skip particles that are not primary
       if( sqrt(pos[0]*pos[0]+pos[1]*pos[1])  > 0.1) continue;
 
@@ -80,7 +83,7 @@ int PHTruthVertexing::Process(PHCompositeNode* topNode)
       if(gembed_set.find(gembed) != gembed_set.end()) continue;
 
       gembed_set.insert(gembed);
-
+      
       pos[0] += _vertex_error[0] * gsl_ran_ugaussian(m_RandomGenerator);
       pos[1] += _vertex_error[1] * gsl_ran_ugaussian(m_RandomGenerator);
       pos[2] += _vertex_error[2] * gsl_ran_ugaussian(m_RandomGenerator);
@@ -112,8 +115,11 @@ int PHTruthVertexing::Process(PHCompositeNode* topNode)
       vertex->set_t0(0);
       vertex->set_chisq(0);
       vertex->set_ndof(1);
-
-      _vertex_map->insert(vertex);
+      if(_embed_only){
+	if(gembed>0)_vertex_map->insert(vertex);
+      }else{
+	_vertex_map->insert(vertex);
+      }
     }
 
     if (Verbosity() > 0) _vertex_map->identify();

@@ -42,16 +42,7 @@ template<class T> T square( const T& x ) { return x*x; }
 
 PHTruthTrackSeeding::PHTruthTrackSeeding(const std::string& name)
   : PHTrackSeeding(name)
-  , _g4truth_container(nullptr)
-  , phg4hits_tpc(nullptr)
-  , phg4hits_intt(nullptr)
-  , phg4hits_mvtx(nullptr)
-  , hittruthassoc(nullptr)
-  , clusterhitassoc(nullptr)
-  , _min_clusters_per_track(3)
-  , _min_momentum(50e-3)  // default to p > 50 MeV
-{
-}
+{}
 
 int PHTruthTrackSeeding::Setup(PHCompositeNode* topNode)
 {
@@ -76,11 +67,12 @@ int PHTruthTrackSeeding::Process(PHCompositeNode* topNode)
   TrkrClusterContainer::ConstRange clusrange = _cluster_map->getClusters();
   for (TrkrClusterContainer::ConstIterator clusiter = clusrange.first; clusiter != clusrange.second; ++clusiter)
   {
-
     auto cluster = clusiter->second;
     auto cluskey = clusiter->first;
     auto trkrid = TrkrDefs::getTrkrId(cluskey);
-
+    unsigned int layer = TrkrDefs::getLayer(cluskey);
+    if(layer<_min_layer) continue;
+    if(layer>=_max_layer) continue;
 
     if (Verbosity() >= 3)
     {
