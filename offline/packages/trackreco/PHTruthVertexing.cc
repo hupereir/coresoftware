@@ -59,6 +59,11 @@ int PHTruthVertexing::Setup(PHCompositeNode* topNode)
 //__________________________________________
 int PHTruthVertexing::Process(PHCompositeNode* topNode)
 {
+
+  if(Verbosity() > 1)
+    {
+      std::cout << "embed only: " << std::boolalpha << _embed_only << std::endl;
+    }
   auto vrange =  _g4truth_container->GetPrimaryVtxRange();
   std::set<int> gembed_set;
   for (auto iter = vrange.first; iter != vrange.second; ++iter)  // process all primary vertexes
@@ -74,7 +79,10 @@ int PHTruthVertexing::Process(PHCompositeNode* topNode)
       pos[1] = iter->second->get_y();
       pos[2] = iter->second->get_z();
 
-      cout << " gembed: " << gembed << " vz " << iter->second->get_z() << endl;
+      if(Verbosity() > 1)
+	{
+	  cout << " gembed: " << gembed << " vz " << iter->second->get_z() << endl;
+	}
 
       // skip particles that are not primary
       if( sqrt(pos[0]*pos[0]+pos[1]*pos[1])  > 0.1) continue;
