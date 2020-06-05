@@ -437,6 +437,7 @@ int TrackingEvaluator_hp::load_nodes( PHCompositeNode* topNode )
   m_g4hits_tpc = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_TPC");
   m_g4hits_intt = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_INTT");
   m_g4hits_mvtx = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MVTX");
+  m_g4hits_micromegas = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_MICROMEGAS");
   m_g4hits_outertracker = findNode::getClass<PHG4HitContainer>(topNode, "G4HIT_OuterTracker");
 
   // g4 truth info
@@ -772,20 +773,24 @@ TrackingEvaluator_hp::G4HitSet TrackingEvaluator_hp::find_g4hits( TrkrDefs::clus
 
       switch( TrkrDefs::getTrkrId( hitset_key ) )
       {
-        case TrkrDefs::tpcId:
-        if( m_g4hits_tpc ) g4hit = m_g4hits_tpc->findHit( g4hit_key );
+        case TrkrDefs::mvtxId:
+        if( m_g4hits_mvtx ) g4hit = m_g4hits_mvtx->findHit( g4hit_key );
         break;
 
         case TrkrDefs::inttId:
         if( m_g4hits_intt ) g4hit = m_g4hits_intt->findHit( g4hit_key );
         break;
 
-        case TrkrDefs::outertrackerId:
-        if( m_g4hits_outertracker ) g4hit = m_g4hits_outertracker->findHit( g4hit_key );
+        case TrkrDefs::tpcId:
+        if( m_g4hits_tpc ) g4hit = m_g4hits_tpc->findHit( g4hit_key );
         break;
 
-        case TrkrDefs::mvtxId:
-        if( m_g4hits_mvtx ) g4hit = m_g4hits_mvtx->findHit( g4hit_key );
+        case TrkrDefs::micromegasId:
+        if( m_g4hits_micromegas ) g4hit = m_g4hits_micromegas->findHit( g4hit_key );
+        break;
+
+        case TrkrDefs::outertrackerId:
+        if( m_g4hits_outertracker ) g4hit = m_g4hits_outertracker->findHit( g4hit_key );
         break;
 
         default: break;

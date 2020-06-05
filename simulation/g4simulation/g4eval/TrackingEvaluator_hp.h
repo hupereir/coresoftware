@@ -368,6 +368,7 @@ class TrackingEvaluator_hp : public SubsysReco
   PHG4HitContainer* m_g4hits_tpc = nullptr;
   PHG4HitContainer* m_g4hits_intt = nullptr;
   PHG4HitContainer* m_g4hits_mvtx = nullptr;
+  PHG4HitContainer* m_g4hits_micromegas = nullptr;
   PHG4HitContainer* m_g4hits_outertracker = nullptr;
 
   PHG4TruthInfoContainer* m_g4truthinfo = nullptr;
