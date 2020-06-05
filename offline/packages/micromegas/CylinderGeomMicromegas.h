@@ -1,20 +1,30 @@
-#ifndef CYLINDERGEOMMICROMEGAS_H
-#define CYLINDERGEOMMICROMEGAS_H
+// Tell emacs that this is a C++ source
+//  -*- C++ -*-.
+
+#ifndef MICROMEGAS_CYLINDERGEOMMICROMEGAS_H
+#define MICROMEGAS_CYLINDERGEOMMICROMEGAS_H
 
 /*!
  * \file CylinderGeomMicromegas.h
  * \author Hugo Pereira Da Costa <hugo.pereira-da-costa@cea.fr>
  */
 
-#include <micromegas/MicromegasDefs.h>
+#include "MicromegasDefs.h"
+#include "MicromegasTile.h"
 #include <g4detectors/PHG4CylinderGeom.h>
 
 #include <cmath>
 #include <iostream>
 
+class TVector3;
+
 class CylinderGeomMicromegas : public PHG4CylinderGeom
 {
   public:
+
+  //* empty constructor
+  explicit CylinderGeomMicromegas()
+  {}
 
   //* constructor
   CylinderGeomMicromegas(int layer, MicromegasDefs::SegmentationType type )
@@ -29,8 +39,23 @@ class CylinderGeomMicromegas : public PHG4CylinderGeom
   virtual double get_thickness() const { return m_thickness;}
   virtual double get_zmin() const {return m_zmin;}
   virtual double get_zmax() const {return m_zmax;}
+
+  //! segmentation type
   MicromegasDefs::SegmentationType get_segmentation_type() const {return m_segmentation_type;}
 
+  //! get tile and strip for a give world location
+  std::pair<int,int> find_strip( const TVector3& ) const;
+
+  //! get strip length for a given tile
+  double get_strip_length( uint tileid ) const;
+
+  //! get pitch for a given tile
+  double get_pitch( uint tileid ) const;
+
+  //! get world location for a given tile and strip
+  TVector3 get_world_coordinate( uint tileid, uint stripnum ) const;
+
+  //! print information about this layer
   virtual void identify(std::ostream&) const;
 
   //@}
@@ -42,6 +67,7 @@ class CylinderGeomMicromegas : public PHG4CylinderGeom
   virtual void set_thickness(const double value) {m_thickness = value;}
   virtual void set_zmin(const double value) {m_zmin = value;}
   virtual void set_zmax(const double value) {m_zmax = value;}
+  void set_tiles( const MicromegasTile::List& tiles ) { m_tiles = tiles; }
   void set_segmentation_type( MicromegasDefs::SegmentationType value ) {m_segmentation_type = value;}
   //@}
 
@@ -53,6 +79,9 @@ class CylinderGeomMicromegas : public PHG4CylinderGeom
   double m_thickness = 0;
   double m_zmin = 0;
   double m_zmax = 0;
+
+  //! tiles
+  MicromegasTile::List m_tiles;
 
   ClassDef(CylinderGeomMicromegas, 1)
 };

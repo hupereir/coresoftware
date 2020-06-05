@@ -1,7 +1,7 @@
 // Tell emacs that this is a C++ source
 //  -*- C++ -*-.
-#ifndef PHG4MICROMEGASSTEPPINGACTION_H
-#define PHG4MICROMEGASSTEPPINGACTION_H
+#ifndef G4MICROMEGAS_PHG4MICROMEGASSTEPPINGACTION_H
+#define G4MICROMEGAS_PHG4MICROMEGASSTEPPINGACTION_H
 
 /*!
  * \file PHG4MicromegasSteppingAction.h
@@ -42,10 +42,10 @@ class PHG4MicromegasSteppingAction : public PHG4SteppingAction
   const PHParameters* m_Params = nullptr;
 
   //! pointer to hit container
-  PHG4HitContainer* m_HitContainer = nullptr;
+  PHG4HitContainer* m_hitContainer = nullptr;
 
   // running hit
-  std::unique_ptr<PHG4Hit> m_Hit;
+  std::unique_ptr<PHG4Hit> m_hit;
 
   PHG4HitContainer* m_SaveHitContainer = nullptr;
   G4VPhysicalVolume* m_SaveVolPre = nullptr;
