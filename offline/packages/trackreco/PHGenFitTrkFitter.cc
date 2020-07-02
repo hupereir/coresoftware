@@ -973,10 +973,6 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
     TrkrDefs::cluskey cluster_key = iter->second;
     const int layer = TrkrDefs::getLayer(cluster_key);
 
-    // skip disabled layers
-    if( _disabled_layers.find( layer ) != _disabled_layers.end() )
-    { continue; }
-
     TrkrCluster* cluster = _clustermap->findCluster(cluster_key);
     if (!cluster)
     {
@@ -1042,8 +1038,9 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
     // end new
     //-----------------
 
-    PHGenFit::Measurement* meas = new PHGenFit::PlanarMeasurement(pos, n,
-                  cluster->getRPhiError(), cluster->getZError());
+    const bool layer_is_disabled( _disabled_layers.find( layer ) != _disabled_layers.end() );
+    const double error_scale = layer_is_disabled ? 5000:1;
+    PHGenFit::Measurement* meas = new PHGenFit::PlanarMeasurement(pos, n, cluster->getRPhiError()*error_scale, cluster->getZError()*error_scale);
 
     if(Verbosity() > 10)
       {
@@ -1518,94 +1515,6 @@ std::shared_ptr<SvtxTrack> PHGenFitTrkFitter::MakeSvtxTrack(const SvtxTrack* svt
         << sqrt(state->get_x() * state->get_x() + state->get_y() * state->get_y())
         << endl;
 #endif
-  }
-
-  // loop over clusters, check if layer is disabled, include extrapolated SvtxTrackState
-  if( !_disabled_layers.empty() )
-  {
-
-    unsigned int id_min = 0;
-    for (auto iter = svtx_track->begin_cluster_keys(); iter != svtx_track->end_cluster_keys(); ++iter)
-    {
-
-      auto cluster_key = *iter;
-      auto cluster = _clustermap->findCluster(cluster_key);
-      const int layer = TrkrDefs::getLayer(cluster_key);
-
-      // skip enabled layers
-      if( _disabled_layers.find( layer ) == _disabled_layers.end() )
-      { continue; }
-
-      // get position
-      TVector3 pos(cluster->getPosition(0), cluster->getPosition(1), cluster->getPosition(2));
-      float r_cluster = std::sqrt( square(pos[0]) + square(pos[1]) );
-
-      // loop over states
-      /* find first state whose radius is larger than that of cluster if any */
-      unsigned int id = id_min;
-      for( ; id < gftrack->getNumPointsWithMeasurement(); ++id)
-      {
-
-        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
-        if (!trpoint) continue;
-
-        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
-        if (!kfi) continue;
-
-        const genfit::MeasuredStateOnPlane* gf_state = nullptr;
-        try
-        {
-
-          gf_state = &kfi->getFittedState(true);
-
-        } catch (...) {
-
-          if (Verbosity() > 1)
-          { LogWarning("Failed to get kf fitted state"); }
-
-        }
-
-        if( !gf_state ) continue;
-
-        float r_track = std::sqrt( square( gf_state->getPos().x() ) + square( gf_state->getPos().y() ) );
-        if( r_track > r_cluster ) break;
-
-      }
-
-      // forward extrapolation
-      genfit::MeasuredStateOnPlane gf_state;
-      float pathlength = 0;
-
-      // first point is previous, if valid
-      if( id > 0 )  id_min = id-1;
-
-      // extrapolate forward
-      {
-        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id_min, rep);
-        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
-        gf_state = *kfi->getForwardUpdate();
-        pathlength = gf_state.extrapolateToPoint( pos );
-        auto tmp = *kfi->getBackwardUpdate();
-        pathlength -= tmp.extrapolateToPoint( vertex_position );
-      }
-
-      // also extrapolate backward from next state if any
-      // and take the weighted average between both points
-      if( id > 0 && id < gftrack->getNumPointsWithMeasurement() )
-      {
-        auto trpoint = gftrack->getPointWithMeasurementAndFitterInfo(id, rep);
-        auto kfi = static_cast<genfit::KalmanFitterInfo*>(trpoint->getFitterInfo(rep));
-        genfit::KalmanFittedStateOnPlane gf_state_backward = *kfi->getBackwardUpdate();
-        gf_state_backward.extrapolateToPlane( gf_state.getPlane() );
-        gf_state = genfit::calcAverageState( gf_state, gf_state_backward );
-      }
-
-      // create new svtx state and add to track
-      auto state = create_track_state(  pathlength, &gf_state );
-      out_track->insert_state( &state );
-
-    }
-
   }
 
   return out_track;
