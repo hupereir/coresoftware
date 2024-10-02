@@ -513,15 +513,14 @@ PositionMap PHSimpleKFProp::PrepareKDTrees()
         continue;
       }
 
-      const Acts::Vector3 globalpos_d = getGlobalPosition(cluskey, cluster);
-      const Acts::Vector3 globalpos = {(float) globalpos_d.x(), (float) globalpos_d.y(), (float) globalpos_d.z()};
+      const Acts::Vector3 globalpos = getGlobalPosition(cluskey, cluster);
       globalPositions.insert(std::make_pair(cluskey, globalpos));
 
       int layer = TrkrDefs::getLayer(cluskey);
       std::vector<double> kdhit(4);
-      kdhit[0] = globalpos_d.x();
-      kdhit[1] = globalpos_d.y();
-      kdhit[2] = globalpos_d.z();
+      kdhit[0] = globalpos.x();
+      kdhit[1] = globalpos.y();
+      kdhit[2] = globalpos.z();
       uint64_t key = cluskey;
       std::memcpy(&kdhit[3], &key, sizeof(key));
 

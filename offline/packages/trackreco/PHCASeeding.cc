@@ -262,8 +262,7 @@ std::pair<PHCASeeding::PositionMap, PHCASeeding::keyListPerLayer> PHCASeeding::F
       }
 
       // get global position, convert to Acts::Vector3 and store in map
-      const Acts::Vector3 globalpos_d = getGlobalPosition(ckey, cluster);
-      const Acts::Vector3 globalpos = {globalpos_d.x(), globalpos_d.y(), globalpos_d.z()};
+      const Acts::Vector3 globalpos = getGlobalPosition(ckey, cluster);
       cachedPositions.insert(std::make_pair(ckey, globalpos));
 
       ckeys[layer - _FIRST_LAYER_TPC].push_back(ckey);
