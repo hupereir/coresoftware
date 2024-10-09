@@ -128,6 +128,9 @@ int MicromegasClusterQA::process_event(PHCompositeNode *topNode)
   m_cluster_hit_map = findNode::getClass<TrkrClusterHitAssoc>(topNode, "TRKR_CLUSTERHITASSOC");
   assert( m_cluster_hit_map );
 
+  // global position wrapper
+  m_globalPositionWrapper.loadNodes(topNode);
+
   auto hm = QAHistManagerDef::getHistoManager();
   assert(hm);
 
@@ -156,6 +159,28 @@ int MicromegasClusterQA::process_event(PHCompositeNode *topNode)
     // loop over clusters
     for( const auto& [ckey,cluster]:range_adaptor(cluster_range))
     {
+
+      // get cluster local and global position
+      // local position
+      if( true )
+      {
+        const auto x_local = cluster->getLocalX();
+        const auto y_local = cluster->getLocalY();
+
+        const auto globalPosition = m_globalPositionWrapper.getGlobalPositionDistortionCorrected(ckey, cluster, 0);
+        const auto x_global = globalPosition.x();
+        const auto y_global = globalPosition.y();
+        const auto z_global = globalPosition.z();
+
+        // print
+        std::cout << "MicromegasClusterQA::process_event -"
+          << " key: " << ckey
+          << " hitsetkey: " << hitsetkey
+          << " local: (" << x_local << ", " << y_local << ")"
+          << " global: (" << x_global << ", " << y_global << ", " << z_global << ")"
+          << std::endl;
+      }
+
       // find associated hits
       const auto hit_range = m_cluster_hit_map->getHits(ckey);
 

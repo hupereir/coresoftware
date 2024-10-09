@@ -8,6 +8,8 @@
 #include <micromegas/MicromegasMapping.h>
 #include <micromegas/MicromegasCalibrationData.h>
 
+#include <tpc/TpcGlobalPositionWrapper.h>
+
 #include <array>
 #include <map>
 #include <set>
@@ -83,6 +85,9 @@ class MicromegasClusterQA : public SubsysReco
 
   //! cluster to hit association
   TrkrClusterHitAssoc* m_cluster_hit_map = nullptr;
+
+  //! tpc global position wrapper
+  TpcGlobalPositionWrapper m_globalPositionWrapper;
 
   /// first micromegas layer
   /* this is updated on the fly from geometry object */
