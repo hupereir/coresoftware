@@ -162,7 +162,7 @@ int MicromegasClusterQA::process_event(PHCompositeNode *topNode)
 
       // get cluster local and global position
       // local position
-      if( true )
+      if( false )
       {
         const auto x_local = cluster->getLocalX();
         const auto y_local = cluster->getLocalY();
