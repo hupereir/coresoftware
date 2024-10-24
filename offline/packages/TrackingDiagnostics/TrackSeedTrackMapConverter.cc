@@ -175,7 +175,7 @@ int TrackSeedTrackMapConverter::process_event(PHCompositeNode* /*unused*/)
       else
       {
         unsigned int silseedindex = trackSeed->get_silicon_seed_index();
-        auto silseed = m_siContainer->get(silseedindex);
+        TrackSeed* silseed = m_siContainer->get(silseedindex);
 
         // get positions from cluster keys
         // TODO: should implement distortions
