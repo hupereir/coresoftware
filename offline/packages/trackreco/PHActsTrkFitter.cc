@@ -1,5 +1,5 @@
 /*!
- *  \file		PHActsTrkFitter.C
+ *  \file		PHActsTrkFitter.cc
  *  \brief		Refit SvtxTracks with PHActs.
  *  \details	Refit SvtxTracks with PHActs.
  *  \author	        Tony Frawley <afrawley@fsu.edu>
