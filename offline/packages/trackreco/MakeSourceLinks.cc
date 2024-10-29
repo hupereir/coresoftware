@@ -82,7 +82,7 @@ SourceLinkVec MakeSourceLinks::getSourceLinks(
        clusIter != track->end_cluster_keys();
        ++clusIter)
   {
-    auto key = *clusIter;
+    const auto& key = *clusIter;
     auto cluster = clusterContainer->findCluster(key);
     if (!cluster)
     {
