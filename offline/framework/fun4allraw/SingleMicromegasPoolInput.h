@@ -4,6 +4,8 @@
 #include "MicromegasBcoMatchingInformation.h"
 #include "SingleStreamingInput.h"
 
+#include <phool/PHTimer.h>
+
 #include <array>
 #include <list>
 #include <map>
@@ -102,6 +104,9 @@ class SingleMicromegasPoolInput : public SingleStreamingInput
 
   // keep track of dropped waveforms per packet, due to fun4all pool mismatch
   std::map<int,uint64_t> m_waveform_count_dropped_pool{};
+
+  // timer
+  PHTimer m_timer{ "SingleMicromegasPoolInput" };
 
   //!@name QA histograms
   //@{

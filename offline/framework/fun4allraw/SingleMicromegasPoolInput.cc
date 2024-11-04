@@ -67,6 +67,10 @@ SingleMicromegasPoolInput::~SingleMicromegasPoolInput()
 {
 
   std::cout << "SingleMicromegasPoolInput::~SingleMicromegasPoolInput - runnumber: " << RunNumber() << std::endl;
+
+  // timer statistics
+  m_timer.print_stat();
+
   for( const auto& [packet,counts]:m_waveform_count_total )
   {
     const auto dropped_bco =  m_waveform_count_dropped_bco[packet];
@@ -166,6 +170,7 @@ void SingleMicromegasPoolInput::FillPool(const unsigned int /*nbclks*/)
       exit(1);
     }
 
+    m_timer.restart();
     for (int i = 0; i < npackets; i++)
     {
       // keep pointer to local packet
@@ -332,6 +337,7 @@ void SingleMicromegasPoolInput::FillPool(const unsigned int /*nbclks*/)
         m_MicromegasRawHitMap[gtm_bco].push_back(newhit.release());
       }
     }
+    m_timer.stop();
   }
 }
 
