@@ -168,7 +168,8 @@ int MicromegasClusterizer::process_event(PHCompositeNode *topNode)
   // geometry
   PHG4CylinderGeomContainer* geonode = nullptr;
   for( std::string geonodename: {"CYLINDERGEOM_MICROMEGAS_FULL", "CYLINDERGEOM_MICROMEGAS" } )
-  { if(( geonode =  findNode::getClass<PHG4CylinderGeomContainer>(topNode, geonodename.c_str()) )) break; }
+  { if(( geonode =  findNode::getClass<PHG4CylinderGeomContainer>(topNode, geonodename.c_str()) )) { break;
+}}
   assert(geonode);
 
   // hitset container
@@ -267,7 +268,8 @@ int MicromegasClusterizer::process_event(PHCompositeNode *topNode)
     }
 
     // store last cluster
-    if( begin != hit_range.second ) ranges.push_back( std::make_pair( begin, hit_range.second ) );
+    if( begin != hit_range.second ) { ranges.push_back( std::make_pair( begin, hit_range.second ) );
+}
 
     // initialize cluster count
     int cluster_count = 0;
@@ -376,17 +378,21 @@ int MicromegasClusterizer::process_event(PHCompositeNode *topNode)
       {
         case MicromegasDefs::SegmentationType::SEGMENTATION_PHI:
         {
-          if( coord_error_sq == 0 ) coord_error_sq = square(pitch)/12;
-          else coord_error_sq *= square(error_scale_phi);
-          error_sq_x = coord_error_sq + square(m_added_smear_sigma_rphi);
+          if( coord_error_sq == 0 ) {
+            coord_error_sq = square(pitch)/12;
+          } else {
+            coord_error_sq *= square(error_scale_phi);
+          }
+          error_sq_x = coord_error_sq;
           error_sq_y = square(strip_length*invsqrt12);
           break;
         }
 
         case MicromegasDefs::SegmentationType::SEGMENTATION_Z:
         {
-          if( coord_error_sq == 0 ) coord_error_sq = square(pitch)/12;
-          else coord_error_sq *= square(error_scale_z);
+          if( coord_error_sq == 0 ) { coord_error_sq = square(pitch)/12;
+          } else { coord_error_sq *= square(error_scale_z);
+}
           error_sq_x = square(strip_length*invsqrt12);
           error_sq_y = coord_error_sq + square(m_added_smear_sigma_z);
           break;
