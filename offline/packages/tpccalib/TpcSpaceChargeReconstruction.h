@@ -8,8 +8,6 @@
 #include <fun4all/SubsysReco.h>
 #include <phparameter/PHParameterInterface.h>
 #include <tpc/TpcGlobalPositionWrapper.h>
-#include <trackbase/ActsSurfaceMaps.h>
-#include <trackbase/ActsTrackingGeometry.h>
 
 /// Acts includes to create all necessary definitions
 #include <Acts/Definitions/Algebra.hpp>
