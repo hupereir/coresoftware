@@ -308,6 +308,11 @@ int PHG4SimpleEventGenerator::InitRun(PHCompositeNode *topNode)
     _particle_names.emplace_back(pdgname, count);
   }
 
+  for (auto &[particle_name,counts] : _particle_names)
+  {
+    std::cout << "PHG4SimpleEventGenerator::InitRun - adding " << particle_name << std::endl;
+  }
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
