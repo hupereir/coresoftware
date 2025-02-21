@@ -121,6 +121,14 @@ int PHActsTrackProjection::Init(PHCompositeNode* /*topNode*/)
 
 int PHActsTrackProjection::End(PHCompositeNode* /*topNode*/)
 {
+  std::cout << "PHActsTrackProjection::End" << std::endl;
+
+  // print calorimeter radii
+  for( const auto& [layer,radius]: m_caloRadii )
+  {
+    std::cout << "{" << layer << ", " << radius << "}" << std::endl;
+  }
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
