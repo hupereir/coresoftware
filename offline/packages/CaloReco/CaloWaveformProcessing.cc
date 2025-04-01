@@ -70,7 +70,7 @@ std::vector<std::vector<float>> CaloWaveformProcessing::process_waveform(std::ve
 {
   unsigned int size1 = waveformvector.size();
   std::vector<std::vector<float>> fitresults;
-  if (m_processingtype == CaloWaveformProcessing::TEMPLATE)
+  if (m_processingtype == CaloWaveformProcessing::TEMPLATE || m_processingtype == CaloWaveformProcessing::TEMPLATE_NOSAT)
   {
     for (unsigned int i = 0; i < size1; i++)
     {
@@ -84,7 +84,7 @@ std::vector<std::vector<float>> CaloWaveformProcessing::process_waveform(std::ve
   }
   if (m_processingtype == CaloWaveformProcessing::FAST)
   {
-    fitresults = m_Fitter->calo_processing_fast(waveformvector);
+    fitresults = CaloWaveformFitting::calo_processing_fast(waveformvector);
   }
   if (m_processingtype == CaloWaveformProcessing::NYQUIST)
   {
