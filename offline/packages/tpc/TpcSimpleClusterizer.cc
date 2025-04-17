@@ -125,8 +125,8 @@ namespace
     double adc_sum = 0.0;
     double t2_sum = 0.0;
 
-    double iphi_sum = 0.0;
-    double iphi2_sum = 0.0;
+    double phi_sum = 0.0;
+    double phi2_sum = 0.0;
 
     double radius = my_data.layergeom->get_radius();  // returns center of layer
 
@@ -157,8 +157,9 @@ namespace
       if(it < tbinlo) tbinlo = it;
 
       // update phi sums
-      iphi_sum += iphi * adc;
-      iphi2_sum += square(iphi)*adc;
+      double phi_center = my_data.layergeom->get_phicenter(iphi, my_data.side);
+      phi_sum += phi_center * adc;
+      phi2_sum += square(phi_center) * adc;
 
       // update t sums
       double t = my_data.layergeom->get_zcenter(it);
@@ -173,7 +174,7 @@ namespace
     }
 
     // This is the global position
-    double clusiphi = iphi_sum / adc_sum;
+    double clusiphi = phi_sum / adc_sum;
     double clusphi = my_data.layergeom->get_phi(clusiphi);
 
     float clusx = radius * cos(clusphi);
@@ -186,7 +187,7 @@ namespace
     double clusz  =  my_data.m_tdriftmax * my_data.tGeometry->get_drift_velocity() - zdriftlength;
     if(my_data.side == 0) clusz = -clusz;
 
-    const double phi_cov = (iphi2_sum/adc_sum - square(clusiphi))* pow(my_data.layergeom->get_phistep(),2);
+    const double phi_cov = (phi2_sum/adc_sum - square(clusiphi))* pow(my_data.layergeom->get_phistep(),2);
     const double t_cov = t2_sum/adc_sum - square(clust);
 
     // Get the surface key to find the surface from the
