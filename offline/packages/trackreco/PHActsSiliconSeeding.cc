@@ -95,7 +95,7 @@ int PHActsSiliconSeeding::Init(PHCompositeNode* /*topNode*/)
     printSeedConfigs(sfCfg);
   }
   // vector containing the map of z bins in the top and bottom layers
- 
+
   m_bottomBinFinder = std::make_unique<const Acts::GridBinFinder<2ul>>(
       nphineighbors, zBinNeighborsBottom);
   m_topBinFinder = std::make_unique<const Acts::GridBinFinder<2ul>>(
@@ -143,7 +143,7 @@ int PHActsSiliconSeeding::process_event(PHCompositeNode* topNode)
   }
 
   runSeeder();
- 
+
 
   if (Verbosity() > 0)
   {
@@ -221,12 +221,12 @@ void PHActsSiliconSeeding::runSeeder()
     auto spacePointsGrouping = Acts::CylindricalBinnedGroup<SpacePoint>(
         std::move(grid), *m_bottomBinFinder, *m_topBinFinder,
         std::move(navigation));
-   
+
     /// variable middle SP radial region of interest
     const Acts::Range1D<float> rMiddleSPRange(
         std::floor(rRangeSPExtent.min(Acts::binR) / 2) * 2 + 1.5,
         std::floor(rRangeSPExtent.max(Acts::binR) / 2) * 2 - 1.5);
-   
+
 
 
     eventTimer->restart();
@@ -498,7 +498,7 @@ short int PHActsSiliconSeeding::getCrossingIntt(TrackSeed& si_track)
 	  if(abs(intt_crossings[ic] - crossing_keep) > 1)
 	    {
 	      keep_it = false;
-	      
+
 	      if (Verbosity() > 1)
 		{
 		  std::cout << " Warning: INTT crossings not all the same "
@@ -520,12 +520,12 @@ short int PHActsSiliconSeeding::getCrossingIntt(TrackSeed& si_track)
 	}
     }
   }
-  
+
   if (keep_it)
     {
       return crossing_keep;
     }
-  
+
   return SHRT_MAX;
 }
 
@@ -535,11 +535,11 @@ std::vector<short int> PHActsSiliconSeeding::getInttCrossings(TrackSeed& si_trac
 
   // If the Si track contains an INTT hit, use it to get the bunch crossing offset
   // loop over associated clusters to get keys for silicon cluster
-  for (TrackSeed::ConstClusterKeyIter iter = si_track.begin_cluster_keys();
+  for (auto iter = si_track.begin_cluster_keys();
        iter != si_track.end_cluster_keys();
        ++iter)
   {
-    TrkrDefs::cluskey cluster_key = *iter;
+    const auto& cluster_key = *iter;
     const unsigned int trkrid = TrkrDefs::getTrkrId(cluster_key);
 
     if (Verbosity() > 1)
@@ -569,7 +569,7 @@ std::vector<short int> PHActsSiliconSeeding::getInttCrossings(TrackSeed& si_trac
 
     if (trkrid == TrkrDefs::inttId)
     {
-      TrkrCluster* cluster = m_clusterMap->findCluster(cluster_key);
+      auto cluster = m_clusterMap->findCluster(cluster_key);
       if (!cluster)
       {
         continue;
