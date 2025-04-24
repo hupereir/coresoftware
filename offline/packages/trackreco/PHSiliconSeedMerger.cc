@@ -48,140 +48,114 @@ int PHSiliconSeedMerger::process_event(PHCompositeNode *)
   std::set<unsigned int> seedsToDelete;
 
   if(Verbosity() > 0)
+  {
+    std::cout << "Silicon seed track container has " << m_siliconTracks->size() << std::endl;
+  }
+
+  for(unsigned int track1ID = 0; track1ID < m_siliconTracks->size(); ++track1ID)
+  {
+    auto track1 = m_siliconTracks->get(track1ID);
+
+    if(!track1) { continue; }
+    if(seedsToDelete.find(track1ID) != seedsToDelete.end()) { continue; }
+
+    std::set<TrkrDefs::cluskey> mvtx1Keys;
+    std::copy_if( track1->begin_cluster_keys(), track1->end_cluster_keys(), std::inserter(mvtx1Keys,mvtx1Keys.end()),
+      [this]( const TrkrDefs::cluskey& ckey ) { return (!m_mvtxOnly) || (TrkrDefs::getTrkrId(ckey) == TrkrDefs::TrkrId::mvtxId); } );
+
+    for(unsigned int track2ID = track1ID+1; track2ID < m_siliconTracks->size(); ++track2ID)
     {
-      std::cout << "Silicon seed track container has " << m_siliconTracks->size() << std::endl;
-    }
-  
-  for(unsigned int track1ID = 0;
-      track1ID != m_siliconTracks->size(); 
-      ++track1ID)
-    {
-      TrackSeed* track1 = m_siliconTracks->get(track1ID);
+      auto track2 = m_siliconTracks->get(track2ID);
+      if(!track2) { continue; }
+      if(seedsToDelete.find(track2ID) != seedsToDelete.end()) { continue; }
 
-      if(seedsToDelete.find(track1ID) != seedsToDelete.end())
-	{ continue; }
+      std::set<TrkrDefs::cluskey> mvtx2Keys;
+      std::copy_if( track2->begin_cluster_keys(), track2->end_cluster_keys(), std::inserter(mvtx2Keys,mvtx2Keys.end()),
+        [this]( const TrkrDefs::cluskey& ckey ) { return (!m_mvtxOnly) || (TrkrDefs::getTrkrId(ckey) == TrkrDefs::TrkrId::mvtxId); } );
 
-      std::set<TrkrDefs::cluskey> mvtx1Keys;
-      for (TrackSeed::ConstClusterKeyIter iter = track1->begin_cluster_keys();
-           iter != track1->end_cluster_keys();
-           ++iter)
-	{
-	  TrkrDefs::cluskey ckey = *iter;
-          auto trkrid = TrkrDefs::getTrkrId(ckey);
-		  if(m_mvtxOnly && trkrid == TrkrDefs::TrkrId::inttId)
-		  {
-                    continue;
-                  }
+      std::vector<TrkrDefs::cluskey> intersection;
+      std::set_intersection(mvtx1Keys.begin(),
+        mvtx1Keys.end(),
+        mvtx2Keys.begin(),
+        mvtx2Keys.end(),
+        std::back_inserter(intersection));
 
-            mvtx1Keys.insert(ckey); 
-			}
-	
-   
-      /// We can speed up the code by only iterating over the track seeds
-      /// that are further in the map container from the current track,
-      /// since the comparison of e.g. track 1 with track 2 doesn't need
-      /// to be repeated with track 2 to track 1.
-      for(unsigned int track2ID = track1ID;
-	  track2ID != m_siliconTracks->size();
-	  ++track2ID) 
-	{
-	  if(track1ID == track2ID)
-	    { continue; }
+      /// If we have two clusters in common in the triplet, it is likely
+      /// from the same track
+      if(intersection.size() > m_clusterOverlap)
+      {
+        if(Verbosity() > 2)
+        {
+          std::cout << "Track " << track1ID << " keys " << std::endl;
+          for(auto& key : mvtx1Keys)
+          { std::cout << "   ckey: " << key << std::endl; }
 
-	  TrackSeed* track2 = m_siliconTracks->get(track2ID);
-	  if(track2 == nullptr)
-	    { continue; }
-	  std::set<TrkrDefs::cluskey> mvtx2Keys;
-	  for (TrackSeed::ConstClusterKeyIter iter = track2->begin_cluster_keys();
-	       iter != track2->end_cluster_keys();
-	       ++iter)
-	    {
-	      TrkrDefs::cluskey ckey = *iter;
-              auto trkrid = TrkrDefs::getTrkrId(ckey);
-              if (m_mvtxOnly && trkrid == TrkrDefs::TrkrId::inttId)
-              {
-                continue;
-              }
-         mvtx2Keys.insert(ckey); 
-	    }
+          std::cout << "Track " << track2ID << " keys " << std::endl;
+          for(auto& key : mvtx2Keys)
+          { std::cout << "   ckey: " << key << std::endl; }
 
-	  std::vector<TrkrDefs::cluskey> intersection;
-	  std::set_intersection(mvtx1Keys.begin(),
-				mvtx1Keys.end(),
-				mvtx2Keys.begin(),
-				mvtx2Keys.end(),
-				std::back_inserter(intersection));
+          std::cout << "Intersection keys " << std::endl;
 
-	  /// If we have two clusters in common in the triplet, it is likely
-	  /// from the same track
-	  if(intersection.size() > m_clusterOverlap) 
-	    {
-	      if(Verbosity() > 2) 
-		{
-		  std::cout << "Track " << track1ID << " keys " << std::endl;
-		  for(auto& key : mvtx1Keys) 
-		    { std::cout << "   ckey: " << key << std::endl; }
-		  std::cout << "Track " << track2ID << " keys " << std::endl;
-		  for(auto& key : mvtx2Keys) 
-		    { std::cout << "   ckey: " << key << std::endl; }
-		  std::cout << "Intersection keys " << std::endl;
-		  for(auto& key : intersection)
-		    { std::cout << "   ckey: " << key << std::endl; }
-		}
+          for(auto& key : intersection)
+          { std::cout << "   ckey: " << key << std::endl; }
+        }
 
 	      for(auto& key : mvtx2Keys)
-		{
-		  mvtx1Keys.insert(key); 
-		}
-	      
-	      if(Verbosity() > 2)
-		{ 
-		  std::cout << "Match IDed"<<std::endl; 
-		  for(auto& key : mvtx1Keys)
-		    { std::cout << "  total track keys " << key << std::endl; }
-		}
+        {
+          mvtx1Keys.insert(key);
+        }
 
-	      matches.insert(std::make_pair(track1ID, mvtx1Keys)); 
-	      seedsToDelete.insert(track2ID);
-	      break;
-	    }
-	}
+        if(Verbosity() > 2)
+        {
+          std::cout << "Match IDed"<<std::endl;
+          for(auto& key : mvtx1Keys)
+          { std::cout << "  total track keys " << key << std::endl; }
+        }
+
+        matches.insert(std::make_pair(track1ID, mvtx1Keys));
+        seedsToDelete.insert(track2ID);
+        // break;
+      }
     }
+  }
 
+  // include missing clusters from the matched seed to the kept seed
   for(const auto& [trackKey, mvtxKeys] : matches)
-    {
-      auto track = m_siliconTracks->get(trackKey);
-      if(Verbosity() > 2)
-	{ std::cout << "original track: " << std::endl; track->identify(); }
+  {
+    auto track = m_siliconTracks->get(trackKey);
+    if(Verbosity() > 2)
+    { std::cout << "original track: " << std::endl; track->identify(); }
 
-      for(auto& key : mvtxKeys) 
-	{
-	  if(track->find_cluster_key(key) == track->end_cluster_keys())
-	    { 
-	      track->insert_cluster_key(key); 
-	      if(Verbosity() > 2) 
-		std::cout << "adding " << key << std::endl;
-	    }
-	}
-      
-    }
-
-  for(const auto& key : seedsToDelete) 
+    // this is very strange:
+    // with this algorithm you can end up with a seed that has two MVTX clusters from the same layer
+    for(auto& key : mvtxKeys)
     {
-      if(Verbosity() > 2 )
-	{ std::cout << "Erasing track " << key << std::endl; }
-      m_siliconTracks->erase(key);
+      if(track->find_cluster_key(key) == track->end_cluster_keys())
+      {
+        track->insert_cluster_key(key);
+        if(Verbosity() > 2)
+        { std::cout << "adding " << key << std::endl; }
+      }
     }
+  }
+
+  // delete all seeds marked as duplicates
+  for(const auto& key : seedsToDelete)
+  {
+    if(Verbosity() > 2 )
+    { std::cout << "Erasing track " << key << std::endl; }
+    m_siliconTracks->erase(key);
+  }
 
   if(Verbosity() > 2)
+  {
+    for(const auto& seed : *m_siliconTracks)
     {
-      for(const auto& seed : *m_siliconTracks)
-	{ 
-	  if (!seed) continue;
-	  seed->identify(); 
-	}
+      if (!seed) continue;
+      seed->identify();
     }
-	  
+  }
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -210,7 +184,7 @@ int PHSiliconSeedMerger::getNodes(PHCompositeNode *topNode)
 		<< std::endl;
       return Fun4AllReturnCodes::ABORTEVENT;
     }
-  
+
 return Fun4AllReturnCodes::EVENT_OK;
 }
 
