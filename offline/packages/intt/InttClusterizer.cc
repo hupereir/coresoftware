@@ -441,7 +441,7 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
       // std::cout << " intt clustering: add cluster number " << clusid << std::endl;
 
       // make the cluster directly in the node tree
-      TrkrDefs::cluskey ckey = TrkrDefs::genClusKey(hitset->getHitSetKey(), clusid);
+      const TrkrDefs::cluskey ckey = TrkrDefs::genClusKey(hitset->getHitSetKey(), clusid);
 
       if (Verbosity() > 2)
       {
@@ -449,7 +449,7 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
       }
 
       // get the bunch crossing number from the hitsetkey
-      short int crossing = InttDefs::getTimeBucketId(hitset->getHitSetKey());
+      const short int crossing = InttDefs::getTimeBucketId(hitset->getHitSetKey());
 
       // Add clusterkey/bunch crossing to mmap
       m_clustercrossingassoc->addAssoc(ckey, crossing);
@@ -710,7 +710,7 @@ void InttClusterizer::ClusterLadderCellsRaw(PHCompositeNode* topNode)
     {
       // std::cout << " intt clustering: add cluster number " << clusid << std::endl;
       // make the cluster directly in the node tree
-      TrkrDefs::cluskey ckey = TrkrDefs::genClusKey(hitset->getHitSetKey(), clusid);
+      const TrkrDefs::cluskey ckey = TrkrDefs::genClusKey(hitset->getHitSetKey(), clusid);
 
       if (Verbosity() > 2)
       {
@@ -718,7 +718,7 @@ void InttClusterizer::ClusterLadderCellsRaw(PHCompositeNode* topNode)
       }
 
       // get the bunch crossing number from the hitsetkey
-      short int crossing = InttDefs::getTimeBucketId(hitset->getHitSetKey());
+      const short int crossing = InttDefs::getTimeBucketId(hitset->getHitSetKey());
 
       // Add clusterkey/bunch crossing to mmap
       m_clustercrossingassoc->addAssoc(ckey, crossing);
