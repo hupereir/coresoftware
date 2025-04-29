@@ -454,6 +454,9 @@ void InttClusterizer::ClusterLadderCells(PHCompositeNode* topNode)
       // Add clusterkey/bunch crossing to mmap
       m_clustercrossingassoc->addAssoc(ckey, crossing);
 
+      // Add clusterkey/bunch crossing to mmap
+      m_clustercrossingassoc->addAssoc(ckey, crossing);
+
       // determine the size of the cluster in phi and z, useful for track fitting the cluster
       std::set<int> phibins;
       std::set<int> zbins;
@@ -719,6 +722,9 @@ void InttClusterizer::ClusterLadderCellsRaw(PHCompositeNode* topNode)
 
       // get the bunch crossing number from the hitsetkey
       const short int crossing = InttDefs::getTimeBucketId(hitset->getHitSetKey());
+
+      // Add clusterkey/bunch crossing to mmap
+      m_clustercrossingassoc->addAssoc(ckey, crossing);
 
       // Add clusterkey/bunch crossing to mmap
       m_clustercrossingassoc->addAssoc(ckey, crossing);
