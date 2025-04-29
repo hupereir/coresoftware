@@ -9,6 +9,7 @@
 #include <phool/PHTimer.h>
 
 #include <trackbase/TrkrDefs.h>
+#include <trackbase/MvtxDefs.h>
 
 #include <trackbase_historic/TrackSeedContainer.h>
 #include <trackbase_historic/TrackSeed.h>
@@ -20,11 +21,6 @@
 PHSiliconSeedMerger::PHSiliconSeedMerger(const std::string &name):
  SubsysReco(name)
 {}
-
-//____________________________________________________________________________..
-PHSiliconSeedMerger::~PHSiliconSeedMerger()
-{
-}
 
 //____________________________________________________________________________..
 int PHSiliconSeedMerger::Init(PHCompositeNode*)
@@ -43,31 +39,141 @@ int PHSiliconSeedMerger::InitRun(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int PHSiliconSeedMerger::process_event(PHCompositeNode *)
 {
+  // count number of valid seeds
+  const auto valid_seeds = std::count_if(
+    m_siliconTracks->begin(), m_siliconTracks->end(),
+    [](TrackSeed*seed){ return seed != nullptr; } );
 
-  std::multimap<unsigned int, std::set<TrkrDefs::cluskey>> matches;
+  // count total number of non-null seeds
+  m_seed_counter_total += valid_seeds;
+
+  strong_merger();
+  weak_merger();
+  return Fun4AllReturnCodes::EVENT_OK;
+}
+
+//____________________________________________________________________________..
+int PHSiliconSeedMerger::strong_merger()
+{
+  // keep track of the seeds to be deleted
   std::set<unsigned int> seedsToDelete;
 
-  if(Verbosity() > 0)
+  // lambda function to get silicon keys from track. removing strobe ID from MVTX
+  auto get_silicon_keys = [](TrackSeed* track)
   {
-    std::cout << "Silicon seed track container has " << m_siliconTracks->size() << std::endl;
-  }
+    std::set<TrkrDefs::cluskey> silicon_keys;
+    for( auto iter=track->begin_cluster_keys(); iter!=track->end_cluster_keys();++iter)
+    {
+      const auto& ckey=*iter;
+      const auto trkId=TrkrDefs::getTrkrId(ckey);
+      switch(trkId)
+      {
+        case TrkrDefs::mvtxId:
+        silicon_keys.insert(MvtxDefs::resetStrobe(ckey));
+        break;
 
+        case TrkrDefs::inttId:
+        silicon_keys.insert(ckey);
+        break;
+
+        default:
+        break;
+      }
+    }
+    return silicon_keys;
+  };
+
+  // first loop over tracks
   for(unsigned int track1ID = 0; track1ID < m_siliconTracks->size(); ++track1ID)
   {
     auto track1 = m_siliconTracks->get(track1ID);
 
+    // check seed validity
     if(!track1) { continue; }
-    if(seedsToDelete.find(track1ID) != seedsToDelete.end()) { continue; }
+
+    // check if already marked as removed
+    if(seedsToDelete.find(track1ID) != seedsToDelete.end())
+    { continue; }
+
+    // get silicon keys
+    const auto silicon_keys1 = get_silicon_keys(track1);
+
+    // second loop over seeds
+    for(unsigned int track2ID = track1ID+1; track2ID < m_siliconTracks->size(); ++track2ID)
+    {
+      auto track2 = m_siliconTracks->get(track2ID);
+
+      // check seed validity
+      if(!track2)
+      { continue; }
+
+      // check if already marked as removed
+      if(seedsToDelete.find(track2ID) != seedsToDelete.end())
+      { continue; }
+
+      // get silicon keys
+      const auto silicon_keys2 = get_silicon_keys(track2);
+
+      // compare
+      /*
+       * for this comparison, we request all keys to be identical for the two seeds
+       * this would remove seeds for which intt clusters are identical and
+       * MVTX clusters are identical but for the strobe number
+       */
+
+      if( silicon_keys2 == silicon_keys1 )
+      { seedsToDelete.insert(track2ID); }
+    }
+  }
+
+  // delete all seeds marked as duplicates
+  for(const auto& key : seedsToDelete)
+  {
+    if(Verbosity() > 2 )
+    { std::cout << "PHSiliconSeedMerger::strong_merger - Erasing seed " << key << std::endl; }
+    m_siliconTracks->erase(key);
+  }
+
+  // delete seeds
+  m_seed_counter_deleted += seedsToDelete.size();
+
+  return Fun4AllReturnCodes::EVENT_OK;
+}
+
+//____________________________________________________________________________..
+int PHSiliconSeedMerger::weak_merger()
+{
+  std::multimap<unsigned int, std::set<TrkrDefs::cluskey>> matches;
+  std::set<unsigned int> seedsToDelete;
+
+  // first loop over seeds
+  for(unsigned int track1ID = 0; track1ID < m_siliconTracks->size(); ++track1ID)
+  {
+    auto track1 = m_siliconTracks->get(track1ID);
+
+    // check seed validity
+    if(!track1) { continue; }
+
+    // check if already marked as removed
+    if(seedsToDelete.find(track1ID) != seedsToDelete.end())
+    { continue; }
 
     std::set<TrkrDefs::cluskey> mvtx1Keys;
     std::copy_if( track1->begin_cluster_keys(), track1->end_cluster_keys(), std::inserter(mvtx1Keys,mvtx1Keys.end()),
       [this]( const TrkrDefs::cluskey& ckey ) { return (!m_mvtxOnly) || (TrkrDefs::getTrkrId(ckey) == TrkrDefs::TrkrId::mvtxId); } );
 
+    // second loop over seeds
     for(unsigned int track2ID = track1ID+1; track2ID < m_siliconTracks->size(); ++track2ID)
     {
       auto track2 = m_siliconTracks->get(track2ID);
-      if(!track2) { continue; }
-      if(seedsToDelete.find(track2ID) != seedsToDelete.end()) { continue; }
+
+      // check seed validity
+      if(!track2)
+      { continue; }
+
+      // check if already marked as removed
+      if(seedsToDelete.find(track2ID) != seedsToDelete.end())
+      { continue; }
 
       std::set<TrkrDefs::cluskey> mvtx2Keys;
       std::copy_if( track2->begin_cluster_keys(), track2->end_cluster_keys(), std::inserter(mvtx2Keys,mvtx2Keys.end()),
@@ -147,6 +253,8 @@ int PHSiliconSeedMerger::process_event(PHCompositeNode *)
     m_siliconTracks->erase(key);
   }
 
+  m_seed_counter_deleted += seedsToDelete.size();
+
   if(Verbosity() > 2)
   {
     for(const auto& seed : *m_siliconTracks)
@@ -162,19 +270,25 @@ int PHSiliconSeedMerger::process_event(PHCompositeNode *)
 //____________________________________________________________________________..
 int PHSiliconSeedMerger::ResetEvent(PHCompositeNode *)
 {
-
   return Fun4AllReturnCodes::EVENT_OK;
 }
-
-
 
 //____________________________________________________________________________..
 int PHSiliconSeedMerger::End(PHCompositeNode *)
 {
+  std::cout << "PHSiliconSeedMerger::End -"
+    << " m_seed_counter_total: " << m_seed_counter_total
+    << std::endl;
+
+  std::cout << "PHSiliconSeedMerger::End -"
+    << " m_seed_counter_deleted: " << m_seed_counter_deleted
+    << " fraction: " << double( m_seed_counter_deleted )/m_seed_counter_total
+    << std::endl;
 
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
+//____________________________________________________________________________..
 int PHSiliconSeedMerger::getNodes(PHCompositeNode *topNode)
 {
   m_siliconTracks = findNode::getClass<TrackSeedContainer>(topNode, m_trackMapName.c_str());

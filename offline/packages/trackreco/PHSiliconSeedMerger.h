@@ -18,7 +18,7 @@ class PHSiliconSeedMerger : public SubsysReco
 
   PHSiliconSeedMerger(const std::string &name = "PHSiliconSeedMerger");
 
-  virtual ~PHSiliconSeedMerger();
+  ~PHSiliconSeedMerger() override = default;
 
   int Init(PHCompositeNode *topNode) override;
   int InitRun(PHCompositeNode *topNode) override;
@@ -32,12 +32,28 @@ class PHSiliconSeedMerger : public SubsysReco
 
  private:
 
+  //! merge seeds based on strong matching between cluster keys
+  /**
+   * all cluster keys are expected to match.
+   * For MVTX clusters, the strobe part of the cluster key is ignored
+   */
+  int strong_merger();
+
+  //! merge seeds based on loose matching between cluster keys
+  int weak_merger();
+
   int getNodes(PHCompositeNode *topNode);
 
   TrackSeedContainer *m_siliconTracks {nullptr};
   std::string m_trackMapName {"SiliconTrackSeedContainer"};
   unsigned int m_clusterOverlap {1};
   bool m_mvtxOnly {true};
+
+  //!@name counters
+  //@{
+  uint64_t m_seed_counter_total = 0;
+  uint64_t m_seed_counter_deleted = 0;
+  //@}
 };
 
 #endif // PHSILICONSEEDMERGER_H
