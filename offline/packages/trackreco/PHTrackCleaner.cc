@@ -29,9 +29,6 @@ PHTrackCleaner::PHTrackCleaner(const std::string &name)
 }
 
 //____________________________________________________________________________..
-PHTrackCleaner::~PHTrackCleaner() = default;
-
-//____________________________________________________________________________..
 int PHTrackCleaner::InitRun(PHCompositeNode *topNode)
 {
   int ret = GetNodes(topNode);
@@ -99,75 +96,73 @@ int PHTrackCleaner::process_event(PHCompositeNode * /*topNode*/)
     unsigned int best_ndf = 1;
     for (auto it = tpc_range.first; it != tpc_range.second; ++it)
     {
-      unsigned int track_id = it->second;
+      const unsigned int& track_id = it->second;
 
       // note that the track no longer exists if it failed in the Acts fitter
-      _track = _track_map->get(track_id);
+      auto track = _track_map->get(track_id);
 
-      if (_track)
+      if (track)
       {
         unsigned int si_index = UINT_MAX;
-        auto si_seed = _track->get_silicon_seed();
+        auto si_seed = track->get_silicon_seed();
         if (si_seed)
-	  {
-	    si_index = _silicon_seed_map->find(si_seed);
-	  }
-	else
-	  {
-      if(Verbosity() > 1)
-      {
-	    std::cout << "      no silicon seed found " << std::endl;
-	  }
-    }
-	
+        {
+          si_index = _silicon_seed_map->find(si_seed);
+        }
+        else
+        {
+          if(Verbosity() > 1)
+          {
+            std::cout << "      no silicon seed found " << std::endl;
+          }
+        }
+
         if (_pp_mode)
-	  {
-	    if (!si_seed)
-	      {
-		// Tracks with no silicon seed in pp mode
-		if (_track->get_chisq() / _track->get_ndf() < min_chisq_df && _track->get_ndf() > min_ndf && _track->get_ndf() != UINT_MAX)
-		  {
-		    best_id = track_id;
-		    best_ndf = _track->get_ndf();	    
-		    double qual = _track->get_chisq() / _track->get_ndf();
-		    
-		    if (qual < quality_cut * 2)
-		      {
-			// keep this TPC only track
-			track_keep_list.insert(best_id);
-			ok_track++;
-			if (qual < quality_cut)
-			  {
-			    good_track++;
-			  }
-			
-			if (Verbosity() > 1)
-			  {
-			    std::cout << "        keep unmatched track tpc_id " << tpc_id << " given best_id " << best_id 
-				      << " best_ndf " << best_ndf << " chisq/ndf " << qual << std::endl;			
-			  }		    
-		      }
-		  }
-		
-		continue;
-	      }
-	    
-	  }
-	
+        {
+          if (!si_seed)
+          {
+            // Tracks with no silicon seed in pp mode
+            if (track->get_chisq() / track->get_ndf() < min_chisq_df && track->get_ndf() > min_ndf && track->get_ndf() != UINT_MAX)
+            {
+              best_id = track_id;
+              best_ndf = track->get_ndf();
+              double qual = track->get_chisq() / track->get_ndf();
+
+              if (qual < quality_cut * 2)
+              {
+                // keep this TPC only track
+                track_keep_list.insert(best_id);
+                ok_track++;
+                if (qual < quality_cut)
+                {
+                  good_track++;
+                }
+
+                if (Verbosity() > 1)
+                {
+                  std::cout << "        keep unmatched track tpc_id " << tpc_id << " given best_id " << best_id
+                    << " best_ndf " << best_ndf << " chisq/ndf " << qual << std::endl;
+                }
+              }
+            }
+
+            continue;
+          }
+        }
+
         // Find the remaining silicon matched track with the best chisq/ndf
-	
         if (Verbosity() > 1)
-	  {
-          std::cout << "        track ID " << track_id << " tpc index " << tpc_id << " si index " << si_index << " crossing " << _track->get_crossing()
-                    << " chisq " << _track->get_chisq() << " ndf " << _track->get_ndf() << " min_chisq_df " << min_chisq_df << std::endl;
+        {
+          std::cout << "        track ID " << track_id << " tpc index " << tpc_id << " si index " << si_index << " crossing " << track->get_crossing()
+            << " chisq " << track->get_chisq() << " ndf " << track->get_ndf() << " min_chisq_df " << min_chisq_df << std::endl;
         }
 
         // only accept tracks with ndf > min_ndf - very small ndf means something went wrong, as does ndf undefined
-        if (_track->get_chisq() / _track->get_ndf() < min_chisq_df && _track->get_ndf() > min_ndf && _track->get_ndf() != UINT_MAX)
+        if (track->get_chisq() / track->get_ndf() < min_chisq_df && track->get_ndf() > min_ndf && track->get_ndf() != UINT_MAX)
         {
-          min_chisq_df = _track->get_chisq() / _track->get_ndf();
+          min_chisq_df = track->get_chisq() / track->get_ndf();
           best_id = track_id;
-          best_ndf = _track->get_ndf();
+          best_ndf = track->get_ndf();
         }
       }
     }
@@ -190,9 +185,7 @@ int PHTrackCleaner::process_event(PHCompositeNode * /*topNode*/)
           good_track++;
         }
       }
-    }
-    else
-    {
+    } else {
       if (Verbosity() > 1)
       {
         std::cout << "        no track exists  for tpc_id " << tpc_id << std::endl;
@@ -206,12 +199,9 @@ int PHTrackCleaner::process_event(PHCompositeNode * /*topNode*/)
   }
 
   // make a list of tracks that did not make the keep list
-  for (auto &track_it : *_track_map)
+  for (const auto &[id,track] : *_track_map)
   {
-    auto id = track_it.first;
-
-    auto set_it = track_keep_list.find(id);
-    if (set_it == track_keep_list.end())
+    if( !track_keep_list.contains(id) )
     {
       if (Verbosity() > 1)
       {
@@ -265,10 +255,11 @@ int PHTrackCleaner::GetNodes(PHCompositeNode *topNode)
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
-  _track_map = findNode::getClass<SvtxTrackMap>(topNode, "SvtxTrackMap");
+  // track map
+  _track_map = findNode::getClass<SvtxTrackMap>(topNode, m_trackmapname);
   if (!_track_map)
   {
-    std::cout << PHWHERE << " ERROR: Can't find SvtxTrackMap: " << std::endl;
+    std::cout << PHWHERE << " ERROR: Can't find track map named " << m_trackmapname << std::endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 

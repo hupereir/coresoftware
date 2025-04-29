@@ -25,9 +25,12 @@ class TrackSeedContainer;
 class PHTrackCleaner : public SubsysReco
 {
  public:
+
+  //! constructor
   PHTrackCleaner(const std::string &name = "PHTrackCleaner");
 
-  ~PHTrackCleaner() override;
+  //! destructor
+  ~PHTrackCleaner() override = default;
 
   int InitRun(PHCompositeNode *topNode) override;
   int process_event(PHCompositeNode *topNode) override;
@@ -36,12 +39,18 @@ class PHTrackCleaner : public SubsysReco
   void set_pp_mode(const bool flag) { _pp_mode = flag; }
   void set_quality_cut(const float cut) { quality_cut = cut; }
 
+  //! track map name
+  void set_trackmap_name( const std::string& value )
+  { m_trackmapname = value; }
+
  private:
   int GetNodes(PHCompositeNode *topNode);
   void findGhostTracks();
 
+  //! track map name
+  std::string m_trackmapname = "SvtxTrackMap";
+
   SvtxTrackMap *_track_map{nullptr};
-  SvtxTrack *_track{nullptr};
   TrackSeedContainer *_tpc_seed_map{nullptr};
   TrackSeedContainer *_silicon_seed_map{nullptr};
 
