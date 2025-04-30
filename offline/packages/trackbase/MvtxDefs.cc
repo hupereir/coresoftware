@@ -150,5 +150,12 @@ TrkrDefs::cluskey
 MvtxDefs::resetStrobe(const TrkrDefs::cluskey key)
 {
   TrkrDefs::hitsetkey tmp =  TrkrDefs::getHitSetKeyFromClusKey(key);
-  return TrkrDefs::genClusKey(resetStrobe(tmp), key);
+  return TrkrDefs::genClusKey(resetStrobe(tmp), TrkrDefs::getClusIndex(key));
+}
+
+TrkrDefs::cluskey
+MvtxDefs::resetIndex(const TrkrDefs::cluskey key)
+{
+  TrkrDefs::hitsetkey tmp =  TrkrDefs::getHitSetKeyFromClusKey(key);
+  return TrkrDefs::genClusKey(tmp,0);
 }

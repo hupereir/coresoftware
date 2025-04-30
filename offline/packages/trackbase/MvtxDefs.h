@@ -111,6 +111,13 @@ namespace MvtxDefs
   TrkrDefs::cluskey genClusKey(const uint8_t lyr, const uint8_t stave, const uint8_t chip, const int strobe, const uint32_t clusid);
 
   /**
+   * @brief Zero the strobe bits in the hitsetkey
+   * @param[in] hskey hitsetkey
+   * @param[out] hitsetkey with strobe bits set to zero
+   */
+  TrkrDefs::hitsetkey resetStrobe(const TrkrDefs::hitsetkey /*hitsetkey*/);
+
+  /**
    * @brief Zero the strobe bits in the cluster key
    * @param[in] hskey cluskey
    * @param[out] cluskey with strobe bits set to zero
@@ -118,11 +125,11 @@ namespace MvtxDefs
   TrkrDefs::cluskey resetStrobe(const TrkrDefs::cluskey /*key*/);
 
   /**
-   * @brief Zero the strobe bits in the hitsetkey
-   * @param[in] hskey hitsetkey
-   * @param[out] hitsetkey with strobe bits set to zero
+   * @brief Zero the strobe bits in the cluster key
+   * @param[in] hskey cluskey
+   * @param[out] cluskey with strobe bits set to zero
    */
-  TrkrDefs::hitsetkey resetStrobe(const TrkrDefs::hitsetkey /*hitsetkey*/);
+  TrkrDefs::cluskey resetIndex(const TrkrDefs::cluskey /*key*/);
 
 }  // namespace MvtxDefs
 
