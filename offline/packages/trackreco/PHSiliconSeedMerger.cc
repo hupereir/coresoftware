@@ -25,7 +25,9 @@ PHSiliconSeedMerger::PHSiliconSeedMerger(const std::string &name):
 //____________________________________________________________________________..
 int PHSiliconSeedMerger::Init(PHCompositeNode*)
 {
-
+  std::cout << "PHSiliconSeedMerger::Init - m_mvtxOnly: " << m_mvtxOnly << std::endl;
+  std::cout << "PHSiliconSeedMerger::Init - m_use_strong_merger: " << m_use_strong_merger << std::endl;
+  std::cout << "PHSiliconSeedMerger::Init - m_use_weak_merger: " << m_use_weak_merger << std::endl;
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
@@ -47,8 +49,8 @@ int PHSiliconSeedMerger::process_event(PHCompositeNode *)
   // count total number of non-null seeds
   m_seed_counter_total += valid_seeds;
 
-  strong_merger();
-  weak_merger();
+  if( m_use_strong_merger ) { strong_merger(); }
+  if( m_use_weak_merger ) { weak_merger(); }
   return Fun4AllReturnCodes::EVENT_OK;
 }
 

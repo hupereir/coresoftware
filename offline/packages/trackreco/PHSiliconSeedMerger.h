@@ -30,6 +30,12 @@ class PHSiliconSeedMerger : public SubsysReco
   void clusterOverlap(const unsigned int nclusters) { m_clusterOverlap = nclusters; }
   void searchIntt() { m_mvtxOnly = false; }
 
+  void set_use_strong_merger(bool value)
+  { m_use_strong_merger = value; }
+
+  void set_use_weak_merger(bool value)
+  { m_use_weak_merger = value; }
+
  private:
 
   //! merge seeds based on strong matching between cluster keys
@@ -48,6 +54,12 @@ class PHSiliconSeedMerger : public SubsysReco
   std::string m_trackMapName {"SiliconTrackSeedContainer"};
   unsigned int m_clusterOverlap {1};
   bool m_mvtxOnly {true};
+
+  //! set to true to run the strong seed merger
+  bool m_use_strong_merger {false};
+
+  //! set to true to run the weak seed merger
+  bool m_use_weak_merger {true};
 
   //!@name counters
   //@{
