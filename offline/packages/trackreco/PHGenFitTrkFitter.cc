@@ -737,7 +737,7 @@ std::shared_ptr<PHGenFit::Track> PHGenFitTrkFitter::ReFitTrack(PHCompositeNode* 
 
   if (_fitter->processTrack(track.get(), false) != 0)
   {
-    // if (Verbosity() >= 1)
+    if (Verbosity())
     {
       LogWarning("Track fitting failed");
     }
