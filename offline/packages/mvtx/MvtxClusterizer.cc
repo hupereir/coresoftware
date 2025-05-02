@@ -132,13 +132,7 @@ bool MvtxClusterizer::are_adjacent(RawHit *lhs, RawHit *rhs)
 
 MvtxClusterizer::MvtxClusterizer(const string &name)
   : SubsysReco(name)
-  , m_hits(nullptr)
-  , m_rawhits(nullptr)
-  , m_clusterlist(nullptr)
-  , m_clusterhitassoc(nullptr)
-  , m_makeZClustering(true)
-{
-}
+{}
 
 int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
 {
@@ -488,7 +482,8 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
         loczsum += local_coords.Z();
         // add the association between this cluster key and this hitkey to the
         // table
-        m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+        if( do_hit_assoc )
+        { m_clusterhitassoc->addAssoc(ckey, mapiter->second.first); }
 
       }  // mapiter
 
@@ -622,7 +617,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
     }  // clusitr loop
   }    // loop over hitsets
 
-  if (Verbosity() > 1)
+  if(do_hit_assoc && Verbosity() > 1)
   {
     // check that the associations were written correctly
     m_clusterhitassoc->identify();
@@ -787,7 +782,7 @@ void MvtxClusterizer::ClusterMvtxRaw(PHCompositeNode *topNode)
         loczsum += local_coords.Z();
         // add the association between this cluster key and this hitkey to the
         // table
-        //	      m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+        // m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
 
       }  // mapiter
 
