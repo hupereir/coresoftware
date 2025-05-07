@@ -34,7 +34,6 @@ namespace
     return x * x;
   }
 
-
   [[maybe_unused]] std::ostream& operator << (std::ostream& out, const Acts::Vector3& v )
   {
     out << "(" << v.x() << ", " << v.y() << ", " << v.z() << ")";
@@ -336,7 +335,7 @@ SourceLinkVec MakeSourceLinks::getSourceLinksClusterMover(
     const Acts::Vector3 global =  globalPositionWrapper.getGlobalPositionDistortionCorrected(key, cluster, crossing );
     if (trkrid == TrkrDefs::tpcId)
     {
-      // if (m_verbosity > 1)
+      if (m_verbosity > 1)
       {
         const Acts::Vector3 global_in =  tGeometry->getGlobalPosition(key, cluster);
 
