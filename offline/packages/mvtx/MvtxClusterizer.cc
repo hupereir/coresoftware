@@ -75,56 +75,64 @@ bool MvtxClusterizer::are_adjacent(
 {
   if (GetZClustering())
   {
-    // column is first, row is second
-    if (fabs(MvtxDefs::getCol(lhs.first) - MvtxDefs::getCol(rhs.first)) <= 1)
-    {
-      if (fabs(MvtxDefs::getRow(lhs.first) - MvtxDefs::getRow(rhs.first)) <=
-          1)
-      {
-        return true;
-      }
-    }
-  }
-  else
-  {
-    if (fabs(MvtxDefs::getCol(lhs.first) - MvtxDefs::getCol(rhs.first)) == 0)
-    {
-      if (fabs(MvtxDefs::getRow(lhs.first) - MvtxDefs::getRow(rhs.first)) <=
-          1)
-      {
-        return true;
-      }
-    }
+
+    return
+
+      // column adjacent
+      ( (MvtxDefs::getCol(lhs.first) > MvtxDefs::getCol(rhs.first)) ?
+      MvtxDefs::getCol(lhs.first)<=MvtxDefs::getCol(rhs.first)+1:
+      MvtxDefs::getCol(rhs.first)<=MvtxDefs::getCol(lhs.first)+1) &&
+
+      // row adjacent
+      ( (MvtxDefs::getRow(lhs.first) > MvtxDefs::getRow(rhs.first)) ?
+      MvtxDefs::getRow(lhs.first)<=MvtxDefs::getRow(rhs.first)+1:
+      MvtxDefs::getRow(rhs.first)<=MvtxDefs::getRow(lhs.first)+1);
+
+  } else {
+
+    return
+      // column identical
+      MvtxDefs::getCol(rhs.first)==MvtxDefs::getCol(lhs.first) &&
+
+      // row adjacent
+      ( (MvtxDefs::getRow(lhs.first) > MvtxDefs::getRow(rhs.first)) ?
+      MvtxDefs::getRow(lhs.first)<=MvtxDefs::getRow(rhs.first)+1:
+      MvtxDefs::getRow(rhs.first)<=MvtxDefs::getRow(lhs.first)+1);
+
   }
 
-  return false;
 }
 
 bool MvtxClusterizer::are_adjacent(RawHit *lhs, RawHit *rhs)
 {
   if (GetZClustering())
   {
-    // column is first, row is second
-    if (fabs(lhs->getPhiBin() - rhs->getPhiBin()) <= 1)  // col
-    {
-      if (fabs(lhs->getTBin() - rhs->getTBin()) <= 1)  // Row
-      {
-        return true;
-      }
-    }
-  }
-  else
-  {
-    if (fabs(lhs->getPhiBin() - rhs->getPhiBin()) == 0)
-    {
-      if (fabs(lhs->getTBin() - rhs->getTBin()) <= 1)
-      {
-        return true;
-      }
-    }
-  }
 
-  return false;
+    return
+
+      // phi adjacent (== column)
+      ((lhs->getPhiBin() > rhs->getPhiBin()) ?
+      lhs->getPhiBin() <= rhs->getPhiBin()+1:
+      rhs->getPhiBin() <= lhs->getPhiBin()+1) &&
+
+      // time adjacent (== row)
+      ((lhs->getTBin() > rhs->getTBin()) ?
+      lhs->getTBin() <= rhs->getTBin()+1:
+      rhs->getTBin() <= lhs->getTBin()+1);
+
+  } else {
+
+    return
+
+      // phi identical (== column)
+      lhs->getPhiBin() == rhs->getPhiBin() &&
+
+      // time adjacent (== row)
+      ((lhs->getTBin() >  rhs->getTBin()) ?
+      lhs->getTBin() <= rhs->getTBin()+1:
+      rhs->getTBin() <= lhs->getTBin()+1);
+
+  }
 }
 
 MvtxClusterizer::MvtxClusterizer(const std::string &name)
@@ -164,8 +172,7 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
   if (!trkrclusters)
   {
     PHNodeIterator dstiter(dstNode);
-    PHCompositeNode *DetNode = dynamic_cast<PHCompositeNode *>(
-        dstiter.findFirst("PHCompositeNode", "TRKR"));
+    PHCompositeNode *DetNode = dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
     if (!DetNode)
     {
       DetNode = new PHCompositeNode("TRKR");
@@ -183,8 +190,7 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
   if (!clusterhitassoc)
   {
     PHNodeIterator dstiter(dstNode);
-    PHCompositeNode *DetNode = dynamic_cast<PHCompositeNode *>(
-        dstiter.findFirst("PHCompositeNode", "TRKR"));
+    PHCompositeNode *DetNode = dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
     if (!DetNode)
     {
       DetNode = new PHCompositeNode("TRKR");
@@ -192,8 +198,7 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
     }
 
     clusterhitassoc = new TrkrClusterHitAssocv3;
-    PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(
-        clusterhitassoc, "TRKR_CLUSTERHITASSOC", "PHObject");
+    PHIODataNode<PHObject> *newNode = new PHIODataNode<PHObject>(clusterhitassoc, "TRKR_CLUSTERHITASSOC", "PHObject");
     DetNode->addNode(newNode);
   }
 
@@ -201,21 +206,18 @@ int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
   if (record_ClusHitsVerbose)
   {
     // get the node
-    mClusHitsVerbose = findNode::getClass<ClusHitsVerbose>(
-        topNode, "Trkr_SvtxClusHitsVerbose");
+    mClusHitsVerbose = findNode::getClass<ClusHitsVerbose>(topNode, "Trkr_SvtxClusHitsVerbose");
     if (!mClusHitsVerbose)
     {
       PHNodeIterator dstiter(dstNode);
-      auto DetNode = dynamic_cast<PHCompositeNode *>(
-          dstiter.findFirst("PHCompositeNode", "TRKR"));
+      auto DetNode = dynamic_cast<PHCompositeNode *>(dstiter.findFirst("PHCompositeNode", "TRKR"));
       if (!DetNode)
       {
         DetNode = new PHCompositeNode("TRKR");
         dstNode->addNode(DetNode);
       }
       mClusHitsVerbose = new ClusHitsVerbosev1();
-      auto newNode = new PHIODataNode<PHObject>(
-          mClusHitsVerbose, "Trkr_SvtxClusHitsVerbose", "PHObject");
+      auto newNode = new PHIODataNode<PHObject>(mClusHitsVerbose, "Trkr_SvtxClusHitsVerbose", "PHObject");
       DetNode->addNode(newNode);
     }
   }
@@ -304,8 +306,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
   }
 
   PHG4CylinderGeomContainer *geom_container =
-      findNode::getClass<PHG4CylinderGeomContainer>(topNode,
-                                                    "CYLINDERGEOM_MVTX");
+      findNode::getClass<PHG4CylinderGeomContainer>(topNode, "CYLINDERGEOM_MVTX");
   if (!geom_container)
   {
     return;
@@ -414,13 +415,12 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
       const unsigned int nhits =
           std::distance(clusrange.first, clusrange.second);
 
-      double locclusx = NAN;
-      double locclusz = NAN;
+      double locclusx = std::numeric_limits<double>::quiet_NaN();
+      double locclusz = std::numeric_limits<double>::quiet_NaN();
 
       // we need the geometry object for this layer to get the global positions
       int layer = TrkrDefs::getLayer(ckey);
-      auto layergeom = dynamic_cast<CylinderGeom_Mvtx *>(
-          geom_container->GetLayerGeom(layer));
+      auto layergeom = dynamic_cast<CylinderGeom_Mvtx *>(geom_container->GetLayerGeom(layer));
       if (!layergeom)
       {
         exit(1);
@@ -467,8 +467,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
         loczsum += local_coords.Z();
         // add the association between this cluster key and this hitkey to the
         // table
-        if( do_hit_assoc )
-        { m_clusterhitassoc->addAssoc(ckey, mapiter->second.first); }
+        m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
 
       }  // mapiter
 
@@ -602,7 +601,7 @@ void MvtxClusterizer::ClusterMvtx(PHCompositeNode *topNode)
     }  // clusitr loop
   }    // loop over hitsets
 
-  if(do_hit_assoc && Verbosity() > 1)
+  if (Verbosity() > 1)
   {
     // check that the associations were written correctly
     m_clusterhitassoc->identify();
@@ -758,7 +757,7 @@ void MvtxClusterizer::ClusterMvtxRaw(PHCompositeNode *topNode)
         loczsum += local_coords.Z();
         // add the association between this cluster key and this hitkey to the
         // table
-        // m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
+        //	      m_clusterhitassoc->addAssoc(ckey, mapiter->second.first);
 
       }  // mapiter
 
