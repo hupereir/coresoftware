@@ -85,6 +85,7 @@ class MvtxClusterizer : public SubsysReco
   bool m_makeZClustering{true};  // z_clustering_option
   bool do_hit_assoc{true};
   bool do_read_raw{false};
+
 };
 
 #endif  // MVTX_MVTXCLUSTERIZER_H

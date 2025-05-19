@@ -75,7 +75,6 @@ bool MvtxClusterizer::are_adjacent(
 {
   if (GetZClustering())
   {
-
     return
 
       // column adjacent
@@ -100,14 +99,12 @@ bool MvtxClusterizer::are_adjacent(
       MvtxDefs::getRow(rhs.first)<=MvtxDefs::getRow(lhs.first)+1);
 
   }
-
 }
 
 bool MvtxClusterizer::are_adjacent(RawHit *lhs, RawHit *rhs)
 {
   if (GetZClustering())
   {
-
     return
 
       // phi adjacent (== column)
@@ -137,7 +134,8 @@ bool MvtxClusterizer::are_adjacent(RawHit *lhs, RawHit *rhs)
 
 MvtxClusterizer::MvtxClusterizer(const std::string &name)
   : SubsysReco(name)
-{}
+{
+}
 
 int MvtxClusterizer::InitRun(PHCompositeNode *topNode)
 {
