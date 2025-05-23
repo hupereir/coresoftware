@@ -17,14 +17,6 @@
 
 using namespace std;
 
-PHHepMCGenEvent::PHHepMCGenEvent()
-  : _embedding_id(0)
-  , _isSimulated(false)
-  , _collisionVertex(0, 0, 0, 0)
-  , _theEvt(nullptr)
-{
-}
-
 PHHepMCGenEvent::PHHepMCGenEvent(const PHHepMCGenEvent& event)
   : _embedding_id(event.get_embedding_id())
   , _isSimulated(event.is_simulated())

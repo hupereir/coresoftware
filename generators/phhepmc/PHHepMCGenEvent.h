@@ -19,10 +19,17 @@ namespace HepMC
 class PHHepMCGenEvent : public PHObject
 {
  public:
-  PHHepMCGenEvent();
 
+  //! default constructor
+  explicit PHHepMCGenEvent() = default;
+
+  //! copy constructor
   PHHepMCGenEvent(const PHHepMCGenEvent& event);
+
+  //! assignment operator
   PHHepMCGenEvent& operator=(const PHHepMCGenEvent& event);
+
+  //! destructor
   ~PHHepMCGenEvent() override;
 
   void identify(std::ostream& os = std::cout) const override;
@@ -120,16 +127,16 @@ class PHHepMCGenEvent : public PHObject
   //! positive ID is the embedded event of interest, e.g. jetty event from pythia
   //! negative IDs are backgrounds, .e.g out of time pile up collisions
   //! Usually, ID = 0 means the primary Au+Au collision background
-  int _embedding_id;
+  int _embedding_id{0};
 
   //! whether this event has been processed in Geant4 simulation
-  bool _isSimulated;
+  bool _isSimulated{false};
 
   //! collision vertex position in the Hall coordinate system, use PHENIX units of cm, ns
-  HepMC::FourVector _collisionVertex;
+  HepMC::FourVector _collisionVertex{0,0,0,0};
 
   //! The HEP MC record from event generator. Note the units are recorded in GenEvent
-  HepMC::GenEvent* _theEvt;
+  HepMC::GenEvent* _theEvt{};
 
   ClassDefOverride(PHHepMCGenEvent, 5)
 };
