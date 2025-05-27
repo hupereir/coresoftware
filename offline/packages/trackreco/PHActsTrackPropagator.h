@@ -33,9 +33,9 @@ class PHActsTrackPropagator : public SubsysReco
   using SurfacePtr = std::shared_ptr<const Acts::Surface>;
   using Trajectory = ActsExamples::Trajectories;
 
-  PHActsTrackPropagator(const std::string &name = "PHActsTrackPropagator");
 
-  ~PHActsTrackPropagator() override;
+  //! constructor
+  PHActsTrackPropagator(const std::string &name = "PHActsTrackPropagator");
 
   int Init(PHCompositeNode *topNode) override;
   int InitRun(PHCompositeNode *topNode) override;

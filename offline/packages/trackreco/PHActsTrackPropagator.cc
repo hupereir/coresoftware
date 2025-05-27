@@ -29,13 +29,7 @@
 //____________________________________________________________________________..
 PHActsTrackPropagator::PHActsTrackPropagator(const std::string &name)
   : SubsysReco(name)
-{
-}
-
-//____________________________________________________________________________..
-PHActsTrackPropagator::~PHActsTrackPropagator()
-{
-}
+{}
 
 //____________________________________________________________________________..
 int PHActsTrackPropagator::Init(PHCompositeNode *)
