@@ -92,7 +92,13 @@ class PHTpcResiduals : public SubsysReco
     m_useMicromegas = value;
   }
 
- private:
+
+  void disableModuleEdgeCorr() { m_disable_module_edge_corr = true; }
+  void disableStaticCorr() { m_disable_static_corr = true; }
+  void disableAverageCorr() { m_disable_average_corr = true; }
+  void disableFluctuationCorr() { m_disable_fluctuation_corr = true; }
+
+  private:
   using BoundTrackParam =
       const Acts::BoundTrackParameters;
 
@@ -160,6 +166,12 @@ class PHTpcResiduals : public SubsysReco
 
   /// minimum pT required for track to be considered in residuals calculation (GeV/c)
   double m_minPt = 0.5;
+
+  /// disable distortion correction
+  bool m_disable_module_edge_corr = false;
+  bool m_disable_static_corr = false;
+  bool m_disable_average_corr = false;
+  bool m_disable_fluctuation_corr = false;
 
   /// output file
   std::string m_outputfile = "TpcSpaceChargeMatrices.root";
