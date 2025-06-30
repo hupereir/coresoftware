@@ -258,7 +258,6 @@ bool PHTpcResiduals::checkTrack(SvtxTrack* track) const
     return false;
   }
   if (m_useMicromegas && count_clusters<TrkrDefs::micromegasId>(cluster_keys) < 1)
-    // if (m_useMicromegas && count_clusters<TrkrDefs::micromegasId>(cluster_keys) < 2)
   {
     return false;
   }
