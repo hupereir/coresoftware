@@ -297,9 +297,25 @@ void TpcSpaceChargeMatrixInversion::calculate_distortion_corrections(const Inver
             using matrix_t = Eigen::Matrix<float, ncoord, ncoord>;
             using column_t = Eigen::Matrix<float, ncoord, 1>;
 
+            if (Verbosity())
+            {
+              // print matrices and entries
+              std::cout << "TpcSpaceChargeMatrixInversion::calculate_distortion_corrections - inverting bin " << iz << ", " << ir << ", " << iphi << std::endl;
+              std::cout << "TpcSpaceChargeMatrixInversion::calculate_distortion_corrections - entries: " << cell_entries << std::endl;
+            }
+
             // build rphi eigen matrices from container and invert
             matrix_t lhs_rphi = get_matrix<&TpcSpaceChargeMatrixContainer::get_lhs_rphi,ncoord>(m_matrix_container.get(),icell);
             column_t rhs_rphi = get_column<&TpcSpaceChargeMatrixContainer::get_rhs_rphi,ncoord>(m_matrix_container.get(),icell);
+
+            if (Verbosity())
+            {
+              std::cout << "TpcSpaceChargeMatrixInversion::calculate_distortion_corrections - lhs_rphi: \n"
+                << lhs_rphi << std::endl;
+              std::cout << "TpcSpaceChargeMatrixInversion::calculate_distortion_corrections - rhs_rphi: \n"
+                << rhs_rphi << std::endl;
+            }
+
             const auto cov_rphi = lhs_rphi.inverse();
             auto partialLu_rphi = lhs_rphi.partialPivLu();
             const auto result_rphi = partialLu_rphi.solve(rhs_rphi);
