@@ -198,6 +198,7 @@ SingleMicromegasPoolInput_v2::~SingleMicromegasPoolInput_v2()
       << " fee: " << fee
       << " wf_total: " << counter.total
       << " wf_dropped_bco: " << counter.dropped_bco
+      << " wf_dropped_pool: " << counter.dropped_pool
       << " ratio_bco: " << counter.dropped_fraction_bco()
       << " ratio_pool: " << counter.dropped_fraction_pool()
       << std::endl;
