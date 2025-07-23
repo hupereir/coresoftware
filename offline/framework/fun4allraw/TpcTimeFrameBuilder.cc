@@ -25,6 +25,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <tuple>   // For std::tie
 
 using namespace std;
 
@@ -63,6 +64,7 @@ TpcTimeFrameBuilder::TpcTimeFrameBuilder(const int packet_id)
   m_hNorm->GetXaxis()->SetBinLabel(i++, "DMA_WORD_INVALID");
 
   m_hNorm->GetXaxis()->SetBinLabel(i++, "DMA_WORD_GTM_HEARTBEAT");
+  m_hNorm->GetXaxis()->SetBinLabel(i++, "DMA_WORD_GTM_DC_STOP_SEND");
 
   m_hNorm->GetXaxis()->SetBinLabel(i++, "TimeFrameSizeLimitError");
 
@@ -202,10 +204,10 @@ bool TpcTimeFrameBuilder::isMoreDataRequired(const uint64_t& gtm_bco) const
 {
   for (const BcoMatchingInformation& bcoMatchingInformation : m_bcoMatchingInformation_vec)
   {
-    if (not bcoMatchingInformation.is_verified())
-    {
-      continue;
-    }
+    // if (not bcoMatchingInformation.is_verified())
+    // {
+    //   continue;
+    // }
 
     if (bcoMatchingInformation.isMoreDataRequired(gtm_bco))
     {
@@ -523,7 +525,9 @@ int TpcTimeFrameBuilder::ProcessPacket(Packet* packet)
   if (data_padding != 0)
   {
     cout << __PRETTY_FUNCTION__ << "\t- : Warning : suspecious padding "
-         << data_padding << "\t- in packet " << m_packet_id << endl;
+         << data_padding << "\t- in packet " << m_packet_id <<":" << endl;
+    packet->identify();
+    // packet->dump();
   }
 
   size_t dma_words_buffer = static_cast<size_t>(data_length) * 2 / DAM_DMA_WORD_LENGTH + 1;
@@ -531,8 +535,25 @@ int TpcTimeFrameBuilder::ProcessPacket(Packet* packet)
 
   int l2 = 0;
   packet->fillIntArray(reinterpret_cast<int*>(buffer.data()), data_length + DAM_DMA_WORD_LENGTH / 2, &l2, "DATA");
+  
+  if (data_padding != 0)
+  {
+    cout << __PRETTY_FUNCTION__ << "\t- :  data_length = " << data_length
+         << "\t- data_padding = " << data_padding <<"\t l2 = "<<l2 << "\t- in packet " << m_packet_id <<":" << endl;
+  }
+
   assert(l2 <= data_length);
+
+  if(l2 < data_padding)
+  {
+    cout << __PRETTY_FUNCTION__ << "\t- : Error : l2 from fillIntArray() is smaller than padding suggesting an invalid data: " << l2
+         << "\t- in packet " << m_packet_id << ". Data length: " << data_length
+         << ", data padding: " << data_padding <<". Ignore this packet: "<< endl;
+    packet->identify();
+    return Fun4AllReturnCodes::DISCARDEVENT;
+  }
   l2 -= data_padding;
+
   assert(l2 >= 0);
 
   size_t dma_words = static_cast<size_t>(l2) * 2 / DAM_DMA_WORD_LENGTH;
@@ -1062,6 +1083,10 @@ void TpcTimeFrameBuilder::process_fee_data_digital_current(const unsigned int & 
     // continue;
   }
 
+  assert(fee < m_bcoMatchingInformation_vec.size());
+  BcoMatchingInformation& m_bcoMatchingInformation = m_bcoMatchingInformation_vec[fee];
+  std::tie(payload.gtm_bco, payload.bx_timestamp_predicted) = m_bcoMatchingInformation.find_dc_read_bco();
+
   if (m_verbosity>2)
   {
     cout << __PRETTY_FUNCTION__ << "\t- : received digital current packet "
@@ -1069,7 +1094,10 @@ void TpcTimeFrameBuilder::process_fee_data_digital_current(const unsigned int & 
          << "\t- pkt_length = " << pkt_length << endl
          << "\t- sampa_address = " << payload.sampa_address << endl
          << "\t- channel = " << payload.channel << endl
-         << "\t- bx_timestamp = 0x" << hex << payload.bx_timestamp << dec << endl;
+         << "\t- bx_timestamp = 0x" << hex << payload.bx_timestamp << dec << endl
+         << "\t- gtm_bco = 0x" << hex << payload.gtm_bco << dec << endl
+         << "\t- bx_timestamp_predicted = 0x" << hex << payload.bx_timestamp_predicted << dec << endl;
+
     cout << "\t- current:" ;
     for (int ich = 0; ich < digital_current_payload::MAX_CHANNELS; ich++)
     {
@@ -1116,7 +1144,7 @@ TpcTimeFrameBuilder::DigitalCurrentDebugTTree::DigitalCurrentDebugTTree(const st
   assert(m_tDigitalCurrent);
   
   m_tDigitalCurrent->Branch("dc", &m_payload, 
-    "fee/s:pkt_length/s:channel/s:sampa_address/s:bx_timestamp/i:current[8]/i:nsamples[8]/i:data_crc/s:calc_crc/s");
+    "gtm_bco/l:bx_timestamp_predicted/i:fee/s:pkt_length/s:channel/s:sampa_address/s:bx_timestamp/i:current[8]/i:nsamples[8]/i:data_crc/s:calc_crc/s");
 }
 
 TpcTimeFrameBuilder::DigitalCurrentDebugTTree::~DigitalCurrentDebugTTree()
@@ -1162,9 +1190,9 @@ int TpcTimeFrameBuilder::decode_gtm_data(const TpcTimeFrameBuilder::dma_word& gt
   payload.modebits = gtm[22];
   payload.userbits = gtm[23];
 
-  if (m_verbosity > 2)
+  if (m_verbosity >= 2)
   {
-    cout << "\t- GTM data : "
+    cout << __PRETTY_FUNCTION__ << "\t- GTM data : "
          << "\t- pkt_type = " << payload.pkt_type << endl
          << "\t- is_lvl1 = " << payload.is_lvl1 << endl
          << "\t- is_endat = " << payload.is_endat << endl
@@ -1187,6 +1215,16 @@ int TpcTimeFrameBuilder::decode_gtm_data(const TpcTimeFrameBuilder::dma_word& gt
       }
       assert(m_hNorm);
       m_hNorm->Fill("DMA_WORD_GTM_HEARTBEAT", 1);
+    }
+
+    if (payload.modebits == BcoMatchingInformation::DC_STOP_SEND_T)
+    {
+      if (m_verbosity > 2)
+      {
+        cout << "\t- (DC stop send modebit)" << endl;
+      }
+      assert(m_hNorm);
+      m_hNorm->Fill("DMA_WORD_GTM_DC_STOP_SEND", 1);
     }
   }
 
@@ -1213,11 +1251,6 @@ int TpcTimeFrameBuilder::decode_gtm_data(const TpcTimeFrameBuilder::dma_word& gt
 
   return 0;
 }
-
-
-
-
-
 
 uint16_t TpcTimeFrameBuilder::reverseBits(const uint16_t x) const
 {
@@ -1344,6 +1377,7 @@ TpcTimeFrameBuilder::BcoMatchingInformation::BcoMatchingInformation(const std::s
                      20, .5, 20.5);
   int i = 1;
   m_hNorm->GetXaxis()->SetBinLabel(i++, "SyncGTM");
+  m_hNorm->GetXaxis()->SetBinLabel(i++, "DC_STOP_SEND_GTM");
   m_hNorm->GetXaxis()->SetBinLabel(i++, "HeartBeatGTM");
   m_hNorm->GetXaxis()->SetBinLabel(i++, "HeartBeatFEE");
   m_hNorm->GetXaxis()->SetBinLabel(i++, "HeartBeatFEEMatchedReference");
@@ -1404,11 +1438,19 @@ bool TpcTimeFrameBuilder::BcoMatchingInformation::isMoreDataRequired(const uint6
 {
   const uint64_t bco_correction = get_gtm_rollover_correction(gtm_bco);
 
+  if (m_verbosity>=2)
+  {
+    std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::isMoreDataRequired entry"
+              << " at gtm_bco = 0x" << hex << gtm_bco << dec
+              << " bco_correction = 0x" << hex << bco_correction << dec
+              << std::endl;
+  }
+
   if (m_bco_reference)
   {
     if (m_bco_reference.value().first > bco_correction + m_max_fee_sync_time)
     {
-      if (m_verbosity > 2)
+      if (m_verbosity >= 2)
       {
         std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::isMoreDataRequired"
                   << " at gtm_bco = 0x" << hex << gtm_bco << dec
@@ -1426,7 +1468,7 @@ bool TpcTimeFrameBuilder::BcoMatchingInformation::isMoreDataRequired(const uint6
   {
     if (m_bco_reference_candidate_list.back().first > bco_correction + m_max_fee_sync_time)
     {
-      if (m_verbosity > 2)
+      if (m_verbosity >= 2)
       {
         std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::isMoreDataRequired"
                   << "at gtm_bco = 0x" << hex << gtm_bco << dec
@@ -1520,6 +1562,10 @@ void TpcTimeFrameBuilder::BcoMatchingInformation::print_gtm_bco_information() co
           << std::endl;
     }
   }
+
+  std::cout <<"\t m_gtm_bco_dc_read = " << std::hex 
+    << m_gtm_bco_dc_read.first <<" -> 0x" << m_gtm_bco_dc_read.second 
+    << std::dec << std::endl;
 }
 
 uint64_t TpcTimeFrameBuilder::BcoMatchingInformation::
@@ -1669,6 +1715,31 @@ void TpcTimeFrameBuilder::BcoMatchingInformation::save_gtm_bco_information(const
       {
         std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::find_reference_from_modebits"
                   << "\t- found reference from modebits BX_COUNTER_SYNC_T "
+                  << "at gtm_bco = 0x" << hex << gtm_bco << dec
+                  << std::endl;
+      }
+    } //     if (modebits == BX_COUNTER_SYNC_T)  // initiate synchronization of clock sync
+
+    if (modebits == DC_STOP_SEND_T)
+    {
+      assert(m_hNorm);
+      m_hNorm->Fill("DC_STOP_SEND_GTM", 1);
+
+      // save the gtm_bco for the digital current readout
+      m_gtm_bco_dc_read.first = gtm_bco;
+      if (is_verified())
+      {
+        m_gtm_bco_dc_read.second = get_predicted_fee_bco(gtm_bco).value();
+      }
+      else
+      {
+        m_gtm_bco_dc_read.second = 0;  // not verified, so no reference clock sync available
+      }
+
+      if (m_verbosity > 2)
+      {
+        std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::save_gtm_bco_information"
+                  << "\t- found DC stop send modebit "
                   << "at gtm_bco = 0x" << hex << gtm_bco << dec
                   << std::endl;
       }
@@ -1911,14 +1982,16 @@ std::optional<uint64_t> TpcTimeFrameBuilder::BcoMatchingInformation::find_gtm_bc
 
         const int fee_bco_diff = (iter2 != m_gtm_bco_trig_list.end()) ? get_bco_diff(get_predicted_fee_bco(*iter2).value(), fee_bco) : -1;
 
-        std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::find_gtm_bco - match failed!"
-                  << std::hex
-                  << "\t- fee_bco: 0x" << fee_bco
-                  << std::dec
-                  << "\t- gtm_bco: 0x" << *iter2
-                  << "\t- difference: " << fee_bco_diff
-                  << std::endl;
-
+        if (m_verbosity >=2)
+        {
+          std::cout << "TpcTimeFrameBuilder[" << m_name << "]::BcoMatchingInformation::find_gtm_bco - match failed!"
+                    << std::hex
+                    << "\t- fee_bco: 0x" << fee_bco
+                    << std::dec
+                    << "\t- gtm_bco: 0x" << *iter2
+                    << "\t- difference: " << fee_bco_diff
+                    << std::endl;
+        }
       }  //       if ((new_orphan and verbosity()) or (verbosity()>3))
 
       if (verbosity() > 3)
