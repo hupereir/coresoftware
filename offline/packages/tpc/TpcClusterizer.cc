@@ -1703,7 +1703,7 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
           << " adc: " << cluster->getAdc()
           << " maxAdc: " << cluster->getMaxAdc()
           << " overlap: " << (int)cluster->getOverlap()
-          << " edge: " << cluster->getEdge()
+          << " edge: " << (int)cluster->getEdge()
           << std::endl;
       }
     }
