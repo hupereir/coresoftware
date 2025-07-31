@@ -1256,13 +1256,7 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
     std::cout << "TpcClusterizer::Process_Event" << std::endl;
   }
 
-  PHNodeIterator iter(topNode);
-  PHCompositeNode *dstNode = static_cast<PHCompositeNode *>(iter.findFirst("PHCompositeNode", "DST"));
-  if (!dstNode)
-  {
-    std::cout << PHWHERE << "DST Node missing, doing nothing." << std::endl;
-    return Fun4AllReturnCodes::ABORTRUN;
-  }
+  // load hits
   if (!do_read_raw)
   {
     // get node containing the digitized hits
@@ -1285,7 +1279,7 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
   }
 
   // get laser event info, if exists and event has laser and rejection is on, don't bother with clustering
-  LaserEventInfo *laserInfo = findNode::getClass<LaserEventInfo>(topNode, "LaserEventInfo");
+  auto laserInfo = findNode::getClass<LaserEventInfo>(topNode, "LaserEventInfo");
   if (m_rejectEvent && laserInfo && laserInfo->isLaserEvent())
   {
     return Fun4AllReturnCodes::EVENT_OK;
@@ -1315,7 +1309,7 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
     return Fun4AllReturnCodes::ABORTRUN;
   }
 
-  PHG4TpcCylinderGeomContainer *geom_container =
+  auto geom_container =
       findNode::getClass<PHG4TpcCylinderGeomContainer>(topNode, "CYLINDERCELLGEOM_SVTX");
   if (!geom_container)
   {
@@ -1693,10 +1687,28 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
   // set the flag to use alignment transformations, needed by the rest of reconstruction
   alignmentTransformationContainer::use_alignment = true;
 
-  if (Verbosity() > 0)
+  // if (Verbosity() > 0)
   {
-    std::cout << "TPC Clusterizer found " << m_clusterlist->size() << " Clusters " << std::endl;
+    // print all clusters
+    for( const auto& hitsetkey:m_clusterlist->getHitSetKeys( TrkrDefs::TrkrId::tpcId ) )
+    {
+      const auto range = m_clusterlist->getClusters(hitsetkey);
+      for( auto iter = range.first; iter != range.second; ++iter )
+      {
+        const auto& [key,cluster] = *iter;
+        std::cout << "TpcClusterizer::process_event -"
+          << " size: (" << (int)cluster->getPhiSize() << ", " << (int)cluster->getZSize() << ")"
+          << " position: (" << cluster->getLocalX() << ", " << cluster->getLocalY() << ")"
+          << " error: (" << cluster->getRPhiError() << ", " << cluster->getZError() << ")"
+          << " adc: " << cluster->getAdc()
+          << " maxAdc: " << cluster->getMaxAdc()
+          << " overlap: " << (int)cluster->getOverlap()
+          << " edge: " << cluster->getEdge()
+          << std::endl;
+      }
+    }
   }
+
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
