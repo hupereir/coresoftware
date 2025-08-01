@@ -1487,6 +1487,19 @@ void PHSimpleKFProp::rejectAndPublishSeeds(std::vector<TrackSeed_v2>& seeds, con
   if (Verbosity())
   { std::cout << "PHSimpleKFProp::rejectAndPublishSeeds - ghost rejection: " << timer.elapsed() << " ms" << std::endl; }
 
+  // print all seeds
+  for(const auto& seed:seeds )
+  {
+    std::cout << "PHSimpleKFProp::rejectAndPublishSeeds - "
+      << " q: " << seed.get_charge()
+      << " qOverR: " << seed.get_qOverR()
+      << " position (" << seed.get_X0() << "," << seed.get_Y0() << "," << seed.get_Z0() << ")"
+      << " slope: " << seed.get_slope()
+      << " phi: " << seed.get_phi()
+      << std::endl;
+  }
+
+  // insert in track map
   timer.restart();
   for (unsigned int itrack = 0; itrack < seeds.size(); ++itrack)
   {
@@ -1500,22 +1513,8 @@ void PHSimpleKFProp::rejectAndPublishSeeds(std::vector<TrackSeed_v2>& seeds, con
     }
     auto& seed = seeds[itrack];
     _track_map->insert(&seed);
-
-    int q = seed.get_charge();
-    if (Verbosity() > 0)
-    {
-      std::cout << "Publishing seed " << ((int) itrack)
-                << " q " << q
-                << " qOverR " << fabs(seed.get_qOverR()) * q
-                << " x " << TrackSeedHelper::get_x(&seed)
-                << " y " << TrackSeedHelper::get_y(&seed)
-                << " z " << TrackSeedHelper::get_z(&seed)
-                << " pT " << seed.get_pt()
-                << " eta " << seed.get_eta()
-                << " phi " << seed.get_phi()
-                << std::endl;
-    }
   }
+
   if (Verbosity())
   { std::cout << "PHSimpleKFProp::rejectAndPublishSeeds - publication: " << timer.elapsed() << " ms" << std::endl; }
 
