@@ -658,9 +658,9 @@ namespace
     // Estimate the errors
     // Blow up error on single pixel clusters by a factor 3 to compensate for threshold effects
     const double phi_err_square = (phibinhi == phibinlo) ? 9*(square(radius * my_data.layergeom->get_phistep()) / 12) : square(radius) * phi_cov / (adc_sum * 0.14);
-  
+
   const double t_err_square = (tbinhi == tbinlo) ? 9*(square(my_data.layergeom->get_zstep()) / 12) : t_cov / (adc_sum * 0.14);
-  
+
     char tsize = tbinhi - tbinlo + 1;
     char phisize = phibinhi - phibinlo + 1;
     // std::cout << "phisize: "  << (int) phisize << " phibinhi " << phibinhi << " phibinlo " << phibinlo << std::endl;
@@ -1236,7 +1236,7 @@ int TpcClusterizer::InitRun(PHCompositeNode *topNode)
     std::cout << PHWHERE << "ERROR: Can't find node CYLINDERCELLGEOM_SVTX" << std::endl;
     return Fun4AllReturnCodes::ABORTRUN;
   }
-  
+
   AdcClockPeriod = geom->GetFirstLayerCellGeom()->get_zstep();
 
   return Fun4AllReturnCodes::EVENT_OK;
@@ -1687,7 +1687,7 @@ int TpcClusterizer::process_event(PHCompositeNode *topNode)
   // set the flag to use alignment transformations, needed by the rest of reconstruction
   alignmentTransformationContainer::use_alignment = true;
 
-  // if (Verbosity() > 0)
+  if (Verbosity() > 0)
   {
     // print all clusters
     for( const auto& hitsetkey:m_clusterlist->getHitSetKeys( TrkrDefs::TrkrId::tpcId ) )
