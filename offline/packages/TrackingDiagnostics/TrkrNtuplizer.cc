@@ -616,12 +616,12 @@ AdcClockPeriod = geom->GetFirstLayerCellGeom()->get_zstep();
 	  continue;
 	}
 	varname = "phi";  // + std::to_string(key);
-	double phi = ((side == 1 ? 1 : -1) * (m_cdbttree->GetDoubleValue(key, varname) - M_PI / 2.)) + ((sector % 12) * M_PI / 6);
+      double phi = -1 * pow(-1, side) * m_cdbttree->GetDoubleValue(key, varname) + (sector % 12) * M_PI / 6;
 	PHG4TpcCylinderGeom* layergeom = geom_container->GetLayerCellGeom(layer);
-	unsigned int phibin = layergeom->get_phibin(phi, side);
+	unsigned int phibin = layergeom->get_phibin(phi);
 	//get global coords
 	double radius = layergeom->get_radius();  // returns center of layer
-	double chanphi = layergeom->get_phi(phibin, side);
+	double chanphi = layergeom->get_phi(phibin);
 	float chanx = radius * cos(chanphi);
 	float chany = radius * sin(chanphi);
     
@@ -1498,8 +1498,8 @@ void TrkrNtuplizer::fillOutputNtuples(PHCompositeNode* topNode)
             double radius = GeoLayer_local->get_radius();
             fx_hit[n_hit::nhitphibin] = (float) TpcDefs::getPad(hit_key);
             fx_hit[n_hit::nhittbin] = (float) TpcDefs::getTBin(hit_key);
-            fx_hit[n_hit::nhitphi] = GeoLayer_local->get_phicenter(fx_hit[n_hit::nhitphibin], fx_hit[n_hit::nhitzelem]);
-            float phi = GeoLayer_local->get_phicenter(TpcDefs::getPad(hit_key), fx_hit[n_hit::nhitzelem]);
+            fx_hit[n_hit::nhitphi] = GeoLayer_local->get_phicenter(fx_hit[n_hit::nhitphibin]);
+            float phi = GeoLayer_local->get_phicenter(TpcDefs::getPad(hit_key));
             float clockperiod = GeoLayer_local->get_zstep();
             auto glob = m_tGeometry->getGlobalPositionTpc(hitset_key, hit_key, phi, radius, clockperiod);
             
