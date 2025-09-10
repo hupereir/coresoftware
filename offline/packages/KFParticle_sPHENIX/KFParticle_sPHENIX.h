@@ -200,12 +200,12 @@ class KFParticle_sPHENIX : public SubsysReco, public KFParticle_nTuple, public K
 
   void setMinTPChits(int nHits) { m_nTPCStates = nHits; } //Actually state counting but use this for backwards compatibility!
 
-  void setMinTPOThits(int nHits) { m_nTPCStates = nHits; } //Actually state counting but use this for backwards compatibility!
+  void setMinTPOThits(int nHits) { m_nTPOTStates = nHits; } //Actually state counting but use this for backwards compatibility!
 
   void setMaximumDaughterDCA_XY(float dca) { m_comb_DCA_xy = dca; }
 
   void setMaximumDaughterDCA(float dca) { m_comb_DCA = dca; }
- 
+
   void setMinimumRadialSV(float min_rad_sv) { m_min_radial_SV = min_rad_sv; }
 
   void setMaximumVertexchi2nDOF(float vertexchi2nDOF) { m_vertex_chi2ndof = vertexchi2nDOF; }
@@ -394,7 +394,7 @@ class KFParticle_sPHENIX : public SubsysReco, public KFParticle_nTuple, public K
   void selectMotherByMassError(bool select = true) { m_select_by_mass_error = select; }
 
   void usePID(bool use = true){ m_use_PID = use; }
- 
+
   void setPIDacceptFraction(float frac = 0.2){ m_dEdx_band_width = frac; }
 
   /// Use alternate vertex and track fitters
