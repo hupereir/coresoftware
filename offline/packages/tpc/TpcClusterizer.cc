@@ -1242,7 +1242,7 @@ int TpcClusterizer::InitRun(PHCompositeNode *topNode)
   auto g1 = (PHG4TpcGeomv1*) geom->GetFirstLayerCellGeom(); // cast because << not in the base class
   std::cout << *g1 << std::endl;
   std::cout << "LayerCellGeomv1 streamer for layer 24: " << std::endl;
-  auto g2 = (PHG4TpcGeomv1*) geom->GetLayerCellGeom(24); // cast because << not in the base class
+  auto *g2 = (PHG4TpcGeomv1*) geom->GetLayerCellGeom(24); // cast because << not in the base class
   std::cout << *g2 << std::endl;
   std::cout << "LayerCellGeomv1 streamer for layer 40: " << std::endl;
   auto g3 = (PHG4TpcGeomv1*) geom->GetLayerCellGeom(40); // cast because << not in the base class
