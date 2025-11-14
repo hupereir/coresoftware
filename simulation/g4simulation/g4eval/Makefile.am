@@ -84,7 +84,7 @@ ROOTDICTS_io = \
 
 pcmdir = $(libdir)
 # more elegant way to create pcm files (without listing them)
-nobase_dist_pcm_DATA = $(ROOTDICTS:.cc=_rdict.pcm)
+nobase_dist_pcm_DATA = $(ROOTDICTS_io:.cc=_rdict.pcm)
 
 libg4eval_io_la_SOURCES = \
   $(ROOTDICTS_io) \
