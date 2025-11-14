@@ -78,16 +78,16 @@ pkginclude_HEADERS = \
   DSTTrackInfoWriter.h \
   DSTTrackInfoReader.h
 
-ROOTDICTS_io = \
+ROOTDICTS = \
   TrackEvaluationContainer_Dict.cc \
   TrackEvaluationContainerv1_Dict.cc
 
 pcmdir = $(libdir)
 # more elegant way to create pcm files (without listing them)
-nobase_dist_pcm_DATA = $(ROOTDICTS_io:.cc=_rdict.pcm)
+nobase_dist_pcm_DATA = $(ROOTDICTS:.cc=_rdict.pcm)
 
 libg4eval_io_la_SOURCES = \
-  $(ROOTDICTS_io) \
+  $(ROOTDICTS) \
   TrackEvaluationContainerv1.cc
 
 libg4eval_la_SOURCES = \
