@@ -189,12 +189,9 @@ class PHTpcResiduals : public SubsysReco
   /// minimum pT required for track to be considered in residuals calculation (GeV/c)
   double m_minPt = 0.5;
 
-<<<<<<< HEAD
-=======
   /// require track crossing zero
   bool m_requireCrossing = false;
 
->>>>>>> master
   /// disable distortion correction
   bool m_disable_module_edge_corr = false;
   bool m_disable_static_corr = false;
