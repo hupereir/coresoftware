@@ -447,15 +447,22 @@ void TpcSpaceChargeMatrixInversion::extrapolate_distortion_corrections()
       TpcSpaceChargeReconstructionHelper::extrapolate_phi2(h, hmask_extrap_p.get());
 
       // perform second z interpolation from readout plane to outermost micromegas module using masks
-      TpcSpaceChargeReconstructionHelper::extrapolate_z2(h, hmask_extrap_p2.get(), side);
+      // TpcSpaceChargeReconstructionHelper::extrapolate_z2(h, hmask_extrap_p2.get(), side);
     };
 
     if( m_dcc_cm )
     {
+//       // use central membrane for normalizing accross phi if available
+//       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), static_cast<TH2*>(m_dcc_cm->m_hDRint[i]));
+//       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDPint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
+//       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDZint[i]), static_cast<TH2*>(m_dcc_cm->m_hDZint[i]));
+
       // use central membrane for normalizing accross phi if available
-      process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), static_cast<TH2*>(m_dcc_cm->m_hDRint[i]));
+      /* only the phi distortion is used for the normalization because this is the only distortion measured by the CM so far */
+      process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDPint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
-      process_histogram(static_cast<TH3*>(m_dcc_average->m_hDZint[i]), static_cast<TH2*>(m_dcc_cm->m_hDZint[i]));
+      process_histogram(static_cast<TH3*>(m_dcc_average->m_hDZint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
+
     } else {
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), nullptr);
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDPint[i]), nullptr);
