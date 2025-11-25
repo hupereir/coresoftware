@@ -87,6 +87,9 @@ TpcSpaceChargeReconstructionHelper::range_list_t TpcSpaceChargeReconstructionHel
 /// list of theta angles for each micromeas in central sector with theta defined as atan2(z,r)
 TpcSpaceChargeReconstructionHelper::range_list_t TpcSpaceChargeReconstructionHelper::theta_range_west = {{-0.643676, -0.141004}, {0.13485, 0.640695}};
 
+/// verbosity
+int TpcSpaceChargeReconstructionHelper::m_verbosity = 0;
+
 //____________________________________________________________________________________
 void TpcSpaceChargeReconstructionHelper::create_tpot_mask(TH3* hmask)
 {
@@ -316,22 +319,151 @@ void TpcSpaceChargeReconstructionHelper::extrapolate_phi1(TH3* source, const TH2
 
     // get phi
     const double phi = source->GetXaxis()->GetBinCenter(ip + 1);
-    std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 -"
-      << " source: " << source->GetName()
-      << " ip: " << ip
-      << " phi: " << phi
-      << std::endl;
+    if( m_verbosity )
+    {
+      std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 -"
+        << " source: " << source->GetName()
+        << " ip: " << ip
+        << " phi: " << phi
+        << std::endl;
+    }
 
     for (int ir = 0; ir < source->GetNbinsY(); ++ir)
     {
 
       // get radius
       const double r = source->GetYaxis()->GetBinCenter(ir + 1);
+      if( m_verbosity )
+      {
+        std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 -"
+          << " source: " << source->GetName()
+          << " ir: " << ir
+          << " r: " << r
+          << std::endl;
+      }
+
+      for (int iz = 0; iz < source->GetNbinsZ(); ++iz)
+      {
+        // do nothing if in TPOT acceptance
+        bool in_range = mask->GetBinContent(ip + 1, ir + 1, iz + 1) > 0;
+        if (in_range)
+        {
+          continue;
+        }
+
+        // phi not in TPOT range, rotate by steps of 2pi/12 (= one TPC sector) until found in range
+        static constexpr int n_sectors = 12;
+        for (int sector = 1; sector < n_sectors; ++sector)
+        {
+          // get ref phi
+          double phi_ref = phi + 2. * M_PI * sector / n_sectors;
+          while (phi_ref >= 2 * M_PI)
+          {
+            phi_ref -= 2 * M_PI;
+          };
+
+          int ip_ref = source->GetXaxis()->FindBin(phi_ref) - 1;
+          in_range = mask->GetBinContent(ip_ref + 1, ir + 1, iz + 1) > 0;
+          if (!in_range)
+          {
+            continue;
+          }
+
+          // get normalization factor from CM histograms
+          double scale = 1;
+          if (source_cm)
+          {
+
+            auto ip_cm = source_cm->GetXaxis()->FindBin(phi);
+            auto ip_ref_cm = source_cm->GetXaxis()->FindBin(phi_ref);
+            auto ir_cm = source_cm->GetYaxis()->FindBin( r );
+
+            // check out of bound
+            if( ip_cm == 0 || ip_cm > source_cm->GetNbinsX() ) { scale = 1; }
+            else if( ir==0 || ir > source_cm->GetNbinsY() ) { scale = 1; }
+            else if( ir==1 || ir == source_cm->GetNbinsY() )
+            {
+
+              // if first or last bin is used, interpolate will break. Need to use the bin content
+              const double distortion_local = source_cm->GetBinContent(ip_cm, ir_cm);
+              const double distortion_ref = source_cm->GetBinContent(ip_ref_cm, ir_cm);
+              scale = distortion_local / distortion_ref;
+
+            } else if( ip_cm==1 || ip_cm == source_cm->GetNbinsX() ) {
+
+              // if first or last bin is used, interpolate will break. Need to use the bin content
+              const double distortion_local = source_cm->GetBinContent(ip_cm, ir_cm);
+              const double distortion_ref = source_cm->GetBinContent(ip_ref_cm, ir_cm);
+              scale = distortion_local / distortion_ref;
+
+            } else {
+
+              // in first or last bin of histogram, interpolation will not work.
+              const double distortion_local = source_cm->Interpolate(phi, r);
+              const double distortion_ref = source_cm->Interpolate(phi_ref, r);
+              scale = distortion_local / distortion_ref;
+
+            }
+
+            // check imposible values
+            if( std::isnan(scale) ) { scale = 1; }
+          }
+
+          // update content and error
+          const double distortion = scale * source->GetBinContent(ip_ref + 1, ir + 1, iz + 1);
+          const double error = scale * source->GetBinError(ip_ref + 1, ir + 1, iz + 1);
+          source->SetBinContent(ip + 1, ir + 1, iz + 1, distortion);
+          source->SetBinError(ip + 1, ir + 1, iz + 1, error);
+        }
+      }
+    }
+  }
+}
+
+
+//____________________________________________________________________________________
+void TpcSpaceChargeReconstructionHelper::extrapolate_phi1_new(TH3* source, const TH2* source_cm, const TH3* mask)
+{
+  if (!source)
+  {
+    std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 - invalid source histogram" << std::endl;
+    return;
+  }
+
+  if (!mask)
+  {
+    std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 - invalid mask histogram" << std::endl;
+    return;
+  }
+
+  // loop over phi bins
+  for (int ip = 0; ip < source->GetNbinsX(); ++ip)
+  {
+
+    // get phi
+    const double phi = source->GetXaxis()->GetBinCenter(ip + 1);
+    if( m_verbosity )
+    {
       std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 -"
         << " source: " << source->GetName()
-        << " ir: " << ir
-        << " r: " << r
+        << " ip: " << ip
+        << " phi: " << phi
         << std::endl;
+    }
+
+    for (int ir = 0; ir < source->GetNbinsY(); ++ir)
+    {
+
+      // get radius
+      const double r = source->GetYaxis()->GetBinCenter(ir + 1);
+      if( m_verbosity )
+      {
+        std::cout << "TpcSpaceChargeReconstructionHelper::extrapolate_phi1 -"
+          << " source: " << source->GetName()
+          << " ir: " << ir
+          << " r: " << r
+          << std::endl;
+      }
 
       for (int iz = 0; iz < source->GetNbinsZ(); ++iz)
       {
