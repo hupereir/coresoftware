@@ -739,16 +739,16 @@ void PHTpcResiduals::processTrack(SvtxTrack* track)
       std::cout << std::endl;
     }
 
-//     // check track angles and residuals agains cuts
-//     if (std::abs(trackAlpha) > m_maxTAlpha || std::abs(drphi) > m_maxResidualDrphi)
-//     {
-//       continue;
-//     }
-//
-//     if (std::abs(trackBeta) > m_maxTBeta || std::abs(dz) > m_maxResidualDz)
-//     {
-//       continue;
-//     }
+    // check track angles and residuals agains cuts
+    if (std::abs(trackAlpha) > m_maxTAlpha || std::abs(drphi) > m_maxResidualDrphi)
+    {
+      continue;
+    }
+
+    if (std::abs(trackBeta) > m_maxTBeta || std::abs(dz) > m_maxResidualDz)
+    {
+      continue;
+    }
 
     // Fill distortion matrices
     m_matrix_container->add_to_lhs(index, 0, 0, square(clusR) / erp);
