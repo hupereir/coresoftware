@@ -462,7 +462,6 @@ void TpcSpaceChargeMatrixInversion::extrapolate_distortion_corrections()
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDPint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDZint[i]), static_cast<TH2*>(m_dcc_cm->m_hDPint[i]));
-
     } else {
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDRint[i]), nullptr);
       process_histogram(static_cast<TH3*>(m_dcc_average->m_hDPint[i]), nullptr);
