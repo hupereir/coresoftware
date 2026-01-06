@@ -934,7 +934,10 @@ void SingleMicromegasPoolInput_v2::process_fee_data(int packet_id, unsigned int 
         m_waveform.gtm_bco_matched = gtm_bco;
         {
           const auto predicted = bco_matching_information.get_predicted_fee_bco(gtm_bco);;
-          if( predicted ) m_waveform.fee_bco_predicted_matched = predicted.value();
+          if( predicted )
+          {
+            m_waveform.fee_bco_predicted_matched = predicted.value();
+          }
         }
         m_evaluation_tree->Fill();
       }
