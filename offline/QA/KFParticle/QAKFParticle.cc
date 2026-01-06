@@ -50,6 +50,37 @@
 
 KFParticle_Tools kfpTools;
 
+namespace
+{
+  inline void fillBunchCrossingRanges(std::vector<std::pair<double, double>> &ranges)
+  {
+    ranges.clear();
+
+    int start = -100;
+    int stop = 800;
+    int step = 100;
+
+    for (int lower = start; lower < stop;)
+    {
+      int upper = lower + step;
+
+      if (lower == 0)
+      {
+        lower += 1;
+      }
+
+      ranges.emplace_back(static_cast<double>(lower), static_cast<double>(upper));
+
+      if (lower == 1)
+      {
+        lower = 0;
+      }
+
+      lower = upper;
+    }
+  }
+}  // namespace
+
 QAKFParticle::QAKFParticle(const std::string &name, const std::string &mother_name, double min_m, double max_m)
   : SubsysReco(name)
   , m_mother_id(kfpTools.getParticleID(mother_name))
@@ -74,6 +105,18 @@ int QAKFParticle::Init(PHCompositeNode * /*topNode*/)
 {
   Fun4AllHistoManager *hm = QAHistManagerDef::getHistoManager();
   assert(hm);
+
+  fillBunchCrossingRanges(bunchCrossingRanges);
+
+  std::cout << "Bunch crossing ranges for mass histograms: " << std::endl;
+  if (Verbosity() > 0)
+  {
+    std::cout << "Total number of ranges: " << bunchCrossingRanges.size() << std::endl;
+    for (const auto &range : bunchCrossingRanges)
+    {
+      std::cout << "  [" << range.first << ", " << range.second << ")" << std::endl;
+    }
+  }
 
   TH1 *h(nullptr);
 
@@ -102,6 +145,11 @@ int QAKFParticle::Init(PHCompositeNode * /*topNode*/)
                 ";mass [GeV]; p_{T} [GeV]", 100, m_min_mass, m_max_mass, 100, pt_min, pt_max);
   hm->registerHisto(h2);
 
+  // mass v.s bunch crossing
+  h2 = new TH2F(TString(get_histo_prefix()) + "BunchCrossing_InvMass_KFP",                                         //
+                ";Beam crossing (106 ns/crossing);mass [GeV];", 899, -149.5, 749.5, 100, m_min_mass, m_max_mass);  // the axis title is the same as the approved plot https://www.sphenix.bnl.gov/sites/default/files/2025-04/sphenix-perf-4-25-Kscrossingcut.pdf
+  hm->registerHisto(h2);
+
   h = new TH1F(TString(get_histo_prefix()) + "InvMass_KFP_crossing0",  //
                ";mass [GeV];Entries", 100, m_min_mass, m_max_mass);
   hm->registerHisto(h);
@@ -122,6 +170,14 @@ int QAKFParticle::Init(PHCompositeNode * /*topNode*/)
                ";mass [GeV];Entries", 100, m_min_mass, m_max_mass);
   hm->registerHisto(h);
 
+  // create the histograms for different bunch crossing ranges
+  for (const auto &range : bunchCrossingRanges)
+  {
+    std::string histname = get_histo_prefix() + "InvMass_KFP_crossing_" + std::to_string(static_cast<int>(range.first)) + "_to_" + std::to_string(static_cast<int>(range.second));
+    h = new TH1F(histname.c_str(), ";mass [GeV];Entries", 100, m_min_mass, m_max_mass);
+    hm->registerHisto(h);
+  }
+
   h_mass_KFP = dynamic_cast<TH1F *>(hm->getHisto(get_histo_prefix() + "InvMass_KFP"));
   assert(h_mass_KFP);
 
@@ -133,6 +189,9 @@ int QAKFParticle::Init(PHCompositeNode * /*topNode*/)
 
   h_mass_KFP_pt = dynamic_cast<TH2F *>(hm->getHisto(get_histo_prefix() + "InvMass_KFP_pT"));
   assert(h_mass_KFP_pt);
+
+  h_bunchcrossing_mass_KFP = dynamic_cast<TH2F *>(hm->getHisto(get_histo_prefix() + "BunchCrossing_InvMass_KFP"));
+  assert(h_bunchcrossing_mass_KFP);
 
   h_mass_KFP_crossing0 = dynamic_cast<TH1F *>(hm->getHisto(get_histo_prefix() + "InvMass_KFP_crossing0"));
   assert(h_mass_KFP_crossing0);
@@ -148,6 +207,13 @@ int QAKFParticle::Init(PHCompositeNode * /*topNode*/)
 
   h_mass_KFP_Jet_6_GeV_MBD_NandS_geq_1_vtx_l_10_cm = dynamic_cast<TH1F *>(hm->getHisto(get_histo_prefix() + "InvMass_KFP_Jet_6_GeV_MBD_NandS_geq_1_vtx_l_10_cm"));
   assert(h_mass_KFP_Jet_6_GeV_MBD_NandS_geq_1_vtx_l_10_cm);
+
+  // histograms for different bunch crossing ranges
+for (const auto &range : bunchCrossingRanges)
+  {
+    h_mass_KFP_crossingrange.push_back(dynamic_cast<TH1F *>(hm->getHisto(get_histo_prefix() + "InvMass_KFP_crossing_" + std::to_string(static_cast<int>(range.first)) + "_to_" + std::to_string(static_cast<int>(range.second)))));
+    assert(h_mass_KFP_crossingrange.back());
+  }
 
   // pt asymmetry analyzer
   if (m_doTrackPtAsymmetry)
@@ -225,6 +291,20 @@ int QAKFParticle::process_event(PHCompositeNode *topNode)
         else
         {
           h_mass_KFP_non_crossing0->Fill(iter.second->GetMass());
+        }
+
+        h_bunchcrossing_mass_KFP->Fill(kfpTrack->get_crossing(), iter.second->GetMass());
+
+        // fill the appropriate crossing range histogram
+        size_t range_index = 0;
+        for (const auto &range : bunchCrossingRanges)
+        {
+          if (kfpTrack->get_crossing() >= range.first && kfpTrack->get_crossing() < range.second)
+          {
+            h_mass_KFP_crossingrange[range_index]->Fill(iter.second->GetMass());
+            break;
+          }
+          ++range_index;
         }
       }
 
