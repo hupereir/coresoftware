@@ -440,14 +440,20 @@ void TpcSpaceChargeMatrixInversion::extrapolate_distortion_corrections()
       // perform z extrapolation
       TpcSpaceChargeReconstructionHelper::extrapolate_z(h, hmask.get());
 
-      // perform first phi extrapolation, sector to sector, with normalization from central membrane
-      TpcSpaceChargeReconstructionHelper::extrapolate_phi1(h, h_cm, hmask_extrap_z.get());
+//       // perform first phi extrapolation, sector to sector, with normalization from central membrane
+//       TpcSpaceChargeReconstructionHelper::extrapolate_phi1(h, h_cm, hmask_extrap_z.get());
+//
+//       // perform second phi extrapolation, between sectors, using masks
+//       TpcSpaceChargeReconstructionHelper::extrapolate_phi2(h, hmask_extrap_p.get());
 
-      // perform second phi extrapolation, between sectors, using masks
-      TpcSpaceChargeReconstructionHelper::extrapolate_phi2(h, hmask_extrap_p.get());
+//       // perform phi extrapolation, with normalization from central membrane
+//       TpcSpaceChargeReconstructionHelper::extrapolate_phi(h, h_cm, hmask_extrap_z.get());
+
+      // perform phi extrapolation, using cm data as seed and using track-based data to extrapolate along z
+      TpcSpaceChargeReconstructionHelper::extrapolate_phi_new(h, h_cm, hmask_extrap_z.get());
 
       // perform second z interpolation from readout plane to outermost micromegas module using masks
-      // TpcSpaceChargeReconstructionHelper::extrapolate_z2(h, hmask_extrap_p2.get(), side);
+      TpcSpaceChargeReconstructionHelper::extrapolate_z2(h, hmask_extrap_p2.get(), side);
     };
 
     if( m_dcc_cm )
