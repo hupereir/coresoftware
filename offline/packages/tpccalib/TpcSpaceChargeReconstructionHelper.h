@@ -49,25 +49,33 @@ class TpcSpaceChargeReconstructionHelper
 
   /// first phi extrapolation
   /**
-   * copy the full z dependence of reference sector to all other sectors
-   * normalized by the measurement from provided micromegas, at the appropriate z
+   * copy the full z dependence of track-based distortions in reference sector to all other sectors
+   * normalized by the measurement from provided central membrane data, at the appropriate phi
    * the mask is used to decide in which bins the extrapolation must be performed
-   */
+  */
   static void extrapolate_phi1(TH3* /*source*/, const TH2* /*source_cm*/, const TH3* /*mask*/);
-
-  /// first phi extrapolation
-  /**
-   * copy the full z dependence of reference sector to all other sectors
-   * normalized by the measurement from provided micromegas, at the appropriate z
-   * the mask is used to decide in which bins the extrapolation must be performed
-   */
-  static void extrapolate_phi1_new(TH3* /*source*/, const TH2* /*source_cm*/, const TH3* /*mask*/);
 
   /// second phi extrapolation
   /**
    * for each r, z and phi bin, linearly extrapolate between neighbor phi sector measurements
    */
   static void extrapolate_phi2(TH3* /*source*/, const TH3* /*mask*/);
+
+  /// first phi extrapolation
+  /**
+   * copy the full z dependence of track-based distortions in reference sector to all other sectors
+   * normalized by the measurement from provided central membrane data, at the appropriate phi
+   * the mask is used to decide in which bins the extrapolation must be performed
+   */
+  static void extrapolate_phi(TH3* /*source*/, const TH2* /*source_cm*/, const TH3* /*mask*/);
+
+  /// first phi extrapolation
+  /**
+   * copy the full phi dependence of CM distortions at reference z to all other z
+   * normalized by the measurement from provided track-based data, at the appropriate z
+   * the mask is used to decide in which bins the extrapolation must be performed
+   */
+  static void extrapolate_phi_new(TH3* /*source*/, const TH2* /*source_cm*/, const TH3* /*mask*/);
 
   /// separate positive and negative z histograms
   /**
