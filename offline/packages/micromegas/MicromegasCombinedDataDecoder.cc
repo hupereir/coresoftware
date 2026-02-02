@@ -255,13 +255,21 @@ int MicromegasCombinedDataDecoder::process_event(PHCompositeNode* topNode)
     const auto hitset_it = trkrhitsetcontainer->findOrAddHitSet(hitsetkey);
 
     // generate hit key
-    const TrkrDefs::hitkey hitkey = MicromegasDefs::genHitKey(strip, max_adc.first);
+    const auto& sample( max_adc.first );
+    const TrkrDefs::hitkey hitkey = MicromegasDefs::genHitKey(strip, sample);
 
     // find existing hit, or create
     auto* hit = hitset_it->second->getHit(hitkey);
     if (hit)
     {
-      std::cout << "MicromegasCombinedDataDecoder::process_event - duplicated hit, hitsetkey: " << hitsetkey << " strip: " << strip << std::endl;
+      std::cout << "MicromegasCombinedDataDecoder::process_event - duplicated hit,"
+        << " hitsetkey: " << hitsetkey
+        << " layer: " << layer
+        << " tile: " << tile
+        << " channel: " << channel
+        << " strip: " << strip
+        << " sample: " << sample
+        << std::endl;
       continue;
     }
 
