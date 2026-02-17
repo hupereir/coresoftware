@@ -9,17 +9,11 @@ lib_LTLIBRARIES = libPHPythia8.la
 
 pkginclude_HEADERS = \
   PHPythia8.h \
-  PHPythia8_hp.h \
   PHPy8GenTrigger.h \
   PHPy8ParticleTrigger.h \
   PHPy8JetTrigger.h
 
-ROOTDICTS = \
- PHPythia8_hp_Dict.cc
-
 pcmdir = $(libdir)
-nobase_dist_pcm_DATA = \
-  PHPythia8_hp_Dict_rdict.pcm
 
 libPHPythia8_la_LDFLAGS = \
   -L$(libdir) \
@@ -36,7 +30,6 @@ libPHPythia8_la_LIBADD = \
 libPHPythia8_la_SOURCES = \
   $(ROOTDICTS) \
   PHPythia8.cc \
-  PHPythia8_hp.cc \
   PHPy8GenTrigger.cc \
   PHPy8ParticleTrigger.cc \
   PHPy8JetTrigger.cc
