@@ -121,27 +121,27 @@ namespace
 
   bool helix_plane_intersection(
     double t_min,
-    double t_max, 
+    double t_max,
     double zmin,
     double zmax,
     double R,
-    double X0, 
-    double Y0, 
-    double intersect_rz, 
+    double X0,
+    double Y0,
+    double intersect_rz,
     double slope_rz,
     const TVector3& ptile,
     const TVector3& ntile,
     TVector3& intersect)
   {
- 
-    // Number of iterations and tolerance for Newton Raphson method	  
+
+    // Number of iterations and tolerance for Newton Raphson method
     const int max_iter = 10;
-    const double tol = 1e-6; // microns level precision	  
+    const double tol = 1e-6; // microns level precision
 
     // Defines C
     double C = ntile.X() * (X0 - ptile.X()) + ntile.Y() * (Y0 - ptile.Y()) + ntile.Z() * (intersect_rz - ptile.Z());
 
-    
+
     // Defines the function and the corresponding derivative to be used in the Newton Raphson method
     auto f = [&](double t) {
 
@@ -153,7 +153,7 @@ namespace
            ntile.Y() * R * std::sin(t) +
            ntile.Z() * slope_rz * Rt  +
            C;
-    };    
+    };
 
     auto df = [&](double t) {
 
@@ -188,15 +188,15 @@ namespace
         double phi = std::atan2(y, x);
 
 
-        TVector3 candidate_intersect(x, y, z); 
+        TVector3 candidate_intersect(x, y, z);
         //Tolerance in phi
 	bool phi_ok = phi_in_range(phi, t_min - 1e-4, t_max + 1e-4);
         //Tolerance in z
         bool z_ok = (z >= zmin - 1e-4 && z <= zmax + 1e-4);
         bool proj_ok = (std::abs(ntile.Dot(candidate_intersect - ptile)) <= 0.05);
 
-	// Passes the checks for the projection inside the tile acceptance 
-        if (std::abs(t_new - t) < tol && proj_ok && phi_ok && z_ok) 
+	// Passes the checks for the projection inside the tile acceptance
+        if (std::abs(t_new - t) < tol && proj_ok && phi_ok && z_ok)
         {
 	  result = candidate_intersect;
 	  return true;
@@ -223,7 +223,7 @@ namespace
     for (int i = 0; i < 3; ++i)
     {
       double t = wrap(t_center + i * delta);
-      t_seeds.push_back(t);	    
+      t_seeds.push_back(t);
     }
 
     // Looks for the solution within the tile acceptance in three different phi seeds in the Newton-Raphson (helix_plane could have more than one solution)
@@ -267,8 +267,8 @@ namespace
 
     return true;
   }
-  
- 
+
+
   // streamer of TVector3
   [[maybe_unused]] inline std::ostream& operator<<(std::ostream& out, const TVector3& vector)
   {
@@ -452,7 +452,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
           const auto cluster = _cluster_map->findCluster(cluster_key);
           const auto global_position = m_globalPositionWrapper.getGlobalPositionDistortionCorrected(cluster_key, cluster, crossing);
           clusGlobPos_silicon.push_back( global_position );
-	  clusGlobPos_intt.push_back( global_position );
+          clusGlobPos_intt.push_back( global_position );
           break;
         }
 
@@ -632,26 +632,30 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
 
       if(_zero_field) {
 
-	// finds the x,y coordinates in the line fit
-	
-	if (!line_line_intersection(slope_xy, intersect_xy, x0, y0, nx, ny, xplus, yplus, xminus, yminus))
+        // finds the x,y coordinates in the line fit
+
+        if (!line_line_intersection(slope_xy, intersect_xy, x0, y0, nx, ny, xplus, yplus, xminus, yminus))
         {
-          if (Verbosity() > 10)
+          // if (Verbosity() > 10)
           {
-            std::cout << PHWHERE << "line_line_intersection - failed" << std::endl;
+            std::cout << "PHMicromegasTpcTrackMatching::process_event -"
+              << " tpc seed: " << tracklet_tpc
+              << " si seed: " << tracklet_si
+              << " line_line_intersection failed"
+              << std::endl;
           }
           continue;
         }
 
-	// calculates z0_line with these coordinates (this is not the real intersection in z) and asigns a p0 vector in the line (consider that xplus = xminus and yplus = yminus)
-	double x0_line = xplus;
-	double y0_line = yplus;
+        // calculates z0_line with these coordinates (this is not the real intersection in z) and asigns a p0 vector in the line (consider that xplus = xminus and yplus = yminus)
+        double x0_line = xplus;
+        double y0_line = yplus;
         double r0 = get_r(x0_line, y0_line);
         double z0_line = slope_rz * r0 + intersect_rz;
-        
+
         TVector3 p0(x0_line, y0_line, z0_line);
 
-	// calculates a unit vector in the direction of the line with the slope_xy and intersect_xy considering that dx/dx=1
+        // calculates a unit vector in the direction of the line with the slope_xy and intersect_xy considering that dx/dx=1
         double dy_dx = slope_xy;
         double y_line = slope_xy * x0_line + intersect_xy;
         double r_line = std::sqrt(x0_line * x0_line + y_line * y_line);
@@ -662,23 +666,27 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
         v = v.Unit();
 
         // calculates the real intersection to the tile
-	if (!line_plane_intersection(p0, v, ptile, ntile, intersection))
+        if (!line_plane_intersection(p0, v, ptile, ntile, intersection))
         {
-          if (Verbosity() > 10)
+          // if (Verbosity() > 10)
           {
-            std::cout << PHWHERE << "line_plane_intersection - failed" << std::endl;
+            std::cout << "PHMicromegasTpcTrackMatching::process_event -"
+              << " tpc seed: " << tracklet_tpc
+              << " si seed: " << tracklet_si
+              << " line_plane_intersection failed"
+              << std::endl;
           }
           continue;
         }
 
-	x = intersection.X();
+        x = intersection.X();
         y = intersection.Y();
         z = intersection.Z();
-        
-	// looking for projections outside the tile
-	const double zmin = layergeom->get_zmin();
+
+        // looking for projections outside the tile
+        const double zmin = layergeom->get_zmin();
         const double zmax = layergeom->get_zmax();
-	if (z < zmin || z > zmax)
+        if (z < zmin || z > zmax)
         {
           if (Verbosity() > 10)
           {
@@ -698,29 +706,33 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
           continue;
         }
 
-	auto phi_range = layergeom->get_phi_range(tileid, _tGeometry);
+        auto phi_range = layergeom->get_phi_range(tileid, _tGeometry);
         double t_min = phi_range.first;
         double t_max = phi_range.second;
-	const double zmin = layergeom->get_zmin();
+        const double zmin = layergeom->get_zmin();
         const double zmax = layergeom->get_zmax();
-        
-        // calculates the real intersection to tile
-	if (!helix_plane_intersection(t_min, t_max, zmin, zmax, R, X0, Y0, intersect_rz, slope_rz, ptile, ntile, intersection))
-	{
-          if (Verbosity() > 0)
-	  {
-	    std::cout << PHWHERE << "helix_plane_intersection - failed" << std::endl;
-	  }
-	  continue;
-	}
 
-	x = intersection.X();
+        // calculates the real intersection to tile
+        if (!helix_plane_intersection(t_min, t_max, zmin, zmax, R, X0, Y0, intersect_rz, slope_rz, ptile, ntile, intersection))
+        {
+          // if (Verbosity() > 0)
+          {
+            std::cout << "PHMicromegasTpcTrackMatching::process_event -"
+              << " tpc seed: " << tracklet_tpc
+              << " si seed: " << tracklet_si
+              << " helix_plane_intersection failed"
+              << std::endl;
+          }
+          continue;
+        }
+
+        x = intersection.X();
         y = intersection.Y();
         z = intersection.Z();
 
         const double last_cluster_phi = _use_silicon ?
         std::atan2(clusGlobPos_silicon.back()(1), clusGlobPos_silicon.back()(0)) :
-        std::atan2(clusGlobPos.back()(1),         clusGlobPos.back()(0));
+        std::atan2(clusGlobPos.back()(1), clusGlobPos.back()(0));
 
         const double phi_proj = std::atan2(y, x);
 
@@ -778,7 +790,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
         }
 
         // compute residuals and store
-	/* in local tile coordinate, x is along rphi, and z is along y) */
+        /* in local tile coordinate, x is along rphi, and z is along y) */
         const double drphi = local_intersection_planar.x() - cluster->getLocalX();
         const double dz = local_intersection_planar.y() - cluster->getLocalY();
         switch( segmentation_type )
@@ -824,7 +836,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
         {
 
           // cluster rphi and z
-	  const auto glob = _tGeometry->getGlobalPosition(ckey, cluster);
+          const auto glob = _tGeometry->getGlobalPosition(ckey, cluster);
           const double mm_clus_rphi = get_r(glob.x(), glob.y()) * std::atan2(glob.y(), glob.x());
           const double mm_clus_z = glob.z();
 
@@ -837,7 +849,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
            * 1/ drphi and dz are actually calculated in Tile's local reference frame, not in world coordinates
            * 2/ drphi also includes SC distortion correction, which the world coordinates don't
           */
-	  std::cout
+          std::cout
             << "  Try_mms: " << (int) layer
             << " drphi " << drphi
             << " dz " << dz
@@ -845,7 +857,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
             << " rphi_proj " << rphi_proj << " z_proj " << z_proj
             << " pt " << tracklet_tpc->get_pt()
             << " charge " << tracklet_tpc->get_charge()
-            << std::endl;		 
+            << std::endl;
         }
       }  // end loop over clusters
 
@@ -853,9 +865,13 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
       if( (!first) && ckey_min > 0 && std::abs(drphi_min) < _rphi_search_win[imm] && std::abs(dz_min) < _z_search_win[imm])
       {
         tracklet_tpc->insert_cluster_key(ckey_min);
-        if (Verbosity() > 0)
+        // if (Verbosity() > 0)
         {
-          std::cout << " Match to MM's found for seedID " << seedID << " tpcID " << tpcID << " siID " << siID << std::endl;
+          std::cout << "PHMicromegasTpcTrackMatching::process_event -"
+            << " tpc seed: " << tracklet_tpc
+            << " si seed: " << tracklet_si
+            << " ckey_min: " << ckey_min
+            << std::endl;
         }
       }
 
