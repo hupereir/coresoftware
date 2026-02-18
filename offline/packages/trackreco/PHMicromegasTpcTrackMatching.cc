@@ -633,10 +633,9 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
       if(_zero_field) {
 
         // finds the x,y coordinates in the line fit
-
         if (!line_line_intersection(slope_xy, intersect_xy, x0, y0, nx, ny, xplus, yplus, xminus, yminus))
         {
-          // if (Verbosity() > 10)
+          if (Verbosity() > 10)
           {
             std::cout << "PHMicromegasTpcTrackMatching::process_event -"
               << " tpc seed: " << tracklet_tpc
@@ -668,7 +667,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
         // calculates the real intersection to the tile
         if (!line_plane_intersection(p0, v, ptile, ntile, intersection))
         {
-          // if (Verbosity() > 10)
+          if (Verbosity() > 10)
           {
             std::cout << "PHMicromegasTpcTrackMatching::process_event -"
               << " tpc seed: " << tracklet_tpc
@@ -715,7 +714,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
         // calculates the real intersection to tile
         if (!helix_plane_intersection(t_min, t_max, zmin, zmax, R, X0, Y0, intersect_rz, slope_rz, ptile, ntile, intersection))
         {
-          // if (Verbosity() > 0)
+          if (Verbosity() > 0)
           {
             std::cout << "PHMicromegasTpcTrackMatching::process_event -"
               << " tpc seed: " << tracklet_tpc
@@ -865,7 +864,7 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
       if( (!first) && ckey_min > 0 && std::abs(drphi_min) < _rphi_search_win[imm] && std::abs(dz_min) < _z_search_win[imm])
       {
         tracklet_tpc->insert_cluster_key(ckey_min);
-        // if (Verbosity() > 0)
+        if (Verbosity() > 0)
         {
           std::cout << "PHMicromegasTpcTrackMatching::process_event -"
             << " tpc seed: " << tracklet_tpc
