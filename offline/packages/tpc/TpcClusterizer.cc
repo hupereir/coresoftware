@@ -60,6 +60,7 @@
 #include <limits>
 #include <map>  // for _Rb_tree_cons...
 #include <string>
+#include <syncstream>
 #include <utility>  // for pair
 #include <vector>
 #include <unordered_set>
@@ -718,6 +719,16 @@ namespace
     local /= Acts::UnitConstants::cm;
     // std::cout << "done transform" << std::endl;
     //  we need the cluster key and all associated hit keys (note: the cluster key includes the hitset key)
+
+    if( true )
+    {
+      std::osyncstream(std::cout) << "TpcClusterizer::calc_cluster_parameter -"
+        << " hitsetkey: " << tpcHitSetKey
+        << " global: (" << global.x()/Acts::UnitConstants::cm << ", " << global.y()/Acts::UnitConstants::cm << ", " << global.z()/Acts::UnitConstants::cm << ")"
+        << " local: (" << local(0) << ", " << local(1) << ")"
+        << " clust: " << clust
+        << std::endl;
+    }
 
     TrkrCluster *clus_base = nullptr;
     bool b_made_cluster{false};
@@ -1830,7 +1841,7 @@ void TpcClusterizer::makeChannelMask(hitMaskTpcSet &aMask, const std::string &db
   else // mask using CDB TTree, default
   {
     std::string database = CDBInterface::instance()->getUrl(dbName);
-    
+
     if (database.empty())
     {
       std::cout << PHWHERE << "ERROR: CDB URL not found for " << dbName
@@ -1840,7 +1851,7 @@ void TpcClusterizer::makeChannelMask(hitMaskTpcSet &aMask, const std::string &db
 
     cdbttree = std::make_unique<CDBTTree>(database);
   }
-  
+
   std::cout << "Masking TPC Channel Map: " << dbName << std::endl;
 
   int NChan = -1;
