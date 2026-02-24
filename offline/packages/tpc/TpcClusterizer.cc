@@ -720,12 +720,12 @@ namespace
     // std::cout << "done transform" << std::endl;
     //  we need the cluster key and all associated hit keys (note: the cluster key includes the hitset key)
 
-    if( true )
+    if( false )
     {
       std::osyncstream(std::cout) << "TpcClusterizer::calc_cluster_parameter -"
         << " hitsetkey: " << tpcHitSetKey
         << " global: (" << global.x()/Acts::UnitConstants::cm << ", " << global.y()/Acts::UnitConstants::cm << ", " << global.z()/Acts::UnitConstants::cm << ")"
-        << " local: (" << local(0) << ", " << local(1) << ")"
+        << " local: (" << local(0) << ", " << local(1) << ", " << local(2) << ")"
         << " clust: " << clust
         << std::endl;
     }
