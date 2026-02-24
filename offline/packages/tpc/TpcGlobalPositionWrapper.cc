@@ -99,13 +99,16 @@ Acts::Vector3 TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected(con
       return global;
     }
 
+//     std::cout << "TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected - cluster: " << key
+//       << " local: (" << cluster->getLocalX() << ", " << cluster->getLocalY() << ")"
+//       << " global: (" << global.x() << ", " << global.y() << ", " << global.z() << ")"
+//       << std::endl;
+
     // apply crossing correction
     global.z() = TpcClusterZCrossingCorrection::correctZ(global.z(), TpcDefs::getSide(key), crossing);
-    // std::cout << "Global: " << global.x() << "  " << global.y() << "  " << global.z() << std::endl;
 
     // apply distortion corrections
     global = applyDistortionCorrections(global);
-    //std::cout << "Global after dist corr: " << global.x() << "  " << global.y() << "  " << global.z() << std::endl;
   }
 
   return global;
