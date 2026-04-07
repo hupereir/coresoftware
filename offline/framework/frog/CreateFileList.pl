@@ -83,8 +83,9 @@ my %proddesc = (
     "42" => "Herwig Jet ptmin = 20 GeV",
     "43" => "Herwig Jet ptmin = 40 GeV",
     "44" => "Herwig Jet ptmin = 50 GeV",
-    "45" => "JS pythia8 ptmin = 12GeV + Detroit",
-    "46" => "JS pythia8 Photonjet ptmin = 10GeV + Detroit"
+    "45" => "Herwig Photonjet ptmin = 5 GeV",
+    "46" => "Herwig Photonjet ptmin = 10 GeV",
+    "47" => "Herwig Photonjet ptmin = 20 GeV"
     );
 
 my %pileupdesc = (
@@ -112,6 +113,7 @@ my $pmin;
 my $pmax;
 my $production;
 my $momentum;
+my $double;
 # that should teach me a lesson to not give a flag an optional string value
 # just using embed:s leads to the next ARGV to be used as argument, even if it
 # is the next option. Sadly getopt swallows the - so parsing this becomes
@@ -136,7 +138,7 @@ foreach my $argument (@ARGV)
 	else
 	{
 	    push(@newargs, $argument);
-	    if ($ARGV[$iarg+1] ne "pau" && $ARGV[$iarg+1] ne "auau" && $ARGV[$iarg+1] ne "central")
+	    if ($ARGV[$iarg+1] ne "pau" && $ARGV[$iarg+1] ne "auau" && $ARGV[$iarg+1] ne "central" && $ARGV[$iarg+1] ne "oo" )
 	    {
 		push(@newargs,"auau");
 	    }
@@ -149,7 +151,7 @@ foreach my $argument (@ARGV)
     $iarg++;
 }
 @ARGV=@newargs;
-GetOptions('embed:s' => \$embed, 'l:i' => \$last_segment, 'momentum:s' => \$momentum, 'n:i' => \$nEvents, "nobkgpileup" => \$nobkgpileup, "nopileup" => \$nopileup, "particle:s" => \$particle, 'pileup:i' => \$pileup, "pmin:i" => \$pmin, "pmax:i"=>\$pmax, "production:s"=>\$production, 'rand' => \$randomize, 'run:i' => \$runnumber, 's:i' => \$start_segment, 'type:i' =>\$prodtype, "verbose" =>\$verbose);
+GetOptions('double' => \$double, 'embed:s' => \$embed, 'l:i' => \$last_segment, 'momentum:s' => \$momentum, 'n:i' => \$nEvents, "nobkgpileup" => \$nobkgpileup, "nopileup" => \$nopileup, "particle:s" => \$particle, 'pileup:i' => \$pileup, "pmin:i" => \$pmin, "pmax:i"=>\$pmax, "production:s"=>\$production, 'rand' => \$randomize, 'run:i' => \$runnumber, 's:i' => \$start_segment, 'type:i' =>\$prodtype, "verbose" =>\$verbose);
 my $filenamestring;
 my %filetypes = ();
 my %notlike = ();
@@ -215,6 +217,7 @@ if (defined $nobkgpileup)
 }
 
 my $embedok = 0;
+my $doubleok = 0;
 
 if (defined $prodtype)
 {
@@ -328,6 +331,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -356,6 +363,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -523,6 +534,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -565,6 +580,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -666,6 +685,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -683,6 +706,11 @@ if (defined $prodtype)
     {
         $embedok = 1;
 	$filenamestring = "pythia8_PhotonJet10";
+	if (defined $double)
+	{
+	    $doubleok = 1;
+	    $filenamestring = "pythia8_PhotonJet10_pythia8_Detroit";
+	}
 	if (! defined $nopileup)
 	{
 	    if (defined $embed)
@@ -694,6 +722,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -723,6 +755,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -840,6 +876,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -868,6 +908,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -898,6 +942,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -926,6 +974,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -970,6 +1022,10 @@ if (defined $prodtype)
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
 		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
+		}
 		else
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
@@ -987,6 +1043,11 @@ if (defined $prodtype)
     {
         $embedok = 1;
 	$filenamestring = "pythia8_Jet12";
+	if (defined $double)
+	{
+	    $doubleok = 1;
+	    $filenamestring = "pythia8_Jet12_pythia8_Detroit";
+	}
 	if (! defined $nopileup)
 	{
 	    if (defined $embed)
@@ -998,6 +1059,10 @@ if (defined $prodtype)
 		elsif ($embed eq "central")
 		{
 		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		elsif ($embed eq "oo")
+		{
+		    $filenamestring = sprintf("%s_sHijing_OO_0_15fm%s",$filenamestring, $OO_pileupstring);
 		}
 		else
 		{
@@ -1160,7 +1225,36 @@ if (defined $prodtype)
     elsif ($prodtype == 45)
     {
         $embedok = 1;
-	$filenamestring = "pythia8_Jet12_pythia8_Detroit";
+	$filenamestring = "Herwig_PhotonJet5";
+	if (! defined $nopileup)
+	{
+	    if (defined $embed)
+	    {
+		if ($embed eq "pau")
+		{
+		    $filenamestring = sprintf("%s_sHijing_pAu_0_10fm%s",$filenamestring, $pAu_pileupstring);
+		}
+		elsif ($embed eq "central")
+		{
+		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		else
+		{
+		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+	    }
+	    else
+	    {
+		$filenamestring = sprintf("%s%s",$filenamestring,$pp_pileupstring);
+	    }
+	}
+        $pileupstring = $pp_pileupstring;
+	&commonfiletypes();
+    }
+    elsif ($prodtype == 45)
+    {
+        $embedok = 1;
+	$filenamestring = "Herwig_PhotonJet5";
 	if (! defined $nopileup)
 	{
 	    if (defined $embed)
@@ -1189,7 +1283,7 @@ if (defined $prodtype)
     elsif ($prodtype == 46)
     {
         $embedok = 1;
-	$filenamestring = "pythia8_PhotonJet10_pythia8_Detroit";
+	$filenamestring = "Herwig_PhotonJet10";
 	if (! defined $nopileup)
 	{
 	    if (defined $embed)
@@ -1215,7 +1309,35 @@ if (defined $prodtype)
         $pileupstring = $pp_pileupstring;
 	&commonfiletypes();
     }
-
+    elsif ($prodtype == 47)
+    {
+        $embedok = 1;
+	$filenamestring = "Herwig_PhotonJet20";
+	if (! defined $nopileup)
+	{
+	    if (defined $embed)
+	    {
+		if ($embed eq "pau")
+		{
+		    $filenamestring = sprintf("%s_sHijing_pAu_0_10fm%s",$filenamestring, $pAu_pileupstring);
+		}
+		elsif ($embed eq "central")
+		{
+		    $filenamestring = sprintf("%s_sHijing_0_488fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+		else
+		{
+		    $filenamestring = sprintf("%s_sHijing_0_20fm%s",$filenamestring, $AuAu_pileupstring);
+		}
+	    }
+	    else
+	    {
+		$filenamestring = sprintf("%s%s",$filenamestring,$pp_pileupstring);
+	    }
+	}
+        $pileupstring = $pp_pileupstring;
+	&commonfiletypes();
+    }
     else
     {
 	print "no production type $prodtype\n";
@@ -1229,6 +1351,11 @@ if (defined $embed && ! $embedok)
     print "Embedding not implemented for type $prodtype\n";
     exit(1);
 }
+if (defined $double && ! $doubleok)
+{
+    print "Double interactions not implemented for type $prodtype\n";
+    exit(1);
+}
 
 my $filenamestring_with_runnumber = sprintf("%s\-%010d-",$filenamestring,$runnumber);
 if ($#ARGV < 0)
@@ -1237,6 +1364,7 @@ if ($#ARGV < 0)
     {
 	print "usage: CreateFileLists.pl -type <production type> <filetypes>\n";
 	print "parameters:\n";
+	print "-double : double interactions, pp of your type and Detroit pp\n";
 	print "-embed : pp embedded into MB AuAu hijing (only for pp types)\n";
 	print "  -embed pau : embedded into pAu (only for pp types)\n";
 	print "  -embed central : embedded into central AuAu\n";
@@ -1360,6 +1488,10 @@ while($#ARGV >= 0)
 }
 print "This Can Take a While (10 minutes depending on the amount of events and the number of file types you want)\n";
 my $conds = sprintf("dsttype = ? and filename like \'\%%%s\%\'",$filenamestring_with_runnumber);
+if (! defined $double)
+{
+    $conds = sprintf("%s and filename not like '\%%pythia8_\%_pythia8\%'",$conds);
+}
 
 if (exists $notlike{$filenamestring})
 {
