@@ -859,6 +859,12 @@ TH3* TpcSpaceChargeReconstructionHelper::add_guarding_bins(const TH3* source, co
 //_____________________________________________________________________________________________________________________-
 void TpcSpaceChargeReconstructionHelper::fill_guarding_bins(TH3* source )
 {
+  if (!source)
+  {
+    std::cout << "TpcSpaceChargeReconstructionHelper::fill_guarding_bins - invalid source histogram" << std::endl;
+    return;
+  }
+
   const auto nbinsx = source->GetNbinsX();
   const auto nbinsy = source->GetNbinsY();
   const auto nbinsz = source->GetNbinsZ();
