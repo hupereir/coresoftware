@@ -188,7 +188,7 @@ class PHTpcResiduals : public SubsysReco
   bool m_useMicromegas = true;
 
   /// minimum pT required for track to be considered in residuals calculation (GeV/c)
-  double m_minPt = 0.5;
+  double m_minPt = 0.2;
 
   /// require track crossing zero
   bool m_requireCrossing = false;
