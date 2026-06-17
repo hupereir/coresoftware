@@ -125,9 +125,9 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
 
   for (auto &iter : *_svtx_track_map)
   {
-    _svtx_track = iter.second;
+    auto* svtx_track = iter.second;
 
-    if(!checkTrack(_svtx_track))
+    if(!checkTrack(svtx_track))
     {
       continue;
     }
@@ -135,8 +135,8 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
     if (Verbosity() > 1) { std::cout<<"Pass track selection"<<std::endl; }
     ++m_accepted_tracks;
 
-    auto* tpc_seed = _svtx_track->get_tpc_seed();
-    auto* si_seed = _svtx_track->get_silicon_seed();
+    auto* tpc_seed = svtx_track->get_tpc_seed();
+    auto* si_seed = svtx_track->get_silicon_seed();
     if (tpc_seed && si_seed)
     {
       if (Verbosity() > 1) { std::cout<<"Insert tpcid and siid into good_matches"<<std::endl; }
@@ -178,7 +178,6 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
 
     cout << "PHTrackPruner::process_event(PHCompositeNode *topNode) Leaving process_event" << endl;
   }
-  m_event++;
   return Fun4AllReturnCodes::EVENT_OK;
 }
 
