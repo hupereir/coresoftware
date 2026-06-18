@@ -115,7 +115,7 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
     return Fun4AllReturnCodes::EVENT_OK;
   }
 
-  std::multimap<unsigned int, unsigned int> good_matches;
+  std::multimap<size_t, size_t> good_matches;
 
   // increment number of processed tracks
   m_total_tracks += _svtx_track_map->size();
@@ -130,20 +130,27 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
     }
 
     if (Verbosity() > 1) { std::cout<<"Pass track selection"<<std::endl; }
-    ++m_accepted_tracks;
 
     auto* tpc_seed = svtx_track->get_tpc_seed();
     auto* si_seed = svtx_track->get_silicon_seed();
     if (tpc_seed && si_seed)
     {
       if (Verbosity() > 1) { std::cout<<"Insert tpcid and siid into good_matches"<<std::endl; }
-      int tpcid = _tpc_seed_map->find(tpc_seed);
-      int siid = _si_seed_map->find(si_seed);
-      good_matches.insert(std::make_pair(tpcid, siid));
+
+      const size_t tpcid = _tpc_seed_map->find(tpc_seed);
+      const size_t siid = _si_seed_map->find(si_seed);
+
+      // check index validity
+      if( tpcid < _tpc_seed_map->size() && siid < _si_seed_map->size() )
+      {
+        good_matches.emplace(tpcid, siid);
+        ++m_accepted_tracks;
+      }
+
     }
   }
 
-  for (auto [tpcid, siid] : good_matches)
+  for (const auto& [tpcid, siid] : good_matches)
   {
       if (Verbosity() > 1) { std::cout<<"Insert pruned svtx seed map"<<std::endl; }
     auto _svtx_seed = std::make_unique<SvtxTrackSeed_v2>();
@@ -272,21 +279,21 @@ int PHTrackPruner::GetNodes(PHCompositeNode *topNode)
   _svtx_track_map = findNode::getClass<SvtxTrackMap>(topNode, _svtx_track_map_name);
   if (!_svtx_track_map)
   {
-    cerr << PHWHERE << " ERROR: Can't find " << _svtx_track_map_name.c_str()  << endl;
+    cerr << PHWHERE << " ERROR: Can't find " << _svtx_track_map_name  << endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
   _si_seed_map = findNode::getClass<TrackSeedContainer>(topNode, _si_seed_map_name);
   if (!_si_seed_map)
   {
-    cerr << PHWHERE << " ERROR: Can't find " << _si_seed_map_name.c_str()  << endl;
+    cerr << PHWHERE << " ERROR: Can't find " << _si_seed_map_name  << endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
   _tpc_seed_map = findNode::getClass<TrackSeedContainer>(topNode, _tpc_seed_map_name);
   if (!_tpc_seed_map)
   {
-    cerr << PHWHERE << " ERROR: Can't find " << _tpc_seed_map_name.c_str() << endl;
+    cerr << PHWHERE << " ERROR: Can't find " << _tpc_seed_map_name << endl;
     return Fun4AllReturnCodes::ABORTEVENT;
   }
 
