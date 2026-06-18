@@ -133,8 +133,7 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
     auto* si_seed = svtx_track->get_silicon_seed();
     if (tpc_seed && si_seed)
     {
-      if (Verbosity() > 1) { std::cout  <<"Insert tpcid and siid into good_matches"<<std::endl; }
-
+      if (Verbosity() > 1) { std::cout <<"Insert tpcid and siid into good_matches"<<std::endl; }
       const size_t tpcid = _tpc_seed_map->find(tpc_seed);
       const size_t siid = _si_seed_map->find(si_seed);
 
@@ -144,7 +143,6 @@ int PHTrackPruner::process_event(PHCompositeNode * /*unused*/)
         good_matches.emplace(tpcid, siid);
         ++m_accepted_tracks;
       }
-
     }
   }
 
