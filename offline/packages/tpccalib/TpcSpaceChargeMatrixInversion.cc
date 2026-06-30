@@ -171,6 +171,14 @@ bool TpcSpaceChargeMatrixInversion::add_from_file(const std::string& shortfilena
       << std::endl;
   }
 
+  if( Verbosity() ) {
+    std::cout << "TpcSpaceChargeMatrixInversion::add_from_file -"
+      << " file: " << filename
+      << " objectname: " << objectname
+      << " entries: " << source->get_entries()
+      << std::endl;
+  }
+
   // add object
   return add(*source);
 }
