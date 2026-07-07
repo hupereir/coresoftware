@@ -172,10 +172,7 @@ ActsPropagator::propagateTrack(const Acts::BoundTrackParameters& params,
     auto finalparams = *result.value().endParameters; // NOLINT(bugprone-unchecked-optional-access)
     auto pathlength = result.value().pathLength;
     auto pair = std::make_pair(pathlength, finalparams);
-
     return Acts::Result<BoundTrackParamPair>::success(pair);
-  } else {
-    std::cout << "ActsPropagator::propagateTrack - propagation failed" << std::endl;
   }
 
   return result.error();
