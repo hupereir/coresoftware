@@ -848,15 +848,18 @@ int PHMicromegasTpcTrackMatching::process_event(PHCompositeNode* topNode)
            * 1/ drphi and dz are actually calculated in Tile's local reference frame, not in world coordinates
            * 2/ drphi also includes SC distortion correction, which the world coordinates don't
           */
-          std::cout
-            << "  Try_mms: " << (int) layer
-            << " drphi " << drphi
-            << " dz " << dz
-            << " mm_clus_rphi " << mm_clus_rphi << " mm_clus_z " << mm_clus_z
-            << " rphi_proj " << rphi_proj << " z_proj " << z_proj
-            << " pt " << tracklet_tpc->get_pt()
-            << " charge " << tracklet_tpc->get_charge()
-            << std::endl;
+         if(Verbosity() > 1)
+         {
+	          std::cout
+              << "  Try_mms: " << (int) layer
+              << " drphi " << drphi
+              << " dz " << dz
+              << " mm_clus_rphi " << mm_clus_rphi << " mm_clus_z " << mm_clus_z
+              << " rphi_proj " << rphi_proj << " z_proj " << z_proj
+              << " pt " << tracklet_tpc->get_pt()
+              << " charge " << tracklet_tpc->get_charge()
+              << std::endl;
+         }
         }
       }  // end loop over clusters
 
