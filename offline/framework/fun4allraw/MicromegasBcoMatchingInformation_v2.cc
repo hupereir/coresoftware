@@ -505,23 +505,6 @@ std::optional<uint64_t> MicromegasBcoMatchingInformation_v2::find_gtm_bco(int pa
 }
 
 //___________________________________________________
-void MicromegasBcoMatchingInformation_v2::cleanup()
-{
-  // remove old gtm_bco and matching
-  while (m_gtm_bco_list.size() > m_max_matching_data_size)
-  {
-    m_gtm_bco_list.pop_front();
-  }
-  while (m_bco_matching_list.size() > m_max_matching_data_size)
-  {
-    m_bco_matching_list.pop_front();
-  }
-
-  // clear orphans
-  m_orphans.clear();
-}
-
-//___________________________________________________
 void MicromegasBcoMatchingInformation_v2::cleanup(uint64_t ref_bco)
 {
   // erase all elements from bco_list that are less than or equal to ref_bco

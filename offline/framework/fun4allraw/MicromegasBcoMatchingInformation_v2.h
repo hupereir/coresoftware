@@ -168,9 +168,6 @@ class MicromegasBcoMatchingInformation_v2
   std::optional<uint64_t> find_gtm_bco(int /*packet_id*/, unsigned int /*fee_id*/, uint32_t /*fee_gtm*/);
 
   //! cleanup
-  void cleanup();
-
-  //! cleanup
   void cleanup(uint64_t /*ref_bco*/);
 
   //@}
