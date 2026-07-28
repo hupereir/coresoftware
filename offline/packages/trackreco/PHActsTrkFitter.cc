@@ -125,12 +125,9 @@ namespace
         s.smoothedCovariance(),
         Acts::ParticleHypothesis::pion());
       return std::make_pair( s.pathLength(), p );
-
-    } else {
-
-      return std::nullopt;
-
     }
+
+    return std::nullopt;
   };
 
   // find nearest parameter in trajectory after a given sPhenix layer
@@ -161,9 +158,9 @@ namespace
         s = state;
         found = true;
         return true;
-      } else {
-        return false;
       }
+
+      return false;
 
     });
 
@@ -178,11 +175,9 @@ namespace
         Acts::ParticleHypothesis::pion());
       return std::make_pair( s.pathLength(), p );
 
-    } else {
-
-      return std::nullopt;
-
     }
+
+    return std::nullopt;
   };
 
 
@@ -1171,7 +1166,7 @@ SurfacePtrVec PHActsTrkFitter::getSurfaceVector(const SourceLinkVec& sourceLinks
   {
     const ActsSourceLink asl = sl.get<ActsSourceLink>();
     const auto* const surf = m_tGeometry->geometry().tGeometry->findSurface(asl.geometryId());
-    //   std::cout << "sl: " <<  surf->geometryId() << std::endl;
+    //std::cout << "sl: " <<  surf->geometryId() << std::endl;
     surfaces.push_back(surf);
   }
 
@@ -1215,15 +1210,19 @@ void PHActsTrkFitter::checkSurfaceVec(SurfacePtrVec& surfaces) const
     /// Implement a check to ensure surfaces are sorted
     if (nextVolume == thisVolume)
     {
+
       //    if (nextLayer < thisLayer)
       if (nextRadius < thisRadius)
       {
+        if(Verbosity() > 0)
+        {
         std::cout
             << "PHActsTrkFitter::checkSurfaceVec - "
             << "Surface not in order... removing surface"
             << surface->geometryId() << " with radius " << thisRadius << std::endl;
             std::cout << "   approach " << nextSurface->geometryId().approach() << " volume " << nextSurface->geometryId().volume() << " layer " << nextSurface->geometryId().layer() << std::endl;
         std::cout << "    Next surface is " << nextSurface->geometryId() << " with radius " << nextRadius << std::endl;
+        }
         surfaces.erase(surfaces.begin() + i);
 
         /// Subtract one so we don't skip a surface
@@ -1360,7 +1359,7 @@ void PHActsTrkFitter::updateSvtxTrack(
       // get layer, propagate
       /* this code is quite complicated. See to simplify */
       const auto layer = TrkrDefs::getLayer(cluskey);
-      auto extrapolate = [&]( ActsPropagator::BoundTrackParamPair p, uint8_t l, Acts::Direction direction )
+      auto extrapolate = [&]( const ActsPropagator::BoundTrackParamPair& p, uint8_t l, Acts::Direction direction )
       {
 
         const auto& [source_pathlength, source_param] = p;
