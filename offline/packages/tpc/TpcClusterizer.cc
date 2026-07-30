@@ -916,23 +916,12 @@ namespace
     // Equivalent charge per T bin is then  (ADU x 2200 mV / 1024) / 2.4 x (1/20) fC/mV x (1/1.6e-04) electrons/fC x (1/2000) = ADU x 0.14
 
     // convert envelope coords to simulation geometry coords - note alignment is turned off here
-    auto simgeom_pos = my_data.tGeometry->transformTpcEnvelopeToWorld(env_pos);    
+    auto simgeom_pos = my_data.tGeometry->transformTpcEnvelopeToWorld(env_pos);
     simgeom_pos *= Acts::UnitConstants::cm;  // convert to Acts units
     Acts::Vector3 local = surface->localToGlobalTransform(my_data.tGeometry->geometry().getGeoContext()).inverse() * simgeom_pos;
     local /= Acts::UnitConstants::cm;
 
     //  we need the cluster key and all associated hit keys (note: the cluster key includes the hitset key)
-
-    if( false )
-    {
-      std::osyncstream(std::cout) << "TpcClusterizer::calc_cluster_parameter -"
-        << " hitsetkey: " << tpcHitSetKey
-        << " global: (" << global.x()/Acts::UnitConstants::cm << ", " << global.y()/Acts::UnitConstants::cm << ", " << global.z()/Acts::UnitConstants::cm << ")"
-        << " local: (" << local(0) << ", " << local(1) << ", " << local(2) << ")"
-        << " clust: " << clust
-        << std::endl;
-    }
-
     TrkrCluster *clus_base = nullptr;
     bool b_made_cluster{false};
 
