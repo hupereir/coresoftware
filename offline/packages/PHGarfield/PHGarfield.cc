@@ -97,6 +97,7 @@ int PHGarfield::InitRun(PHCompositeNode* /*topNode*/)
 
   // Here we fetch the gas from the CDB
   std::string gasfile = m_cdb->getUrl("PHGARFIELD_GAS");
+  //std::string gasfile("/gpfs/mnt/gpfs02/sphenix/user/hemmick/gasfiles_20260804/Ar75_CF20_iso5.gas");  // for testing only...
   if (gasfile.empty() || !fs::exists(gasfile))
   {
     std::cerr << PHWHERE << " Missing CDB gasfile: " << gasfile << std::endl;
@@ -331,7 +332,10 @@ void PHGarfield::GetMagneticFieldTesla(double x_cm, double y_cm, double z_cm, do
 
   // Get the magnetic field via the PHField3DCartesian object constructed using
   // the CDB url reference.
-  m_field->GetFieldValue(point, bfield_map);
+  if (!m_zerofield)
+  {
+    m_field->GetFieldValue(point, bfield_map);
+  }
 
   const TVector3 b_tpc = MagnetFieldMapVectorToTpcVector(
       bfield_map[0], bfield_map[1], bfield_map[2]);

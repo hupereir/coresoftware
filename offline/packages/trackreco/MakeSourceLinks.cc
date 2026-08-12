@@ -56,6 +56,7 @@ void MakeSourceLinks::initialize(PHG4TpcGeomContainer* cellgeo, ActsGeometry *tG
   if (cellgeo && tGeometry && topNode)
   {
     _clusterMover.initialize_geometry(cellgeo, tGeometry, topNode);
+    _clusterMover.set_verbosity(m_verbosity);
   }
 }
 
@@ -440,19 +441,24 @@ SourceLinkVec MakeSourceLinks::getSourceLinksClusterMover(
       continue;
     }
 
-    auto* cluster = clusterContainer->findCluster(cluskey);
-    Surface surf = tGeometry->maps().getSurface(cluskey, cluster);
-
     if (std::isnan(global.x()) || std::isnan(global.y()))
     {
-      std::cout << "MakeSourceLinks::getSourceLinksClusterMover - invalid position"
-                << " key: " << cluskey
-                << " layer: " << (int) TrkrDefs::getLayer(cluskey)
-                << " position: " << global
-                << std::endl;
+      if (m_verbosity > 1)
+	{
+	  std::cout << "MakeSourceLinks::getSourceLinksClusterMover - invalid position"
+		    << " key: " << cluskey
+		    << " layer: " << (int) TrkrDefs::getLayer(cluskey)
+		    << " position: " << global
+		    << std::endl;
+	}
+      continue;
     }
 
-    // if this is a TPC cluster, the crossing correction may have moved it across the central membrane, check the surface
+    // clustermover updates the subsurface key after moving the clusters to the surface, so this is safe
+    auto* cluster = clusterContainer->findCluster(cluskey);
+    if(!cluster) { continue; }
+    Surface surf = tGeometry->maps().getSurface(cluskey, cluster);
+
     auto trkrid = TrkrDefs::getTrkrId(cluskey);
     if (trkrid == TrkrDefs::tpcId)
     {
@@ -460,26 +466,11 @@ SourceLinkVec MakeSourceLinks::getSourceLinksClusterMover(
       {
         continue;
       }
-
-      TrkrDefs::hitsetkey hitsetkey = TrkrDefs::getHitSetKeyFromClusKey(cluskey);
-      TrkrDefs::subsurfkey new_subsurfkey = 0;
-      surf = tGeometry->get_tpc_surface_from_coords(hitsetkey, global, new_subsurfkey);
-
-      if(m_verbosity > 2 && (int) TrkrDefs::getLayer(cluskey) == 28)
-	{
-	  if(new_subsurfkey - cluster->getSubSurfKey() != 0)
-	    {
-	      std::cout << "        ********  surf sskey changed from " << cluster->getSubSurfKey() << " to " << new_subsurfkey << std::endl;
-	    }
-	}
     }
-
+    
     if (!surf)
     {
-      if (m_verbosity > 2)
-      {
-        std::cout << "MakeSourceLinks::getSourceLinksClusterMover -  Failed to find surface for cluskey " << cluskey << std::endl;
-      }
+      std::cout << "MakeSourceLinks::getSourceLinksClusterMover -  Failed to find surface for cluskey " << cluskey << std::endl;
       continue;
     }
 
