@@ -1372,7 +1372,7 @@ void PHActsTrkFitter::updateSvtxTrack(
         }
       };
 
-      if( m_extrapolation_mode == ExtrapolationMode::Default )
+      if( m_extrapolation_mode == ExtrapolationMode::Legacy )
       {
 
         // extrapolate from track parameters
@@ -1479,7 +1479,7 @@ void PHActsTrkFitter::updateSvtxTrack(
 
       switch( m_extrapolation_mode )
       {
-        case ExtrapolationMode::Default:
+        case ExtrapolationMode::Legacy:
         {
 
           // extrapolate from track parameters
