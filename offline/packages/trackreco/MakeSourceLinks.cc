@@ -357,7 +357,7 @@ SourceLinkVec MakeSourceLinks::getSourceLinksClusterMover(
   std::vector<std::pair<TrkrDefs::cluskey, Acts::Vector3>> global_raw;
 
   // keep track of old cluster keys
-  std::vector<std::pair<TrkrCluster*,int> old_subsurfkey_map;
+  std::vector<std::pair<TrkrCluster*, int>> old_subsurfkey_map;
 
   for (auto clusIter = track->begin_cluster_keys();
        clusIter != track->end_cluster_keys();
@@ -395,7 +395,7 @@ SourceLinkVec MakeSourceLinks::getSourceLinksClusterMover(
     if (trkrid == TrkrDefs::tpcId)
     {
       // store old subsurface keys in map. They will need to be restored after the cluster mover has been called
-      old_subsurfkey_map.emplace(cluster, cluster->getSubSurfKey() );
+      old_subsurfkey_map.emplace_back(cluster, cluster->getSubSurfKey() );
 
 
       if (m_verbosity > 2)
