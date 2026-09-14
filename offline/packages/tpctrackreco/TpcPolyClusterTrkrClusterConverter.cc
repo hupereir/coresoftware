@@ -284,8 +284,10 @@ bool TpcPolyClusterTrkrClusterConverter::seedOutputCluster(const Tpc_PolyCluster
   if (!std::isfinite(centroid.x()) || !std::isfinite(centroid.y()) || !std::isfinite(centroid.z())) { return false;
 }
 
+  const Acts::Vector3 sphenix_centroid =  m_geometry->transformTpcEnvelopeToWorld(centroid);
+  
   TrkrDefs::subsurfkey subsurfkey = 0;
-  Surface surface = m_geometry->get_tpc_surface_from_coords(hitsetkey, centroid, subsurfkey);
+  Surface surface = m_geometry->get_tpc_surface_from_coords(hitsetkey, sphenix_centroid, subsurfkey);
   if (!surface)
   {
     subsurfkey = 0;
@@ -325,8 +327,11 @@ void TpcPolyClusterTrkrClusterConverter::buildMovedClusterMap()
     const Acts::Vector3 centroid(cluster->get_centroid_x(),
                                  cluster->get_centroid_y(),
                                  cluster->get_centroid_z());
-    m_movedGlobals[cluskey] = {{centroid.x(), centroid.y(), centroid.z()}};
-    clusters_by_track[track_iter->first].emplace_back(cluskey, centroid);
+
+    const Acts::Vector3 sphenix_centroid =  m_geometry->transformTpcEnvelopeToWorld(centroid);
+    m_movedGlobals[cluskey] = {{sphenix_centroid.x(), sphenix_centroid.y(), sphenix_centroid.z()}};
+    
+    clusters_by_track[track_iter->first].emplace_back(cluskey, sphenix_centroid);
   }
 
   for (const auto& track_clusters : clusters_by_track)
