@@ -1065,13 +1065,7 @@ void TrackResiduals::fillClusterBranchesKF(TrkrDefs::cluskey ckey, SvtxTrack* tr
   for (const auto& pair : global_moved)
   {
     auto thiskey = pair.first;
-<<<<<<< HEAD
-    clusglob_moved = pair.second;
-    //  unsigned int layer = TrkrDefs::getLayer(thiskey);
-    // std::cout << "global moved: " << layer << " ckey " << ckey << std::endl;
-=======
     clusglob_moved = pair.second.second;
->>>>>>> master
     if (thiskey == ckey)
     {
       surf = pair.second.first;
@@ -2671,13 +2665,8 @@ void TrackResiduals::fillResidualTreeSeeds(PHCompositeNode* topNode)
     m_tracklength = maxR - minR;
 
     // Call clusterMover for the entire track
-<<<<<<< HEAD
-    auto global_moved = m_clusterMover.processTrack(global_raw);
-
-=======
     std::vector<std::pair<TrkrDefs::cluskey, std::pair<Surface, Acts::Vector3>>> global_moved = m_clusterMover.processTrack(global_raw);
 
->>>>>>> master
     if (!m_doAlignment)
     {
       std::vector<TrkrDefs::cluskey> keys;
