@@ -1637,7 +1637,7 @@ void TrackResiduals::fillClusterBranchesSeeds(TrkrDefs::cluskey ckey,  // SvtxTr
   return;
 }
 
-void TrackResiduals::fillStatesWithCircleFit(Acts::Vector3& glob, Surface surf, ActsGeometry* geometry)
+void TrackResiduals::fillStatesWithCircleFit(Acts::Vector3& glob, const Surface& surf, ActsGeometry* geometry)
 {
   std::vector<float> fitpars;
   fitpars.push_back(m_R);
@@ -1666,7 +1666,7 @@ void TrackResiduals::fillStatesWithCircleFit(Acts::Vector3& glob, Surface surf, 
     m_statelz.push_back(local.y());
   }
 }
-void TrackResiduals::fillStatesWithLineFit(Surface surf, ActsGeometry* geometry)
+void TrackResiduals::fillStatesWithLineFit(const Surface& surf, ActsGeometry* geometry)
 {
   auto intersection = TrackFitUtils::surface_3Dline_intersection(surf, geometry, m_xyslope,
                                                                  m_xyint, m_yzslope, m_yzint);
