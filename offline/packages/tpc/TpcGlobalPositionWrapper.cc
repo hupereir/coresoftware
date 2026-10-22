@@ -82,31 +82,22 @@ Acts::Vector3 TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected(con
     return {0,0,0};
   }
 
-  // get global position from acts
-  Acts::Vector3 global = m_tGeometry->getGlobalPosition(key, cluster);
+  // verify crossing validity
+  if(crossing == SHRT_MAX)
+    {
+      if(!m_suppressCrossing)
+	{
+	  std::cout << "TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected - invalid crossing, assume zero." << std::endl;
+	}
+      Acts::Vector3 global_zero = m_tGeometry->getGlobalPosition(key, cluster); // defaults to crossing zero
+      return global_zero;
+    }
+
+  Acts::Vector3 global = m_tGeometry->getGlobalPosition(key, cluster, crossing);
 
   // make sure cluster is from TPC
   if( TrkrDefs::getTrkrId(key) == TrkrDefs::TrkrId::tpcId )
   {
-
-    // verify crossing validity
-    if(crossing == SHRT_MAX)
-    {
-      if(!m_suppressCrossing)
-      {
-        std::cout << "TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected - invalid crossing." << std::endl;
-      }
-      return global;
-    }
-
-//     std::cout << "TpcGlobalPositionWrapper::getGlobalPositionDistortionCorrected - cluster: " << key
-//       << " local: (" << cluster->getLocalX() << ", " << cluster->getLocalY() << ")"
-//       << " global: (" << global.x() << ", " << global.y() << ", " << global.z() << ")"
-//       << std::endl;
-
-    // apply crossing correction
-    global.z() = TpcClusterZCrossingCorrection::correctZ(global.z(), TpcDefs::getSide(key), crossing);
-
     // apply distortion corrections
     global = applyDistortionCorrections(global);
   }

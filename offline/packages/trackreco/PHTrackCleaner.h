@@ -20,6 +20,7 @@ class PHCompositeNode;
 class SvtxTrack;
 class SvtxTrackMap;
 class TrkrCluster;
+class TrackSeed;
 class TrackSeedContainer;
 
 class PHTrackCleaner : public SubsysReco
@@ -46,6 +47,9 @@ class PHTrackCleaner : public SubsysReco
  private:
   int GetNodes(PHCompositeNode *topNode);
   void findGhostTracks();
+  TrackSeed *getSiliconSeed(SvtxTrack *track) const;
+  TrackSeed *getTpcSeed(SvtxTrack *track) const;
+  static TrackSeed *findSeed(TrackSeedContainer *container, unsigned short id);
 
   //! track map name
   std::string m_trackmapname = "SvtxTrackMap";
