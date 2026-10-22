@@ -104,7 +104,7 @@ int PHTrackCleaner::process_event(PHCompositeNode * /*topNode*/)
       if (track)
       {
         unsigned int si_index = UINT_MAX;
-        auto *si_seed = getSiliconSeed(_track);
+        auto *si_seed = getSiliconSeed(track);
         if (si_seed)
         {
           si_index = _silicon_seed_map->find(si_seed);
